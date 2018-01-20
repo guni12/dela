@@ -1,0 +1,6 @@
+/.bin
+/build
+/vendor
+/config/database.php
+memory::
+composer.lock

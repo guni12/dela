@@ -1,0 +1,476 @@
+/** css for kmom10 */
+
+body {
+    background: #fbf8f3;
+    color: #838281;
+    text-align: center;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.deladark {
+    color: #838281;
+}
+
+.delabrown {
+    color: #594a3c;
+}
+
+.delalight {
+    color: #FBF8F3;
+}
+
+.delared {
+    color: #D8776A;
+}
+
+.delared a {
+    color: #D8776A;
+}
+
+.delablue {
+    color: #337ab7;
+}
+
+.delablue a {
+    color: #337ab7;
+}
+
+.delalightblue {
+    color: #30B4CB;
+}
+
+.delagreen {
+    color: green;
+}
+
+.delagreen a {
+    color: green;
+}
+
+.shade {
+    background-color: #594a3c;
+    height: 10px;
+}
+
+.header-wrap {
+    width: 100%;
+}
+
+.navbar-wrap {
+    max-width: 1300px;
+    margin: 0 auto;
+}
+
+.navbar-header a {
+    color: #FBF8F3;
+    font-size: 3em;
+}
+
+.navbar-brand {
+    background-color: #30B4CB;
+    background-size:100%;
+}
+
+.navbar-collapse a {
+    color: #D8776A;
+}
+
+.navbar-nav li:hover {
+    background-color: transparent;
+}
+
+.navbar-nav .active a {
+    color: #30B4CB;
+}
+
+.navbar-nav li:hover {
+    background-color: transparent;
+}
+
+.navbar-nav li a:hover {
+    background-color: transparent;
+    color: #594a3c;
+}
+
+.icon-bar {
+    background-color: #30B4CB;
+}
+
+
+/* User page */
+.auser {
+    padding-left: 5%;
+    padding-right: 5%;
+}
+
+.auser a {
+    color: #30B4CB;
+}
+.header-flash {
+    background: url("../img/header.png") no-repeat;
+    height: 60px;
+    background-size:100%;
+}
+
+.container {
+    margin: 0 auto;
+    text-align: left;
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.flex {
+    display: flex; /* or inline-flex */
+    flex-wrap: wrap;
+}
+
+.inner {
+    margin: 2%;
+    width: 21%;
+}
+
+.left {
+    float: left;    
+    width: 25%;
+}
+
+.left img{
+    height: auto;
+    width: 100%;
+    padding: 2%;
+}
+
+.right {
+    float: left;
+    padding-left: 2%; 
+    width: 70%;
+}
+
+.margin-right {
+    margin-right: 10%;
+}
+
+.footer-wrap {
+    clear: both;
+    background-color: #594a3c;
+    color: #ccc;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.footer-wrap a {
+    color: #30B4CB;
+}
+
+.clearfix::after {
+    content: "";
+    clear: both;
+    display: block;
+}
+
+.member {
+    width: 100%;
+}
+
+.smalltext {
+    float: right;
+    font-size: 0.6em;
+    font-style: italic;
+}
+
+.border {
+    margin: 0;
+}
+
+th, td {
+    padding-right: 1%;
+}
+
+th {
+    padding-bottom: 1%;
+}
+
+.title {
+    width: 32%;
+}
+
+.tag {
+    width: 20%;
+    padding-right: 5%;
+    font-size: 0.8em;
+}
+
+td.tag {
+    font-size: 0.6em;
+}
+
+.parent {
+    width: 25%;
+    font-size: 0.8em;
+}
+
+.parenttag {
+    width: 20%;
+    font-size: 0.8em;
+}
+
+.answercomments {
+    font-size: 0.8em;
+    width: 3%;
+}
+
+td.parenttag {
+    font-size: 0.6em;
+}
+
+.canvote {
+    color: #30B4CB;
+    position: relative;
+    display: inline-block;
+}
+
+.canvote .canvotetext {
+    visibility: hidden;
+    width: 20px;
+    background-color: #ccc;
+    color: black;
+    text-align: center;
+    border-radius: 6px;
+    padding: 2px 0;
+    font-size: 0.8em;
+
+    /* Position the tooltip */
+    position: absolute;
+    top: -20px;
+    z-index: 1;
+}
+
+.canvote:hover .canvotetext {
+    visibility: visible;
+}
+
+.hasvoted {
+    color: #ccc;
+    position: relative;
+    display: inline-block;
+}
+
+.hasvoted .hasvotedtext {
+    visibility: hidden;
+    width: 100px;
+    background-color: #ccc;
+    color: black;
+    text-align: center;
+    border-radius: 6px;
+    padding: 2px 0;
+    font-size: 0.8em;
+
+    /* Position the tooltip */
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1;
+}
+
+.hasvoted:hover .hasvotedtext {
+    visibility: visible;
+}
+
+.canaccept {
+    color: #D8776A;
+    position: relative;
+    display: inline-block;
+}
+
+.canaccept .canaccepttext {
+    visibility: hidden;
+    width: 100px;
+    background-color: #ccc;
+    color: black;
+    text-align: center;
+    border-radius: 6px;
+    padding: 2px 0;
+    font-size: 0.8em;
+
+    /* Position the tooltip */
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1;
+}
+
+.canaccept:hover .canaccepttext {
+    visibility: visible;
+}
+
+.userupdate {
+    position: relative;
+    display: inline-block;
+}
+
+.userupdate .userupdatetext {
+    visibility: hidden;
+    width: 100px;
+    background-color: #ccc;
+    color: black;
+    text-align: center;
+    border-radius: 6px;
+    padding: 2px 0;
+    font-size: 0.8em;
+
+    /* Position the tooltip */
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1;
+}
+
+.userupdate:hover .userupdatetext {
+    visibility: visible;
+}
+
+.fa-thumbs-up {
+    color: inherit;
+}
+
+.fa-thumbs-down {
+    color: inherit;
+}
+
+.tagpage tr {
+    border-bottom: 1px solid #ccc;
+}
+
+.tagpage td {
+    padding-bottom: 5px;
+    padding-top: 5px;
+}
+
+.headline {
+    width: 26%;
+}
+
+.author {
+    width: 2%;
+}
+
+.itis {
+    width: 2%;
+}
+
+.taganswers {
+    width: 40%;
+}
+
+.tagheadline {
+    width: 30%;
+}
+
+.tagcomments {
+    width: 30%;
+}
+
+.answers {
+    width: 40%;
+}
+
+.comments {
+    width: 30%;
+}
+
+.smaller {
+    font-size: 0.6em;
+    padding-right: 0;
+}
+
+.tagsize {
+    font-size: 0.6em;
+    padding-right: 1%;
+    color: #838281;
+}
+
+.move20 {
+    padding-left: 20px;
+}
+
+.pcomment {
+    font-size: 0.7em;
+}
+
+.pcomment p {
+    font-size: inherit;
+}
+
+.smallpoints {
+    font-size: 0.4em;
+}
+
+.wmd-preview { 
+    margin-bottom: 40px;
+    width: 90%;
+    margin-left: 5%;
+    margin-right: 5%;
+}
+
+
+
+/*/////////////Mediaqueries///////////////*/
+
+
+@media (min-width: 1000px) {
+    .member {
+        width: 90%;
+    }
+}
+
+@media (max-width: 800px) {
+    .inner {
+        margin: 2%;
+        width: 28%;
+    }
+    .member {
+        width: 100%;
+    }
+}
+
+@media (max-width: 550px) {
+    .parent, .parenttag, .itis {
+        display: none;
+        width: 0;
+    }
+    .title {
+        width: 70%;
+    }
+    .tag {
+        width: 30%;
+        padding-right: 0;
+    }
+    .answers {
+        width: 42%;
+    }
+    .taganswers {
+        padding-left: 3%;
+        padding-right: 3%;
+        width: 30%;
+    }
+}
+
+@media (max-width: 450px) {
+    .col-xs-4 {
+        min-width: 50%;
+    }
+    .col-xs-4 .inner {
+        max-width: 30%;
+    }
+    .inner {
+        margin: 2%;
+        width: 44%;
+    }
+}
+
+
+
+
+

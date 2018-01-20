@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+#
+# Postprocess scaffold
+#
+
+#
+# Read input from user supporting a default value for reponse.
+# arg1: The message to display.
+# arg2: The default value.
+#
+input()
+{
+    read -r -p "$1 [$2]: "
+    echo "${REPLY:-$2}"
+}
+
+
+
+#
+# Compatible sed -i.
+# https://stackoverflow.com/a/4247319/341137
+# arg1: Expression.
+# arg2: Filename.
+#
+sedi()
+{
+    sed -i.bak "$1" "$2"
+    rm -f "$2.bak"
+}
+
+
+
+#
+# Read values from user input
+#
+NAMESPACE=$( input "Namespace" "${ANAX_NAMESPACE:-Anax\\\\XXX}" )
+CLASS_NAME=$( input "Class name" "ClassName" )
+
+# Update default config file
+sedi "s/NAMESPACE/$NAMESPACE/g" CLASS_NAME.php
+sedi "s/CLASS_NAME/$CLASS_NAME/g" CLASS_NAME.php
+mv CLASS_NAME.php "$CLASS_NAME.php"
