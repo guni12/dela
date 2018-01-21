@@ -33,6 +33,6 @@ Repot på GitHub skall vara länkat till en byggtjänst likt Travis/CircleCI och
 
 Redovisning
 
-[Github](https://github.com/guni12 "dELa")
+[Github](https://github.com/guni12/dela "dELa")
 
 Jag som gjort webbplatsen heter Gunvor Nilsson och studerar på BTH, när jag inte sjunger på GöteborgsOperan.

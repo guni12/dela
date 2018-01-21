@@ -11,6 +11,8 @@ use \Guni\User\User;
  */
 class UpdateUserForm extends FormModel
 {
+    protected $user;
+
     /**
      * Constructor injects with DI container and the id to update.
      *
@@ -20,16 +22,17 @@ class UpdateUserForm extends FormModel
     public function __construct(DIInterface $di, $id)
     {
         parent::__construct($di);
-        $user = $this->getUserDetails($id);
+        $this->user = $this->getUserDetails($id);
 
-        $checked = false;
+        $this->aForm($id);
+    }
 
-        if ($user->isadmin == 1) {
-            $checked = true;
-        } else {
-            $checked = false;
-        }
-
+    /**
+     * Create the form.
+     *
+     */
+    public function aForm($id)
+    {
         $this->form->create(
             [
                 "id" => __CLASS__,
@@ -40,21 +43,21 @@ class UpdateUserForm extends FormModel
                     "type" => "text",
                     "validation" => ["not_empty"],
                     "readonly" => true,
-                    "value" => $user->id,
+                    "value" => $this->user->id,
                 ],
 
 
                 "acronym" => [
                     "type" => "text",
                     "validation" => ["not_empty"],
-                    "value" => $user->acronym,
+                    "value" => $this->user->acronym,
                     "class" => "form-control"
                 ],
 
                 "email" => [
                     "type"        => "email",
                     "label"       => "Epost",
-                    "value" => $user->email,
+                    "value" => $this->user->email,
                     "validation" => ["email"],
                     "class" => "form-control"
                 ],
@@ -62,7 +65,7 @@ class UpdateUserForm extends FormModel
                 "profile" => [
                     "type"        => "text",
                     "label"       => "Hemort",
-                    "value" => $user->profile,
+                    "value" => $this->user->profile,
                     "validation" => ["not_empty"],
                     "wrapper-element-class" => "form-group",
                     "class" => "form-control",
@@ -110,7 +113,6 @@ class UpdateUserForm extends FormModel
         $user = new User();
         $user->setDb($this->di->get("db"));
         $user->find("id", $id);
-        //var_dump($user->isadmin);
         return $user;
     }
 
@@ -144,7 +146,6 @@ class UpdateUserForm extends FormModel
         $user->email = $this->form->value("email");
         $user->setPassword($passwordAgain);
         $user->save();
-        //$this->form->addOutput("Användare $user->acronym uppdaterad.");
         $this->di->get("response")->redirect("user/login");
     }
 }

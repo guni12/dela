@@ -11,6 +11,9 @@ use \Guni\User\User;
  */
 class UserLoginForm extends FormModel
 {
+    protected $session;
+    protected $sess;
+
     /**
      * Constructor injects with DI container.
      *
@@ -19,7 +22,19 @@ class UserLoginForm extends FormModel
     public function __construct(DIInterface $di)
     {
         parent::__construct($di);
+        $this->session = $this->di->get("session");
+        $this->sess = $this->session->get('user');
 
+        $this->aForm();
+    }
+
+
+    /**
+     * Create the form.
+     *
+     */
+    public function aForm()
+    {
         $this->form->create(
             [
                 "id" => __CLASS__,
@@ -51,6 +66,38 @@ class UserLoginForm extends FormModel
 
 
     /**
+    *
+    */
+    public function checkUser($user)
+    {
+        $key = $user->acronym;
+        if ($this->sess['acronym'] && $this->sess['acronym'] == $key) {
+            $inlogg = [
+                'loggedin' => true,
+                'id' => $user->id,
+                'acronym' => $user->acronym,
+                'isadmin' => $user->isadmin,
+                'email' => $user->email
+            ];
+            $this->session->set('user', $inlogg);
+            $this->form->addOutput("Användare " . $user->acronym . " är redan inloggad.");
+        } else {
+            $inlogg = [
+                'loggedin' => true,
+                'id' => $user->id,
+                'acronym' => $user->acronym,
+                'isadmin' => $user->isadmin,
+                'email' => $user->email
+            ];
+            $this->session->set('user', $inlogg);
+            $red == true;
+            $this->di->get("response")->redirect("comm/front");
+        }
+    }
+
+
+
+    /**
      * Callback for submit-button which should return true if it could
      * carry out its work and false if something failed.
      *
@@ -64,14 +111,9 @@ class UserLoginForm extends FormModel
         $inlogg = [];
         $red = false;
 
-        $session = $this->di->get("session");
-        //var_dump($session);
-
         $user = new User();
         $user->setDb($this->di->get("db"));
         $res = $user->verifyPassword($acronym, $password);
-
-        //'anders@electrotest.se' => string 'loggedin'
 
         if (!$res) {
             $this->form->rememberValues();
@@ -79,35 +121,8 @@ class UserLoginForm extends FormModel
             return false;
         }
 
-        $sess = $session->get('user');
-        //var_dump($sess);
-        $key = $user->acronym;
+        $inlogg = $this->checkUser($user);
 
-        if ($sess[$key] && $sess[$key] == 'loggedin') {
-            $inlogg = [
-                'loggedin' => true,
-                'id' => $user->id,
-                'acronym' => $user->acronym,
-                'isadmin' => $user->isadmin,
-                'email' => $user->email
-            ];
-            $session->set('user', $inlogg);
-            //var_dump($sess[$key]);
-            $this->form->addOutput("Användare " . $user->acronym . " är redan inloggad.");
-        } else {
-            $inlogg = [
-                'loggedin' => true,
-                'id' => $user->id,
-                'acronym' => $user->acronym,
-                'isadmin' => $user->isadmin,
-                'email' => $user->email
-            ];
-            $session->set('user', $inlogg);
-            $red == true;
-            //$this->form->addOutput("Användare " . $user->acronym . " loggade in.");
-            $this->di->get("response")->redirect("comm/front");
-        }
-        
         return true;
     }
 }

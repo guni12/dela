@@ -21,65 +21,8 @@ class PageRender implements PageRenderInterface, InjectionAwareInterface
     }
 
 
-
-    /**
-     * Render a standard web page using a specific layout.
-     * @SuppressWarnings("exit")
-     * @param array   $data   variables to expose to layout view.
-     * @param integer $status code to use when delivering the result.
-     *
-     * @return void
-     */
-    public function renderPage($text, $meta = null, $status = 200)
+    public function addViewContent($view, $text, $region, $data, $status)
     {
-        //$req = $this->di->get("request");
-        //$path = $req->getRoute();
-        //var_dump($meta);
-        //var_dump($text);
-
-        if (is_array($text)) {
-            if (isset($text['content'])) {
-                $text = $text['content'];
-            }
-            if (isset($text['form'])) {
-                $text = $text['form'];
-            }
-        }
-        
-
-        $data["stylesheets"] = isset($meta["stylesheets"]) ? $meta["stylesheets"] : ["css/style.css"];
-        $data["title"] = isset($meta["title"]) ? $meta["title"] : "AnaxProj";
-        $region = isset($meta['region']) ? $meta['region'] : "main";
-
-        // Add layout, render it, add to response and send.
-        $view = $this->di->get("view");
-
-        if (isset($meta['views']['img'])) {
-            $view->add("view/img", [
-                "img" => $meta['views']['img']['data']['src'],
-                "imgtext" => $meta['views']['img']['data']['text']
-            ], $meta['views']['img']['region'], 0);
-        }
-
-        if (isset($meta['views']['links'])) {
-            $view->add($meta['views']['links']['template'], [
-                "headline" => $meta['views']['links']['data']['headline'],
-            ], $meta['views']['links']['region'], 0);
-        }
-
-        /*
-        $comm = $this->di->get("comm");
-
-        if ($path == 'commpage') {
-            $comm->addComment();
-            $comm->getCommFromSess();
-            //$comm->getCommFromJson();
-        }
-
-        if ($path == 'validate') {
-            $comm->inValidate();
-        }*/
-
         $navbar = $this->di->get("navbar");
 
         // Add common header, navbar and footer
@@ -100,5 +43,44 @@ class PageRender implements PageRenderInterface, InjectionAwareInterface
         $this->di->get("response")->setBody($body)
                                   ->send($status);
         exit;
+    }
+
+
+
+    /**
+     * Render a standard web page using a specific layout.
+     * @SuppressWarnings("exit")
+     * @param array   $data   variables to expose to layout view.
+     * @param integer $status code to use when delivering the result.
+     *
+     * @return void
+     */
+    public function renderPage($text, $meta = null, $status = 200)
+    {
+        if (is_array($text)) {
+            $text = isset($text['content']) ? $text['content'] : isset($text['form']) ? $text['form'] : "";
+        }
+
+        $data["stylesheets"] = isset($meta["stylesheets"]) ? $meta["stylesheets"] : ["css/style.css"];
+        $data["title"] = isset($meta["title"]) ? $meta["title"] : "dELa";
+        $region = isset($meta['region']) ? $meta['region'] : "main";
+
+        // Add layout, render it, add to response and send.
+        $view = $this->di->get("view");
+
+        if (isset($meta['views']['img'])) {
+            $view->add("view/img", [
+                "img" => $meta['views']['img']['data']['src'],
+                "imgtext" => $meta['views']['img']['data']['text']
+            ], $meta['views']['img']['region'], 0);
+        }
+
+        if (isset($meta['views']['links'])) {
+            $view->add($meta['views']['links']['template'], [
+                "headline" => $meta['views']['links']['data']['headline'],
+            ], $meta['views']['links']['region'], 0);
+        }
+
+        $this->addViewContent($view, $text, $region, $data, $status);
     }
 }

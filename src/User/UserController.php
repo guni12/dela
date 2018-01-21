@@ -27,12 +27,6 @@ class UserController implements
         InjectionAwareTrait;
 
 
-
-    /**
-     * @var $data description
-     */
-    //private $data;
-
     /**
      * Sends data to view
      *
@@ -49,8 +43,9 @@ class UserController implements
         $pageRender->renderPage($tempfix, ["title" => $title]);
     }
 
+
     /**
-     * Description.
+     * Questionspage
      *
      * @return void
      */
@@ -88,7 +83,7 @@ class UserController implements
 
 
     /**
-     * Description.
+     * One Member Page
      *
      * @param integer $id Chosen User
      *
@@ -112,11 +107,7 @@ class UserController implements
 
 
     /**
-     * Description.
-     *
-     * @param datatype $variable Description
-     *
-     * @throws Exception
+     * Loginpage
      *
      * @return void
      */
@@ -128,29 +119,12 @@ class UserController implements
 
         $form->check();
 
-        $sess = $this->getSess();
-        $userid = isset($sess['id']) ? $sess['id'] : null;
-        $isadmin = isset($sess['isadmin']) && $sess['isadmin'] == 1 ? $sess['isadmin'] : null;
-
-        $url = $this->di->get("url");
-        $members = call_user_func([$url, "create"], "user");
-        $update = call_user_func([$url, "create"], "user/update");
-        $delete = call_user_func([$url, "create"], "user/delete");
-        $create = call_user_func([$url, "create"], "user/create");
-
-        $text = '<p><span class="button"><a href="' . $create . '">Skapa ett nytt konto</a></span>';
-        if ($isadmin == 1) {
-            $text .= ' | <span class="button"><a href="' . $members . '">Till Admin</a></span></p>';
-
-        } else if ((int)$userid > 0) {
-            $text .= ' | <span class="button"><a href="' . $update . '/' . $userid . '">';
-            $text .= 'Redigera ditt konto</a></span><br /><span class="button">';
-            $text .= '<a href="' . $delete . '/' . $userid . '">Ta bort ditt konto</a></span></p>';
-        }
+        $extra = new ShowAllService($this->di);
+        $extratext = $extra->getLoginText();
 
         $data = [
             "content" => $form->getHTML(),
-            "text" => $text,
+            "text" => $extratext,
         ];
 
         $crud = "user/crud/login";
@@ -160,11 +134,7 @@ class UserController implements
 
 
     /**
-     * Description.
-     *
-     * @param datatype $variable Description
-     *
-     * @throws Exception
+     * Logoutpage
      *
      * @return void
      */
@@ -175,31 +145,24 @@ class UserController implements
         $pageRender = $this->di->get("pageRender");
         $text       = new UserLogout($this->di);
 
-        $tempfix = "";
-
         $data = [
             "content" => $text->getHTML(),
         ];
 
-        $view->add("user/crud/logout", $data);
-
-        $pageRender->renderPage($tempfix, ["title" => $title]);
+        $crud = "user/crud/logout";
+        $this->toRender($title, $crud, $data);
     }
 
 
 
     /**
-     * Description.
-     *
-     * @param datatype $variable Description
-     *
-     * @throws Exception
+     * Create User Page
      *
      * @return void
      */
     public function getPostCreateUser()
     {
-        $title      = "A create user page";
+        $title      = "Skapa användare";
         $view       = $this->di->get("view");
         $pageRender = $this->di->get("pageRender");
         $form       = new CreateUserForm($this->di);
@@ -210,16 +173,15 @@ class UserController implements
             "content" => $form->getHTML(),
         ];
 
-        $view->add("user/crud/create", $data);
-        $tempfix = "";
-
-        $pageRender->renderPage($tempfix, ["title" => $title]);
+        $crud = "user/crud/create";
+        $this->toRender($title, $crud, $data);
     }
 
 
 
     /**
-     * Handler with form to update an item.
+     * Update Member
+     * @param integer $id - Member to update
      *
      * @return void
      */
@@ -255,16 +217,15 @@ class UserController implements
             ];
         }
 
-        $view->add("user/crud/update", $data);
-        $tempfix = "";
-
-        $pageRender->renderPage($tempfix, ["title" => $title]);
+        $crud = "user/crud/update";
+        $this->toRender($title, $crud, $data);
     }
 
 
 
     /**
-     * Handler with form to update an item.
+     * Delete member
+     * @param integer - Member to delete
      *
      * @return void
      */
@@ -290,27 +251,21 @@ class UserController implements
             ];
         }
 
-        $view->add("user/crud/delete", $data);
-        $tempfix = "";
-
-        $pageRender->renderPage($tempfix, ["title" => $title]);
+        $crud = "user/crud/delete";
+        $this->toRender($title, $crud, $data);    
     }
 
 
 
 
     /**
-     * Description.
-     *
-     * @param datatype $variable Description
-     *
-     * @throws Exception
+     * Create User for Admin
      *
      * @return void
      */
     public function getPostAdminCreateUser()
     {
-        $title      = "A create user page";
+        $title      = "Skapa användare_admin";
         $sess = $this->getSess();
         $view       = $this->di->get("view");
         $pageRender = $this->di->get("pageRender");
@@ -329,14 +284,14 @@ class UserController implements
             ];
         }
 
-        $view->add("user/crud/admincreate", $data);
-        $tempfix = "";
-
-        $pageRender->renderPage($tempfix, ["title" => $title]);
+        $crud = "user/crud/admincreate";
+        $this->toRender($title, $crud, $data);
     }
 
+
     /**
-     * Handler with form to update an item.
+     * Update Member For Admin
+     * @param integer $id - Member to update
      *
      * @return void
      */
@@ -361,16 +316,15 @@ class UserController implements
             ];
         }
 
-        $view->add("user/crud/adminupdate", $data);
-        $tempfix = "";
-
-        $pageRender->renderPage($tempfix, ["title" => $title]);
+        $crud = "user/crud/adminupdate";
+        $this->toRender($title, $crud, $data);       
     }
 
 
 
     /**
-     * Handler with form to update an item.
+     * Delete Member For Admin
+     * @param integer $id - Member to delete
      *
      * @return void
      */
@@ -395,10 +349,8 @@ class UserController implements
             ];
         }
 
-        $view->add("user/crud/admindelete", $data);
-        $tempfix = "";
-
-        $pageRender->renderPage($tempfix, ["title" => $title]);
+        $crud = "user/crud/admindelete";
+        $this->toRender($title, $crud, $data);
     }
 
 
@@ -431,7 +383,6 @@ class UserController implements
             $data = [];
         }
 
-        
         return $data;
     }
 }

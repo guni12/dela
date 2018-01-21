@@ -2,7 +2,7 @@
 
 namespace Guni\Comments\HTMLForm;
 
-use \Guni\Comments\HTMLForm\FormModel;
+use \Anax\HTMLForm\FormModel;
 use \Anax\DI\DIInterface;
 use \Guni\Comments\Comm;
 
@@ -11,7 +11,9 @@ use \Guni\Comments\Comm;
  */
 class CreateCommForm extends FormModel
 {
-    public $tags;
+    protected $tags;
+    protected $headline;
+    protected $iscomment;
 
 
     /**
@@ -25,17 +27,9 @@ class CreateCommForm extends FormModel
     public function __construct(DIInterface $di, $iscomment, $id = null, $parentid = null)
     {
         parent::__construct($di);
-        $parentUserId = null;
-
-        if ($parentid) {
-            $comm = $this->getCommDetails($parentid);
-            $parentUserId = $comm->userid;
-        }
+        $this->iscomment = $iscomment;
         
-        $this->aForm($id, $parentid, $iscomment, $parentUserId);
-
-        //echo "id, parentid, iscomment, parentuserid: ";
-        //echo $id . ', ' . $parentid . ', ' . $iscomment . ', ' . $parentUserId;
+        $this->aForm($id, $parentid);
     }
 
 
@@ -54,57 +48,70 @@ class CreateCommForm extends FormModel
         return $comm;
     }
 
-
     /**
-     * Create the form.
-     *
-     */
-    public function aForm($id, $parentid, $iscomment, $parentuserid)
+    * @param integer $parentid - id of parentcomment
+    *
+    * @return array $dropdown - for the form
+    */
+    public function getDropdown($parentid)
     {
-        $placeholder = 'Image: ![alt text](https://somewhere.com/img.jpg "Text") | ';
-        $placeholder .= '*italics* | **emphasis** | [Link](https://www.somewhere.com) | ';
-        $placeholder .= ' > Blockquotes';
-        $dropdown = [];
-        $headline = "";
-        //var_dump("iscomment", $iscomment);
-
         if ($parentid > 0) {
-            if ($iscomment == 1) {
-                echo "Iscomment<br />";
+            if ($this->iscomment == 1) {
                 $dropdown = [
                     "type"        => "hidden",
                     "value"       => "comment",
                 ];
-                $headline = "Skriv en kommentar";
+                $this->headline = "Skriv en kommentar";
             } else {
-                echo "Answer<br />";
                 $dropdown = [
                     "type"        => "hidden",
                     "value"       => "answer",
                 ];
-                $headline = "Skriv ett svar";
+                $this->headline = "Skriv ett svar";
             }
         } else {
             $dropdown = [
                 "type"        => "select-multiple",
                 "label"       => "Taggar, minst en:",
-                "description" => "Håll ner Ctrl (windows) / Command (Mac) knapp för att välja flera taggar.<br />Default tagg är Värme.",
+                "description" => "Håll ner Ctrl (windows) / Command (Mac) knapp för att välja flera taggar.<br />Default tagg är Elbil.",
                 "size"        => 5,
-                //"validation" => ["not_empty"],
                 "options"     => [
                     "elcar" => "elbil",
                     "safety" => "säkerhet",
                     "light"  => "belysning",
                     "heat"   => "värme"
                 ],
-                "checked" => ["elbil", "säkerhet"],
             ];
-            $headline = "Gör ett inlägg";
-            $iscomment = null;
+            $this->headline = "Gör ett inlägg";
+            $this->iscomment = null;
         }
+
+        return $dropdown;
+    }
+
+
+    /**
+    * @return string $placeholder - placeholdertext
+    */
+    public function getPlaceholder()
+    {
+        $placeholder = 'Image: ![alt text](https://somewhere.com/img.jpg "Text") | ';
+        $placeholder .= '*italics* | **emphasis** | [Link](https://www.somewhere.com) | ';
+        $placeholder .= ' > Blockquotes';
+        return $placeholder;
+    }
+
+
+    /**
+     * Create the form.
+     *
+     */
+    public function aForm($id, $parentid)
+    {
+        $dropdown = $this->getDropdown($parentid);
         $this->form->create(
             [   "id" => __CLASS__,
-                "legend" => $headline,
+                "legend" => $this->headline,
                 "wmd" => "wmd-button-bar",
                 "preview" => "wmd-preview",
             ],
@@ -132,7 +139,7 @@ class CreateCommForm extends FormModel
                     "type"  => "textarea",
                     "label" => "Text",
                     "id" => "wmd-input",
-                    "placeholder" => $placeholder,
+                    "placeholder" => $this->getPlaceholder(),
                     "validation" => ["not_empty"],
                     "wrapper-element-class" => "form-group",
                     "class" => "form-control wmd-input",
@@ -140,7 +147,7 @@ class CreateCommForm extends FormModel
                 "tags" => $dropdown,
                 "iscomm" => [
                     "type"  => "hidden",
-                    "value" => $iscomment,
+                    "value" => $this->iscomment,
                 ],
                 "submit" => [
                     "type" => "submit",
@@ -150,6 +157,31 @@ class CreateCommForm extends FormModel
                 ],
             ]
         );
+    }
+
+
+    /**
+    * adds array through frontmatter to $comment
+    *
+    */
+    public function handleTags($tags)
+    {
+        if ($tags == "comment" || $tags == "answer") {
+            $comment->frontmatter['tags'] = $tags;
+        } elseif (is_array($tags)) {
+            $elcar = in_array("elcar", $tags) ? "elcar" : null;
+            $safety = in_array("safety", $tags) ? "safety" : null;
+            $light = in_array("light", $tags) ? "light" : null;
+            $heat = in_array("heat", $tags) ? "heat" : null;
+
+            if ($elcar == null && $safety == null && $light == null && $heat == null) {
+                $elcar = "elcar";
+            }
+
+            $comment->frontmatter['tags'] = [$elcar, $safety, $light, $heat];
+        } else {
+            echo "Not ok", $tags;
+        }
     }
 
 
@@ -169,33 +201,14 @@ class CreateCommForm extends FormModel
         $comment = $textfilter->parse($this->form->value("comment"), $parses);
         $comment->frontmatter['title'] = $this->form->value("title");
 
-        $tags = $this->form->value("tags");
-        //var_dump("comment: ", $comment);
-
         $this->form->rememberValues();
 
-        if ($tags == "comment" || $tags == "answer") {
-            $comment->frontmatter['tags'] = $tags;
-        } elseif (is_array($tags)) {
-            $elcar = in_array("elcar", $tags) ? "elcar" : null;
-            $safety = in_array("safety", $tags) ? "safety" : null;
-            $light = in_array("light", $tags) ? "light" : null;
-            $heat = in_array("heat", $tags) ? "heat" : null;
-
-            if ($elcar == null && $safety == null && $light == null && $heat == null) {
-                echo "Ja, null";
-            }
-
-            $comment->frontmatter['tags'] = [$elcar, $safety, $light, $heat];
-        } else {
-            echo "Not ok", $tags;
-        }
+        $tags = $this->form->value("tags");
+        $this->handleTags($tags);
 
         $comment = json_encode($comment);
 
         $now = date("Y-m-d H:i:s");
-
-        var_dump($tags);
 
         $comm = new Comm();
         $comm->setDb($this->di->get("db"));

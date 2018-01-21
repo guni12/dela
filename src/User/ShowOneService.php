@@ -17,6 +17,8 @@ class ShowOneService
     protected $sess;
     protected $person;
     protected $chosenid;
+    protected $comments;
+    protected $grav;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -28,10 +30,12 @@ class ShowOneService
         $this->di = $di;
         $this->person = $this->getItems($id);
         $session = $this->di->get("session");
-        $this->sess = $session->get("user");
-        $addsess = isset($this->sess) ? $this->sess : null;
-        $this->sess = $addsess;
+        $sess = $session->get("user");
+        $this->sess = isset($sess) ? $sess : null;
         $this->chosenid = $id;
+        $this->comments = $this->getUserComments();
+        $comm = $this->di->get("commController");
+        $this->grav = $comm->getGravatar($this->person->email, 50);
     }
 
     /**
@@ -153,7 +157,7 @@ class ShowOneService
             case "light":
                 return "Belysning";
                 break;
-            default:
+            case "heat":
                 return "Värme";
         }
     }
@@ -166,9 +170,7 @@ class ShowOneService
      */
     public function getTags($item)
     {
-        //var_dump("getTags: ", $item);
         $base = $this->setUrlCreator("comm/tags/");
-        $text = "";
         $taglinks = "";
         if (is_array($item)) {
             foreach ($item as $key => $val) {
@@ -180,8 +182,7 @@ class ShowOneService
             }
         }
         $taglinks = substr($taglinks, 0, -2);
-        $text .=  $taglinks;
-        return $text;
+        return $taglinks;
     }
 
 
@@ -209,8 +210,7 @@ class ShowOneService
         }
         $text .= $hasanswers;
         $text .= $hascomments;
-        $text .= "</td>";
-        $text .= "</tr>";
+        $text .= "</td></tr>";
 
         return $text;
     }
@@ -222,9 +222,9 @@ class ShowOneService
      *
      * @return string - html-text for the comments
      */
-    public function getCommentHTML($item, $viewone, $comm)
+    public function getCommentHTML($item, $viewone)
     {
-        $parent = $comm->findOne($item['iscomment']);
+        $parent = $this->comm->findOne($item['iscomment']);
         $color = "";
         if ($parent->parentid == null) { //Comment to question
             $color = "delared";
@@ -237,9 +237,7 @@ class ShowOneService
         $text = "<td><a href='" . $viewone . "/" . $item['id'] . "'><span class='delagreen'>" . $item['comm']->frontmatter->title . "</span></a></td>";
         $text .= "<td></td>";
         $text .= "<td class = 'parent'><a href='" . $viewone . "/" . $parent->id . "'><span class='" . $color . "'>"  . $parent->title . "</span></a></td>";
-        $text .= "<td class = 'parenttag'>" . $tag . "</td>";
-        $text .= "<td></td>";
-        $text .= "</tr>";
+        $text .= "<td class = 'parenttag'>" . $tag . "</td><td></td></tr>";
         return $text;
     }
 
@@ -250,9 +248,9 @@ class ShowOneService
      *
      * @return string - html-text for the answers
      */
-    public function getAnswersHTML($item, $viewone, $comm)
+    public function getAnswersHTML($item, $viewone)
     {
-        $parent = $comm->findOne($item['isanswer']);
+        $parent = $this->comm->findOne($item['isanswer']);
         $color = "";
         if ($parent->parentid == null) {
             $color = "delared";
@@ -264,12 +262,9 @@ class ShowOneService
         //var_dump($tag);
         $parenttitel = $parent->title;
 
-        $text = "<td><a href='" . $viewone . "/" . $item['id'] . "'><span class='delablue'>" . $item['comm']->frontmatter->title . "</span></a></td>";
-        $text .= "<td></td>";
+        $text = "<td><a href='" . $viewone . "/" . $item['id'] . "'><span class='delablue'>" . $item['comm']->frontmatter->title . "</span></a></td><td></td>";
         $text .= "<td class = 'parent'><a href='" . $viewone . "/" . $parent->id . "'><span class='" . $color . "'>"  . $parent->title . "</span></a></td>";
-        $text .= "<td class = 'parenttag'>" . $tag . "</td>";
-        $text .= "<td></td>";
-        $text .= "</tr>";
+        $text .= "<td class = 'parenttag'>" . $tag . "</td><td></td></tr>";
 
         return $text;
     }
@@ -348,6 +343,17 @@ class ShowOneService
         return $array;
     }
 
+    /**
+    *
+    * @return string $text - html for tableintro
+    */
+    public function getTableHead()
+    {
+        $text = '<table class = "member tagpage"><tr>';
+        $text .= '<th class = "title"><span class = "delared">Fråga</span> | <span class = "delablue">Svar</span> | <span class = "delagreen">Kommentar</span></th><th class = "tag">Taggar</th><th class = "parent">Till <span class = "delared">Fråga</span> | <span class = "delablue">Svar</span></th><th class = "parenttag">Taggar</th><th class = "answercomments">Har <span class = "delablue">Svar</span> | <span class = "delagreen">Kommentarer</span></th></tr>';
+        return $text;
+    }
+
 
 
     /**
@@ -362,21 +368,13 @@ class ShowOneService
         $virgin = true;
         $array = [];
 
-        $comm = $this->di->get("commController");
-        $grav = $comm->getGravatar($this->person->email, 50);
-
-        $comments = $this->getUserComments();
-
         $reputation = 0;
-        $text = "";
+        $text = $this->getTableHead();
 
-        if ($comments) {
-            $array = $this->populateArray($comments);
+        if ($this->comments) {
+            $array = $this->populateArray($this->comments);
             $virgin = false;
         }
-
-        $text .= '<table class = "member tagpage"><tr>';
-        $text .= '<th class = "title"><span class = "delared">Fråga</span> | <span class = "delablue">Svar</span> | <span class = "delagreen">Kommentar</span></th><th class = "tag">Taggar</th><th class = "parent">Till <span class = "delared">Fråga</span> | <span class = "delablue">Svar</span></th><th class = "parenttag">Taggar</th><th class = "answercomments">Har <span class = "delablue">Svar</span> | <span class = "delagreen">Kommentarer</span></th></tr>';
 
         foreach ($array as $key => $value) {
             $text .= '<tr>';
@@ -389,18 +387,18 @@ class ShowOneService
                 $reputation += $questionValue;
             }
             elseif ($value['iscomment']) {
-                $text .= $this->getCommentHTML($value, $viewone, $comm);
+                $text .= $this->getCommentHTML($value, $viewone);
 
                 $points = $value['points'] + 0.5;
                 $commentValue = $points * 2;
                 $reputation += $commentValue;
             }
             elseif ($value['isanswer']) {
-                $text .= $this->getAnswersHTML($value, $viewone, $comm);
+                $text .= $this->getAnswersHTML($value, $viewone);
 
                 $points = $value['points'] + 0.5;
-                $test = $this->getIsAccepted($value['id']);
-                if ($test) {
+                $bonus = $this->getIsAccepted($value['id']);
+                if ($bonus) {
                     $answerValue = $points * 8;
                 } else {
                     $answerValue = $points * 4;
@@ -418,7 +416,7 @@ class ShowOneService
         }
 
 
-        $html .= "<img src='" . $grav . "' />";
+        $html .= "<img src='" . $this->grav . "' />";
         $html .= '<h1>' . $this->person->acronym . '</h1>';
         $html .= $startinfo;
         $html .= $text;

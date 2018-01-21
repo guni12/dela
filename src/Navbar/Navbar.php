@@ -21,69 +21,64 @@ class Navbar implements
 
 
     /**
-     * Get HTML for the navbar.
+     * Sets the callable to use for creating routes.
      *
-     * @return string as HTML with the navbar.
+     * @param obj $url - di_connection
+     * @param string $update - pathbase
+     * @param obj $sess - session_info
+     * @param string $grav - gravator_htmltext
+     *
+     * @return string $loginout - htmltext
      */
-    public function getHTML()
+    public function getIsLoggedin($url, $update, $sess, $grav)
     {
-        $url = $this->di->get("url");
+        $navtext = "Logga ut";
+        $navpath = call_user_func([$url, "create"], "user/logout");
+
+        $loginout = '<li><a href="' . $update . '/' . $sess['id'] . '"><span class="userupdate"><span class="userupdatetext">Ändra ' . $sess['acronym'] . ' profil</span>' . $grav . '</span></a></li>';
+        $loginout .= '<li><a href="' . $navpath . '"><span class="glyphicon glyphicon-log-out">';
+        $loginout .= '</span> ' . $navtext . '</a></li>';
+        return $loginout;
+    }
+
+    /**
+     * @param obj $url - di_connection
+     * @param obj $val - navpath_info
+     *
+     * @return string $link - htmltext
+     */
+    public function getNavLink($url, $val)
+    {
         $req = $this->di->get("request");
         $path = $req->getRoute();
-
-        $session = $this->di->get("session");
-        $sess = $session->get('user');
-
-        $comm = $this->di->get("commController");
-        $grav = $comm->getGravatar($sess['email']);
-        $grav = "<img src='" . $grav . "' />";
-
-        $span = '<span class="icon-bar"></span>';
-        $spans = $span . $span . $span;
-
-        $links = "";
+        $htmlNavbar = call_user_func([$url, "create"], $val['route']);
+        $navtext = $val['text'];
         $tail = '"><a href="';
-        $welcome = "";
-
-        $this->setUrlCreator($this->config['items']['home']['route']);
-        $home = $this->htmlNavbar;
-
-        $navtext = "Logga in";
-        $navpath = call_user_func([$url, "create"], "user/login");
-        $create = call_user_func([$url, "create"], "user/create");
-        $update = call_user_func([$url, "create"], "user/update");
-
-        $loginout = '<li><a href = "' . $create . '">Bli medlem</span></a> ' . $welcome . '</li>';
-        $loginout .= '<li><a href="' . $navpath . '"><span class="glyphicon glyphicon-log-in">';
-        $loginout .= '</span> ' . $navtext . '</a></li>';
-
-        if ($sess) {
-            $navtext = "Logga ut";
-            $navpath = call_user_func([$url, "create"], "user/logout");
-            $welcome = $sess['acronym'];
-
-            $loginout = '<li><a href="' . $update . '/' . $sess['id'] . '"><span class="userupdate"><span class="userupdatetext">Ändra ' . $sess['acronym'] . ' profil</span>' . $grav . '</span></a></li>';
-            $loginout .= '<li><a href="' . $navpath . '"><span class="glyphicon glyphicon-log-out">';
-            $loginout .= '</span> ' . $navtext . '</a></li>';
-        }
-
-        foreach ($this->config['items'] as $val) {
-            $this->setUrlCreator($val['route']);
-            $navtext = $val['text'];
-            
-            if ($val['route'] == $path) {
-                $class = "active";
-            } else {
-                $class = "";
-            }
-
-            if ($val['route'] == "user/login") {
-                $class .= " login";
-            }
-            
-            $links .= '<li class="' . $class . $tail . $this->htmlNavbar . '">' . $navtext . '</a></li>';
-        }
         
+        if ($val['route'] == $path) {
+            $class = "active";
+        } else {
+            $class = "";
+        }
+
+        if ($val['route'] == "user/login") {
+            $class .= " login";
+        }
+        $link = '<li class="' . $class . $tail . $htmlNavbar . '">' . $navtext . '</a></li>';
+        return $link;
+    }
+
+
+    /**
+     * @param string $spans - htmlcode for hamburger-icon
+     * @param string $home - htmlcode for active link
+     * @param string $links - htmlcode for navigation
+     * @param string $loginout - htmlcode for login-paths
+     *
+     * @return string $navbar - all the navbar htmltext
+     */
+    public function getEOD($spans, $home, $links, $loginout)
+    {
         $navbar = <<<EOD
 <nav class="navbar">
 <div class="container-fluid">
@@ -106,6 +101,54 @@ EOD;
         $navbar;
     }
 
+
+
+    /**
+     * Get HTML for the navbar.
+     *
+     * @return string as HTML with the navbar.
+     */
+    public function getHTML()
+    {
+        $session = $this->di->get("session");
+        $sess = $session->get('user');
+
+        $url = $this->di->get("url");
+        $home = call_user_func([$url, "create"], $this->config['items']['home']['route']);
+        $navpath = call_user_func([$url, "create"], "user/login");
+        $create = call_user_func([$url, "create"], "user/create");
+        $update = call_user_func([$url, "create"], "user/update");        
+        if ($sess['isadmin'] == 1) {
+            $update = call_user_func([$url, "create"], "user/adminupdate");
+        }
+
+        $comm = $this->di->get("commController");
+        $grav = $comm->getGravatar($sess['email']);
+        $grav = "<img src='" . $grav . "' />";
+
+        $span = '<span class="icon-bar"></span>';
+        $spans = $span . $span . $span;
+
+        $links = "";
+        $navtext = "Logga in";
+
+        $loginout = '<li><a href = "' . $create . '">Bli medlem</span></a></li>';
+        $loginout .= '<li><a href="' . $navpath . '"><span class="glyphicon glyphicon-log-in">';
+        $loginout .= '</span> ' . $navtext . '</a></li>';
+
+        if ($sess) {
+            $loginout = $this->getIsLoggedin($url, $update, $sess, $grav);
+        }
+
+        foreach ($this->config['items'] as $val) {
+            $links .= $this->getNavLink($url, $val);
+        }
+
+        $navbar = $this->getEOD($spans, $home, $links, $loginout);
+        return
+        $navbar;
+    }
+
     /**
      * Sets the current route.
      *
@@ -116,18 +159,5 @@ EOD;
     public function setCurrentRoute($route)
     {
         $this->currentUrl = $route;
-    }
-
-    /**
-     * Sets the callable to use for creating routes.
-     *
-     * @param callable $urlCreate to create framework urls.
-     *
-     * @return void
-     */
-    public function setUrlCreator($route)
-    {
-        $url = $this->di->get("url");
-        $this->htmlNavbar = call_user_func([$url, "create"], $route);
     }
 }

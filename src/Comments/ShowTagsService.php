@@ -4,6 +4,7 @@ namespace Guni\Comments;
 
 use \Anax\DI\DIInterface;
 use \Guni\Comments\Comm;
+use \Guni\Comments\ShowOneService;
 
 /**
  * 
@@ -122,83 +123,6 @@ class ShowTagsService
     }
 
 
-    /**
-     * If param met, returns string with edit-links
-     * @param object $item
-     * @param string $del
-     * @return string htmlcode
-     */
-    public function getCanEdit(Comm $item, $del)
-    {
-        $canedit = "";
-        $update = $this->setUrlCreator("comm/update");
-        if ($item->userid == $this->sess['id'] || $this->isadmin) {
-            $canedit = '<br /><a href="' . $update . '/' . $item->id . '">Redigera</a>';
-            $canedit .= ' | <a href="' . $del . '/' . $item->id . '">Ta bort inlägget</a></p>';
-        } else {
-            $canedit .= '</p>';
-        }
-        return $canedit;
-    }
-
-
-    /**
-     * If session contains correct id, returns string with edit-links
-     *
-     * @return string htmlcode
-     */
-    public function getLoginurl()
-    {
-        $loginurl = $this->setUrlCreator("user/login");
-        $create = $this->setUrlCreator("comm/create");
-
-        $htmlcomment = '<a href="' . $loginurl . '">Logga in om du vill svara</a></p>';
-
-        if ($this->sess && $this->sess['id']) {
-            $htmlcomment = '<a href="' . $create . '/' . $this->comment->id . '">Svara</a>';
-        }
-        return $htmlcomment;
-    }
-
-
-    /**
-     * If loggedin allowed to edit
-     *
-     * @param string $userid
-     * @param string $id
-     * @param string $htmlcomment, link
-     *
-     * @return string htmlcode
-     */
-    public function getEdit($userid, $id, $htmlcomment)
-    {
-        $update = $this->setUrlCreator("comm/update");
-        if ($this->isadmin || $userid == $this->sess['id']) {
-            $edit = '<p><a href="' . $update . '/' . $id . '">Redigera</a> | ';
-            $edit .= $htmlcomment;
-        } else {
-            $edit = "<p>" . $htmlcomment . "</p>";
-        }
-        return $edit;
-    }
-
-
-    /**
-     * If session contains correct id, returns string with edit-links
-     *
-     * @return string htmlcode
-     */
-    public function getDelete($userid, $del, $id)
-    {
-        $delete = "";
-        if ($this->isadmin || $userid == $this->sess['id']) {
-            $delete = ' | <a href="' .  $del . '/' . $id . '">Ta bort inlägget</a></p>';
-        }
-        return $delete;
-    }
-
-
-
     public function getHeadline($name) {
         switch ($name) {
             case "elcar":
@@ -239,16 +163,10 @@ class ShowTagsService
 
 
     /**
-     * Returns all text for the view
-     *
-     * @return string htmlcode
-     */
-    public function getHTML()
+    * @return string $html - htmltext for beginning of table
+    */
+    public function getTableStart()
     {
-        $view = $this->setUrlCreator("tags/view-one");
-        $viewcomm = $this->setUrlCreator("comm/view-one");
-        $base = $this->setUrlCreator("comm/tags/");
-
         $headline = $this->getHeadline($this->name);
 
         $html = "<h1>" . $headline . "</h1>";
@@ -259,30 +177,50 @@ class ShowTagsService
         $html .= '<th class = "taganswers">Svar</th>';
         $html .= '<th class = "tagcomments">Kommentarer</th>';
         $html .= '</tr>';
+        return $html;
+    }
 
-        $question = "Fråga: ";
-        $excla = "Svar: ";
-        $parent = "";
+
+
+    /**
+    * @return string $childrentext - htmltext for comments to comment-item
+    */
+    public function getChildrenText($val, $viewcomm)
+    {
+        $answers = "";
+        $comments = "";
+        $children = $this->getChildrenDetails($val->id);
+        foreach ($children as $count => $item) {
+            if ($item->iscomment == 1) {
+                $comments .= '<a href = "' . $viewcomm . '/' . $item->id . '">' . $item->title . '</a>, ';
+            } else {
+                $answers .= '<a href = "' . $viewcomm . '/' . $item->id . '">' . $item->title . '</a>, ';
+            }
+        }
+        $answers = rtrim($answers, ', ');
+        $comments = rtrim($comments, ', ');
+        $childrentext = "<td class = 'taganswers'>" . $answers . "</td><td class = 'comments'>" . $comments . "</td>";
+        return $childrentext;
+    }
+
+
+    /**
+     * Returns all text for the view
+     *
+     * @return string htmlcode
+     */
+    public function getHTML()
+    {
+        $view = $this->setUrlCreator("tags/view-one");
+        $viewcomm = $this->setUrlCreator("comm/view-one");
+        $base = $this->setUrlCreator("comm/tags/");
+
+        $html = $this->getTableStart();
 
         $userController = $this->di->get("userController");
 
         foreach ($this->tagset as $key => $val) {
-            $answers = "";
-            $comments = "";
-            //var_dump($val);
-            $children = $this->getChildrenDetails($val->id);
-            foreach ($children as $count => $item) {
-                //var_dump($item);
-                //var_dump($item->id, $item->title, $item->iscomment);
-                if ($item->iscomment == 1) {
-                    $comments .= '<a href = "' . $viewcomm . '/' . $item->id . '">' . $item->title . '</a>, ';
-                } else {
-                    $answers .= '<a href = "' . $viewcomm . '/' . $item->id . '">' . $item->title . '</a>, ';
-                }
-            }
-            $answers = rtrim($answers, ', ');
-            $comments = rtrim($comments, ', ');
-            $childrentext = "<td class = 'taganswers'>" . $answers . "</td><td class = 'comments'>" . $comments . "</td>";
+            $childrentext = $this->getChildrenText($val, $viewcomm);
             $html .= "<tr>";
             $user = $userController->getOne($val->userid);
             $grav = $this->getGravatar($user['email']);

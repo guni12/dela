@@ -146,48 +146,35 @@ class ShowAllService
      */
     public function getValHtml(Comm $item, $email, $isadmin, $viewone)
     {
-        $showid = "";
         $where = "parentid = ?";
-        $answers = 0;
-        $comments = 0;
-        $points = 0;
+        $answersct = 0;
+        $commentsct = 0;
+        $points = "";
+        $answers = "";
+        $comments = "";
 
         $gravatar = $this->getGravatar($email);
         $when = $this->getWhen($item);
-        if ($isadmin === true) {
-            $showid = '(' . $item->id . '): ';
-        }
+        $showid = $isadmin === true ? '(' . $item->id . '): ' : "";
 
         $commcomments = $this->getParentDetails($where, $item->id);
 
         foreach ($commcomments as $key => $value) {
             if ($value->iscomment > 0) {
-                $comments += 1;
+                $commentsct += 1;
             } else {
-                $answers += 1;
+                $answersct += 1;
             }
         }
         
-        if ($answers > 0) {
-            $answers = $answers . ' svar';
-            if ($comments > 0) {
-                $answers .= ", ";
-            }
-        } else {
-            $answers = "";
+        if ($answersct > 0) {
+            $answers = $answersct . ' svar';
+            $answers .= $commentsct > 0 ? ", " : "";
+            $comments = $commentsct > 0 ? $commentsct . " kommentarer" : "";
         }
 
-        if ($comments > 0) {
-            $comments = $comments . ' kommentarer ';
-        } else {
-            $comments = "";
-        }
-
-        if ($item->points !== null && $item->points > 0) {
-            $points = ', rank: ' . $item->points;
-        } else {
-            $points = "";
-        }
+        $points = $answersct > 0 ? ", " : "";
+        $points .= $item->points !== null && $item->points > 0 ? 'rank: ' . $item->points : "";
 
         $html = '<div class="clearfix"><h4><a href="' . $viewone . '/' . $item->id . '">';
         $html .= $showid . ' ' . $item->title . '</a><span class = "smaller"> ' . $answers . $comments . $points . '</span></h4><p class="by">';
@@ -224,7 +211,6 @@ class ShowAllService
                 continue;
             }
             $curruser = $this->userController->getOne($value->userid);
-            //var_dump($curruser);
             $html .= $this->getValHtml($value, $curruser['email'], $isadmin, $viewone);
         }
         

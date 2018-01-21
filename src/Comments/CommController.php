@@ -156,7 +156,6 @@ class CommController implements
     {
         $title      = "Ta bort ett inlägg";
         $sess = $this->getSess();
-        echo $id;
 
         $comm = $this->findOne($id);
 

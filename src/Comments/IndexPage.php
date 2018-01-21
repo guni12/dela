@@ -106,27 +106,6 @@ class IndexPage
 
 
     /**
-     * Returns correct loginlink
-     *
-     * @param string $create - path
-     * @param string $del - path
-     *
-     * @return string htmlcode
-     */
-    public function getLoginLink($create, $del)
-    {
-        $loggedin = '<a href="user/login">Logga in om du vill kommentera</a>';
-        if ($this->sess['id']) {
-            $loggedin = ' <a href="' . $create .'">Skriv ett inlägg</a>';
-            if ($this->isadmin === true) {
-                $loggedin .= ' | <a href="' . $del . '">Ta bort ett inlägg</a>';
-            }
-        }
-        return $loggedin;
-    }
-
-
-    /**
      * Returns html for each item
      *
      * @param object $item
@@ -216,13 +195,13 @@ class IndexPage
      * @param object $comments
      * @return array
      */
-    public function getTaginfo($comments) {
+    public function getTagarr() {
         $elcar = 0;
         $safety = 0;
         $light = 0;
         $heat = 0;
 
-        foreach ($comments as $key => $value) {
+        foreach ($this->comments as $key => $value) {
             $test = $this->getDecode($value->comment);
 
             if ($test[0] == "elcar") {
@@ -251,30 +230,29 @@ class IndexPage
 
 
     /**
-     * Returns all text for the view
-     *
-     * @return string htmlcode
-     */
-    public function getHTML()
+    * @return string $html - htmltext for the tags
+    */
+    public function getTaginfo($base) {
+        $arr = $this->getTagarr();
+        $html = '<h4>';
+        foreach ($arr as $key => $value) {
+            $html .= '<a href = "' . $base . '/' . $key . '">' . $value[1] . '<span class="tagsize">[ ' . $value[0] . ' ]</span></a>  ';
+        }
+        $html .= '</h4><hr class="border" />';
+        return $html;
+    }
+
+
+
+    /**
+    * @return string $html - htmltext for the questions
+    */
+    public function getLatestQuestions($viewone)
     {
-        $loggedin = "";
-        $html = "";
-
-        $create = $this->setUrlCreator("comm/create");
-        $del = $this->setUrlCreator("comm/admindelete");
-        $viewone = $this->setUrlCreator("comm/view-one");
-        $base = $this->setUrlCreator("comm/tags/");
-        $loggedin = $this->getLoginLink($create, $del);
-
-        $html .= '<div class="col-lg-6 col-sm-6 col-xs-12">';
-        $html .= '<div class="margin-right">';
-        $html .= '<h3>Senaste frågorna</h3><hr />';
-
         usort($this->comments, array($this, "dateSort"));
-
         $ct = 0;
-        //var_dump($this->comments);
         $reversed = array_reverse($this->comments);
+        $html = "";
 
         foreach ($reversed as $value) {
             if ((int)$value->parentid > 0) {
@@ -286,39 +264,18 @@ class IndexPage
             $html .= $this->getValHtml($value, $viewone);
             $ct += 1;
         }
-
-        /*$html .= '<h3>Senaste svaren</h3><hr />';
-
-        $count = 0;
-
-        foreach ($this->comments as $value) {
-            if ((int)$value->parentid > 0) {
-                $html .= $this->getValHtml($value, $viewone);
-                $count += 1;
-            }
-            if ($count >= 5) {
-                break;
-            }
-        }*/
+        return $html;
+    }
 
 
-        $html .= '</div></div><div class="col-lg-6 col-sm-6 col-xs-12">';
-
-                $html .= '<h3>Våra Taggar</h3>';
-
-        $arr = $this->getTaginfo($this->comments);
-        $html .= '<h4>';
-
-        foreach ($arr as $key => $value) {
-            $html .= '<a href = "' . $base . '/' . $key . '">' . $value[1] . '<span class="tagsize">[ ' . $value[0] . ' ]</span></a>  ';
-        }
-        $html .= '</h4><hr class="border" />';
-
-        $html .= '<h3>Flitigaste användarna</h3><hr />';
-
+    /**
+    * @return string $html - htmltext for the actives
+    */
+    public function getActivesInfo($viewone)
+    {
         $actives = $this->getActives();
-
         $userController = $this->di->get("userController");
+        $html = "";
 
         $count = 0;
 
@@ -332,6 +289,35 @@ class IndexPage
             $html .=  '</div><hr class="border" />';
             $count += 1;
         }
+        return $html;
+    }
+
+
+
+    /**
+     * Returns all text for the view
+     *
+     * @return string htmlcode
+     */
+    public function getHTML()
+    {
+        $html = "";
+
+        $viewone = $this->setUrlCreator("comm/view-one");
+        $base = $this->setUrlCreator("comm/tags/");
+
+        $html .= '<div class="col-lg-6 col-sm-6 col-xs-12">';
+        $html .= '<div class="margin-right">';
+        $html .= '<h3>Senaste frågorna</h3><hr />';
+        $html .= $this->getLatestQuestions($viewone);
+
+        $html .= '</div></div><div class="col-lg-6 col-sm-6 col-xs-12">';
+        $html .= '<h3>Våra Taggar</h3>';
+        $html .= $this->getTaginfo($base);
+
+        $html .= '<h3>Flitigaste användarna</h3><hr />';
+        $html .= $this->getActivesInfo($viewone);
+
         $html .= "</div";
 
         return $html;

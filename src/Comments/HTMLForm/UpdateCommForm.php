@@ -2,7 +2,7 @@
 
 namespace Guni\Comments\HTMLForm;
 
-use \Guni\Comments\HTMLForm\FormModel;
+use \Anax\HTMLForm\FormModel;
 use \Anax\DI\DIInterface;
 use \Guni\Comments\Comm;
 
@@ -68,23 +68,17 @@ class UpdateCommForm extends FormModel
         } else {
             $checked = $array;
         }
-
         return $checked;
     }
 
+
     /**
-     * Create the form.
-     *
-     */
-    public function aForm($id, $sessid, $comm, $comt, $tags)
+    * @param integer $parentid - id of parentcomment
+    *
+    * @return array $dropdown - for the form
+    */
+    public function getDropdown($tags)
     {
-        $placeholder = 'Image: ![alt text](https://somewhere.com/img.jpg "Text") | ';
-        $placeholder .= '*italics* | **emphasis** | [Link](https://www.somewhere.com) | ';
-        $placeholder .= ' > Blockquotes';
-        $dropdown = [];
-
-        echo is_string($tags);
-
         if (is_string($tags)) {
             $dropdown = [
                 "type"        => "hidden",
@@ -94,7 +88,7 @@ class UpdateCommForm extends FormModel
             $dropdown = [
                 "type"        => "select-multiple",
                 "label"       => "Taggar, minst en:",
-                "description" => "Håll ner Ctrl (windows) / Command (Mac) knapp för att välja flera taggar.",
+                "description" => "Håll ner Ctrl (windows) / Command (Mac) knapp för att välja flera taggar.<br />Default tagg är Elbil.",
                 "size"        => 5,
                 "options"     => [
                     "elcar" => "elbil",
@@ -105,6 +99,29 @@ class UpdateCommForm extends FormModel
                 "checked"   => $tags,
             ];
         }
+        return $dropdown;
+    }
+
+
+    /**
+    * @return string $placeholder - placeholdertext
+    */
+    public function getPlaceholder()
+    {
+        $placeholder = 'Image: ![alt text](https://somewhere.com/img.jpg "Text") | ';
+        $placeholder .= '*italics* | **emphasis** | [Link](https://www.somewhere.com) | ';
+        $placeholder .= ' > Blockquotes';
+        return $placeholder;
+    }
+
+
+    /**
+     * Create the form.
+     *
+     */
+    public function aForm($id, $sessid, $comm, $comt, $tags)
+    {
+        $dropdown = $this->getDropdown($tags);
 
         $this->form->create(
             [
@@ -136,7 +153,7 @@ class UpdateCommForm extends FormModel
                     "value" => $comt,
                     "wrapper-element-class" => "form-group",
                     "class" => "form-control wmd-input",
-                    "description" => $placeholder
+                    "description" => $this->getPlaceholder()
                 ],
                 "tags" => $dropdown,
                 "submit" => ["type" => "submit", "value" => "Spara", "callback" => [$this, "callbackSubmit"]],
@@ -162,6 +179,25 @@ class UpdateCommForm extends FormModel
     }
 
 
+    /**
+    * adds array through frontmatter to $comment
+    *
+    */
+    public function handleTags($tags)
+    {
+        $elcar = in_array("elcar", $tags) ? "elcar" : null;
+        $safety = in_array("safety", $tags) ? "safety" : null;
+        $light = in_array("light", $tags) ? "light" : null;
+        $heat = in_array("heat", $tags) ? "heat" : null;
+
+        if ($elcar == null && $safety == null && $light == null && $heat == null) {
+                $elcar = "elcar";
+            }
+
+        $comment->frontmatter['tags'] = [$elcar, $safety, $light, $heat];
+    }
+
+
 
     /**
      * Callback for submit-button which should return true if it could
@@ -177,27 +213,18 @@ class UpdateCommForm extends FormModel
 
         $userController = $this->di->get("userController");
         $userdetails = $userController->getOne($this->form->value("sessid"));
-        //var_dump("userdetails", $userdetails);
 
         $parses = ["yamlfrontmatter", "shortcode", "markdown", "titlefromheader"];
         $comment = $textfilter->parse($this->form->value("comment"), $parses);
         $comment->frontmatter['title'] = $this->form->value("title");
 
         $tags = $this->form->value("tags");
-        var_dump("tags", $tags);
-        $elcar = in_array("elcar", $tags) ? "elcar" : null;
-        $safety = in_array("safety", $tags) ? "safety" : null;
-        $light = in_array("light", $tags) ? "light" : null;
-        $heat = in_array("heat", $tags) ? "heat" : null;
+        $this->handleTags($tags);
 
-        $comment->frontmatter['tags'] = [$elcar, $safety, $light, $heat];
-        
         $comment = json_encode($comment);
 
         $comm = new Comm();
         $comm->setDb($this->di->get("db"));
-
-        var_dump("comment, this->form->value(id)", $comment, $this->form->value("id"));
 
         $comm->find("id", $this->form->value("id"));
         $comm->updated = $now;

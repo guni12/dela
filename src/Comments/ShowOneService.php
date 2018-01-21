@@ -17,6 +17,7 @@ class ShowOneService
     protected $comments;
     protected $sess;
     protected $isadmin;
+    protected $commtext;
 
 
     /**
@@ -46,6 +47,7 @@ class ShowOneService
         $this->sess = $session->get("user");
 
         $this->isadmin = $this->sess['isadmin'] == 1 ? true : false;
+        $this->commtext = "";
     }
 
 
@@ -191,40 +193,38 @@ class ShowOneService
      */
     public function getVoteHtml($value)
     {
-        $voteup = $this->setUrlCreator("comm/voteup");
-        $votedown = $this->setUrlCreator("comm/votedown");
+        $html = "";
+        if ((string)$value->userid !== (string)$this->sess['id'])
+        {
+            $voteup = $this->setUrlCreator("comm/voteup");
+            $votedown = $this->setUrlCreator("comm/votedown");
 
-        $arr_decoded = json_decode($value->hasvoted);
-        $vote = "";
-        $faup = '<i class="fa fa-thumbs-up" aria-hidden="true"></i>';
-        $fadown = '<i class="fa fa-thumbs-down" aria-hidden="true"></i>';
-        $hasvoted = "";
+            $arr_decoded = json_decode($value->hasvoted);
+            $faup = '<i class="fa fa-thumbs-up" aria-hidden="true"></i>';
+            $fadown = '<i class="fa fa-thumbs-down" aria-hidden="true"></i>';
 
-        if ($this->sess == null) {
-            $linkup = '<span class="hasvoted">';
-            $linkdown = '<span class="hasvoted">';
-            $linkend = '</span>';
-        } elseif ($arr_decoded && in_array($this->sess['id'], $arr_decoded)) {
-            $linkup = '<span class="hasvoted"><span class="hasvotedtext">Man kan bara rösta en gång</span>';
-            $linkdown = '<span class="hasvoted"><span class="hasvotedtext">Man kan bara rösta en gång</span>';
-            $linkend = '</span>';
-        } elseif ($this->sess['id'] == $value->userid) {
-            $linkup = '<span class="hasvoted"><span class="hasvotedtext">Det går inte rösta på sig själv</span>';
-            $linkdown = '<span class="hasvoted">';
-            $linkend = '</span>';
-        } else {
-            $linkup = '<a href="' . $voteup . '/' . $value->id . '"><span class="canvote"><span class="canvotetext">+1</span>';
-            $linkdown = '<a href="' . $votedown . '/' . $value->id . '"><span class="canvote"><span class="canvotetext">-1</span>';
-            $linkend = '</span></a>';
+            if ($this->sess == null) {
+                $linkup = '<span class="hasvoted">';
+                $linkdown = '<span class="hasvoted">';
+                $linkend = '</span>';
+            } elseif ($arr_decoded && in_array($this->sess['id'], $arr_decoded)) {
+                $linkup = '<span class="hasvoted"><span class="hasvotedtext">Man kan bara rösta en gång</span>';
+                $linkdown = '<span class="hasvoted"><span class="hasvotedtext">Man kan bara rösta en gång</span>';
+                $linkend = '</span>';
+            } elseif ($this->sess['id'] == $value->userid) {
+                $linkup = '<span class="hasvoted"><span class="hasvotedtext">Det går inte rösta på sig själv</span>';
+                $linkdown = '<span class="hasvoted">';
+                $linkend = '</span>';
+            } else {
+                $linkup = '<a href="' . $voteup . '/' . $value->id . '"><span class="canvote"><span class="canvotetext">+1</span>';
+                $linkdown = '<a href="' . $votedown . '/' . $value->id . '"><span class="canvote"><span class="canvotetext">-1</span>';
+                $linkend = '</span></a>';
+            }
+            $points = $value->points ? ' | <span class = "smaller">[' . $value->points . ']</span>' : "";
+
+            $html = ' | ' . $linkup . $faup . $linkend;
+            $html  .= ' | ' . $linkdown . $fadown . $linkend . $points;
         }
-        $points = "";
-        if ($value->points) {
-            $points = ' | <span class = "smaller">[' . $value->points . ']</span>';
-        }
-
-        $html = ' | ' . $linkup . $faup . $linkend;
-        $html  .= ' | ' . $linkdown . $fadown . $linkend . $points;
-
         return $html;
     }
 
@@ -238,14 +238,14 @@ class ShowOneService
     {
         $loginurl = $this->setUrlCreator("user/login");
         $create = $this->setUrlCreator("comm/create");
-        $comment = $this->setUrlCreator("comm/comment");
+        $commentpath = $this->setUrlCreator("comm/comment");
 
 
         $htmlcomment = '<a href="' . $loginurl . '">Logga in om du vill svara</a></p>';
 
         if ($this->sess && $this->sess['id']) {
             $htmlcomment = '<a href="' . $create . '/' . $this->comment->id . '">Svara</a>';
-            $htmlcomment .= ' | <a href="' . $comment . '/' . $this->comment->id . '">Kommentera</a>';
+            $htmlcomment .= ' | <a href="' . $commentpath . '/' . $this->comment->id . '">Kommentera</a>';
             $htmlcomment .= $this->getVoteHtml($this->comment);
         }
         return $htmlcomment;
@@ -290,6 +290,36 @@ class ShowOneService
 
 
     /**
+     * @param object - $value - commentitem
+     *
+     * @return string htmlcode
+     */
+    public function getCommComments($value)
+    {
+        $lead = null;
+        $text = '<div class = "move20">';
+        $text .= '<hr />';
+        $text .= $this->getValHtml($value, $lead, 1);
+        if ((string)$value->userid !== (string)$this->sess['id']) {
+            $text .= $this->getVoteHtml($value);
+        }
+        $text .= "</div>";
+    }
+
+    /**
+     * If a comment is accepted by questioner
+     * @return integer - if comment is accepted, else string
+     */
+    public function getToAccept()
+    {
+        $toaccept = "";
+        if ((string)$this->comment->userid == (string)$this->sess['id'] && $this->comment->accept < 1) {
+            $toaccept = $this->comment->id;
+        }
+        return $toaccept;
+    }
+
+    /**
      * Returns html for each item
      *
      * @param object $item
@@ -315,6 +345,41 @@ class ShowOneService
 
 
     /**
+     * Returns htmltext for each item
+     *
+     * @return string htmlcode
+     */
+    public function getHTMLItem($value, $commentpath)
+    {
+        $where = "parentid = ?";
+        $lead = null;
+        $text = "";
+        if ($value->iscomment == 0) {
+            $toaccept = 0;
+
+            $text .= $this->getValHtml($value);
+            $text .= '<br /><a href="' . $commentpath . '/' . $value->id . '">Kommentera</a>';
+            $text .= $this->getVoteHtml($value);
+            $params = [$value->id];
+            $commcomments = $this->getParentDetails($where, $params);
+            $toaccept = $this->getToAccept();
+            $text .= $this->getAcceptIcon($toaccept, $this->comment->accept, $value->id);
+            if ($commcomments) {
+                foreach ($commcomments as $key => $value) {
+                    $text .= $this->getCommComments($value);
+                }
+            }
+            $text .= '<hr />';
+        } elseif ($value->iscomment == 1) {
+            $this->commtext .= $this->getValHtml($value, $lead, 1);
+            $this->commtext .= $this->getVoteHtml($value);
+            $this->commtext .= '<hr />';
+        }
+
+        return $text;
+    }
+
+    /**
      * Returns all text for the view
      *
      * @return string htmlcode
@@ -322,61 +387,23 @@ class ShowOneService
     public function getHTML()
     {
         $del = $this->setUrlCreator("comm/delete");
-        $comment = $this->setUrlCreator("comm/comment");
+        $commentpath = $this->setUrlCreator("comm/comment");
         $commpage = $this->setUrlCreator("comm");
+        $pointsort = $this->setUrlCreator("comm/commentpoints");
+        $datesort = $this->setUrlCreator("comm/view-one");
+        $voteup = $this->setUrlCreator("comm/voteup");
+        $votedown = $this->setUrlCreator("comm/votedown");
         
         $htmlcomment = $this->getLoginurl();
         $edit = $this->getEdit($this->comment->userid, $this->comment->id, $htmlcomment);
         $delete = $this->getDelete($this->comment->userid, $del, $this->comment->id);
 
-        $commtext = "";
-        $pointsort = $this->setUrlCreator("comm/commentpoints");
-        $datesort = $this->setUrlCreator("comm/view-one");
-
         $text = '<h2>Svar <span class = "smallpoints"><a href="' . $pointsort . '/' . $this->comment->id . '">rankordning</a> | <a href="' . $datesort . '/' . $this->comment->id . '"> datumordning</a></span></h2>';
 
         if ($this->comments) {
-            $commtext .= "<h3>Kommentarer</h3>";
-            $where = "parentid = ?";
-            $lead = null;
+            $this->commtext .= "<h3>Kommentarer</h3>";
             foreach ($this->comments as $value) {
-                if ($value->iscomment == 0) {
-                    $toaccept = 0;
-                    $voteup = $this->setUrlCreator("comm/voteup");
-                    $votedown = $this->setUrlCreator("comm/votedown");
-
-                    $text .= $this->getValHtml($value);
-                    $text .= '<br /><a href="' . $comment . '/' . $value->id . '">Kommentera</a>';
-
-                    if ((string)$value->userid !== (string)$this->sess['id']) {
-                        $text .= $this->getVoteHtml($value);
-                    }
-                    $params = [$value->id];
-                    $commcomments = $this->getParentDetails($where, $params);
-
-                    if ((string)$this->comment->userid == (string)$this->sess['id'] && $this->comment->accept < 1) {
-                        $toaccept = $this->comment->id;
-                    }
-                    $text .= $this->getAcceptIcon($toaccept, $this->comment->accept, $value->id);
-                    if ($commcomments) {
-                        foreach ($commcomments as $key => $value) {
-                            $text .= '<div class = "move20">';
-                            $text .= '<hr />';
-                            $text .= $this->getValHtml($value, $lead, 1);
-                            if ((string)$value->userid !== (string)$this->sess['id']) {
-                                $text .= $this->getVoteHtml($value);
-                            }
-                            $text .= "</div>";
-                        }
-                    }
-                    $text .= '<hr />';
-                } elseif ($value->iscomment == 1) {
-                    $commtext .= $this->getValHtml($value, $lead, 1);
-                    if ((string)$value->userid !== (string)$this->sess['id']) {
-                        $commtext .= $this->getVoteHtml($value);
-                    }
-                    $commtext .= '<hr />';
-                }
+                $text .= $this->getHTMLItem($value, $commentpath);
             }
         }
 
@@ -385,7 +412,7 @@ class ShowOneService
         $html .= '<br />' . $edit;
         $html .=  $delete;
         $html .= '<hr />';
-        $html .= $commtext;
+        $html .= $this->commtext;
         $html .=  '<p><a href="' . $commpage . '">Till Frågor</a></p>';
         $html .=  '</div><div class="col-sm-5 col-xs-12">';
         $html .= $text;

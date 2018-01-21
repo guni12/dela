@@ -19,6 +19,18 @@ class AdminCreateUserForm extends FormModel
     public function __construct(DIInterface $di)
     {
         parent::__construct($di);
+
+        $this->aForm();
+    }
+
+
+
+    /**
+     * Create the form.
+     *
+     */
+    public function aForm()
+    {
         $this->form->create(
             [
                 "id" => __CLASS__,

@@ -86,9 +86,7 @@ class ShowAllService
 
     public function getHTML()
     {
-
-        $html = "";
-        $html .= $this->getMembers();
+        $html = $this->getMembers();
 
         $create = $this->setUrlCreator("user/admincreate");
         $adminupdate = $this->setUrlCreator("user/adminupdate");
@@ -122,5 +120,29 @@ class ShowAllService
         $html .= '</table>';
 
         return $html;
+    }
+
+
+    public function getLoginText()
+    {
+        $userid = isset($this->sess['id']) ? $this->sess['id'] : null;
+        $isadmin = isset($this->sess['isadmin']) && $this->sess['isadmin'] == 1 ? $this->sess['isadmin'] : null;
+
+        $url = $this->di->get("url");
+        $members = call_user_func([$url, "create"], "user");
+        $update = call_user_func([$url, "create"], "user/update");
+        $delete = call_user_func([$url, "create"], "user/delete");
+        $create = call_user_func([$url, "create"], "user/create");
+
+        $text = '<p><span class="button"><a href="' . $create . '">Skapa ett nytt konto</a></span>';
+        if ($isadmin == 1) {
+            $text .= ' | <span class="button"><a href="' . $members . '">Till Admin</a></span></p>';
+
+        } else if ((int)$userid > 0) {
+            $text .= ' | <span class="button"><a href="' . $update . '/' . $userid . '">';
+            $text .= 'Redigera ditt konto</a></span><br /><span class="button">';
+            $text .= '<a href="' . $delete . '/' . $userid . '">Ta bort ditt konto</a></span></p>';
+        }
+        return $text;
     }
 }

@@ -11,6 +11,8 @@ use \Guni\User\User;
  */
 class AdminUpdateUserForm extends FormModel
 {
+    protected $user;
+
     /**
      * Constructor injects with DI container and the id to update.
      *
@@ -20,11 +22,21 @@ class AdminUpdateUserForm extends FormModel
     public function __construct(DIInterface $di, $id)
     {
         parent::__construct($di);
-        $user = $this->getUserDetails($id);
+        $this->user = $this->getUserDetails($id);
 
+        $this->aForm($id);
+    }
+
+        /**
+     * Create the form.
+     *
+     */
+    public function aForm($id)
+    {
         $checked = false;
+        var_dump($this->user->isadmin);
 
-        if ($user->isadmin == 1) {
+        if ($this->user->isadmin == 1) {
             $checked = true;
         } else {
             $checked = false;
@@ -40,40 +52,40 @@ class AdminUpdateUserForm extends FormModel
                     "type" => "text",
                     "validation" => ["not_empty"],
                     "readonly" => true,
-                    "value" => $user->id,
+                    "value" => $this->user->id,
                 ],
 
                 "created" => [
                     "type" => "datetime",
                     "readonly" => true,
-                    "value" => $user->created,
+                    "value" => $this->user->created,
                     "label"      => "Skapad",
                 ],
 
                 "updated" => [
                     "type" => "datetime",
                     "readonly" => true,
-                    "value" => $user->updated,
+                    "value" => $this->user->updated,
                     "label"      => "Uppdaterad",
                 ],
 
                 "active" => [
                     "type" => "datetime",
                     "readonly" => true,
-                    "value" => $user->active,
+                    "value" => $this->user->active,
                     "label"      => "Aktiv",
                 ],
 
                 "acronym" => [
                     "type" => "text",
                     "validation" => ["not_empty"],
-                    "value" => $user->acronym,
+                    "value" => $this->user->acronym,
                 ],
 
                 "email" => [
                     "type"        => "email",
                     "label"       => "Epost",
-                    "value" => $user->email,
+                    "value" => $this->user->email,
                     "validation" => ["email"],
                 ],
 
@@ -122,7 +134,6 @@ class AdminUpdateUserForm extends FormModel
         $user = new User();
         $user->setDb($this->di->get("db"));
         $user->find("id", $id);
-        //var_dump($user->isadmin);
         return $user;
     }
 

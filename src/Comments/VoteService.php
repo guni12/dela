@@ -15,6 +15,7 @@ class VoteService
     */
     protected $comment;
     protected $sess;
+    protected $comm;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -27,11 +28,17 @@ class VoteService
         $this->di = $di;
         $this->comment = $this->getItemDetails($id);
 
-        //var_dump($this->comment);
         $session = $this->di->get("session");
         $this->sess = $session->get("user");
 
-        $this->handleVotes($vote);
+        $this->comm = new Comm();
+        $this->comm->setDb($this->di->get("db"));
+
+        if ($vote == "accept") {
+            $this->acceptVote($this->comm);
+        } else {
+            $this->handleVotes($vote);
+        }
     }
 
 
@@ -51,58 +58,67 @@ class VoteService
     }
 
 
+    /**
+    *
+    * @param obj $comm - commentobject
+    * saves which comment is accepted to db
+    */
+    public function acceptVote($comm)
+    {
+        $answerid = $this->comment->id;
+        $commentid = $this->getItemDetails($this->comment->parentid);
+        if ($commentid->accept == null || $commentid->hasvoted == "null") {
+            $comm->find("id", $this->comment->parentid);
+            $comm->accept = $answerid;
+            $comm->save();
+            $pagerender->redirect("comm" . $back);
+        }
+    }
+
+
+    /**
+    *
+    * @return array $arr_decoded - info of votedcomment
+    */
+    public function getDecodedArray()
+    {
+        $arr_decoded = [];
+        if (!$this->comment->hasvoted)
+        {
+            $arr_decoded = [0];
+        } else {
+            $arr_decoded = json_decode($this->comment->hasvoted);
+        }
+        return $arr_decoded;
+    }
+
+
     public function handleVotes($vote)
     {
         $end = $this->comment->id;
-        var_dump($end, $vote);
         if ($this->comment->parentid > 0) {
             $end = $this->comment->parentid;
         }
-        var_dump($end, $vote);
         $back = "/view-one/" . $end;
-
         $pagerender = $this->di->get("pageRender");
+        $points = 0 + $this->comment->points;
 
-        $comm = new Comm();
-        $comm->setDb($this->di->get("db"));
+        $arr_decoded = $this->getDecodedArray();
+        $this->comm->find("id", $this->comment->id);
+        if ($vote == "voteup") {
+            $this->comm->points = $points + 1;
+        } elseif ($vote == "votedown") {
+            $this->comm->points = $points - 1;
+        }
 
-        if ($vote == "accept") {
-            echo "Accept";
-            $answerid = $this->comment->id;
-            $commentid = $this->getItemDetails($this->comment->parentid);
-            if ($commentid->accept == null || $commentid->hasvoted == "null") {
-                echo "Null";
-                $comm->find("id", $this->comment->parentid);
-                $comm->accept = $answerid;
-                $comm->save();
-                $pagerender->redirect("comm" . $back);
-            }
+        if ($arr_decoded && in_array($this->sess['id'], $arr_decoded)) {
+            $pagerender->redirect("comm" . $back);
         } else {
-
-            $points = 0 + $this->comment->points;
-
-            if ($this->comment->hasvoted == null || $this->comment->hasvoted == "null") {
-                $arr_decoded = [0];
-            } else {
-                $arr_decoded = json_decode($this->comment->hasvoted);
-            }
-
-            $comm->find("id", $this->comment->id);
-            if ($vote == "voteup") {
-                $comm->points = $points + 1;
-            } elseif ($vote == "votedown") {
-                $comm->points = $points - 1;
-            }
-
-            if ($arr_decoded && in_array($this->sess['id'], $arr_decoded)) {
-                $pagerender->redirect("comm" . $back);
-            } else {
-                array_push($arr_decoded, $this->sess['id']);
-                $json = json_encode($arr_decoded);
-                $comm->hasvoted = $json;
-                //$comm->save();
-                //$pagerender->redirect("comm" . $back);
-            }
+            array_push($arr_decoded, $this->sess['id']);
+            $json = json_encode($arr_decoded);
+            $this->comm->hasvoted = $json;
+            $this->comm->save();
+            $pagerender->redirect("comm" . $back);
         }
     }
 }
