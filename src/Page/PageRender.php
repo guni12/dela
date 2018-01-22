@@ -23,20 +23,15 @@ class PageRender implements PageRenderInterface, InjectionAwareInterface
 
     public function addViewContent($view, $text, $region, $data)
     {
-        $navbar = $this->di->get("navbar");
-
         // Add common header, navbar and footer
         $view->add("view/header", [], "header");
-        $view->add("view/navbar", [
-            "navbar" => $navbar->getHTML()
-        ], "navbar", 0);
+        
         $view->add("view/footer", [
             "footeradd" => "<br />"
         ], "footer", 1);
         $view->add("default1/article", [
                 "content" => $text
             ], $region, 0);
-        
         $view->add("view/layout", $data, "layout");
     }
 
@@ -53,7 +48,7 @@ class PageRender implements PageRenderInterface, InjectionAwareInterface
     public function renderPage($text, $meta = null, $status = 200)
     {
         if (is_array($text)) {
-            $text = isset($text['content']) ? $text['content'] : isset($text['form']) ? $text['form'] : "";
+            $text = isset($text['content']) ? $text['content'] : (isset($text['form']) ? $text['form'] : "");
         }
 
         $data["stylesheets"] = isset($meta["stylesheets"]) ? $meta["stylesheets"] : ["css/style.css"];
@@ -75,6 +70,11 @@ class PageRender implements PageRenderInterface, InjectionAwareInterface
                 "headline" => $meta['views']['links']['data']['headline'],
             ], $meta['views']['links']['region'], 0);
         }
+
+        $navbar = $this->di->get("navbar");
+        $view->add("view/navbar", [
+            "navbar" => $navbar->getHTML()
+        ], "navbar", 0);
 
         $this->addViewContent($view, $text, $region, $data);
         $body = $view->renderBuffered("layout");

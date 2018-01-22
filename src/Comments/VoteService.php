@@ -93,32 +93,39 @@ class VoteService
     }
 
 
+
+    /**
+    * Saves updated vote to db
+    * @param string $arr_decoded - decoded votecontent
+    * @param obj $pagerender -connection to class
+    */
+    public function saveVote($arr_decoded, $pagerender)
+    {
+        array_push($arr_decoded, $this->sess['id']);
+        $json = json_encode($arr_decoded);
+        $this->comm->hasvoted = $json;
+        $this->comm->save();
+        $pagerender->redirect("comm" . $back);
+    }
+
+
+
+    /**
+    * Updates votes for the comment
+    * @param string $vote - votecontent
+    */
     public function handleVotes($vote)
     {
-        $end = $this->comment->id;
-        if ($this->comment->parentid > 0) {
-            $end = $this->comment->parentid;
-        }
+        $end = $this->comment->parentid > 0 ? $this->comment->parentid : $this->comment->id;
+
         $back = "/view-one/" . $end;
         $pagerender = $this->di->get("pageRender");
         $points = 0 + $this->comment->points;
 
         $arr_decoded = $this->getDecodedArray();
         $this->comm->find("id", $this->comment->id);
-        if ($vote == "voteup") {
-            $this->comm->points = $points + 1;
-        } elseif ($vote == "votedown") {
-            $this->comm->points = $points - 1;
-        }
+        $this->comm->points = $vote == "voteup" ? $points + 1 : $vote == "votedown" ? $points - 1 : $this->comm->points;
 
-        if ($arr_decoded && in_array($this->sess['id'], $arr_decoded)) {
-            $pagerender->redirect("comm" . $back);
-        } else {
-            array_push($arr_decoded, $this->sess['id']);
-            $json = json_encode($arr_decoded);
-            $this->comm->hasvoted = $json;
-            $this->comm->save();
-            $pagerender->redirect("comm" . $back);
-        }
+        ($arr_decoded && in_array($this->sess['id'], $arr_decoded)) ? $pagerender->redirect("comm" . $back) : $this->saveVote($arr_decoded, $pagerender);
     }
 }

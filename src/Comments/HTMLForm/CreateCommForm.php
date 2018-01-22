@@ -48,6 +48,31 @@ class CreateCommForm extends FormModel
         return $comm;
     }
 
+
+    /**
+    *
+    * @return string $dropdown - tagcontent for the form
+    */
+    public function notQuestion()
+    {
+        if ($this->iscomment == 1) {
+            $this->headline = "Skriv en kommentar";
+            return [
+                "type"        => "hidden",
+                "value"       => "comment",
+            ];
+        } else {
+                $this->headline = "Skriv ett svar";            
+            return [
+                "type"        => "hidden",
+                "value"       => "answer",
+            ];
+        }
+    }
+
+
+
+
     /**
     * @param integer $parentid - id of parentcomment
     *
@@ -56,21 +81,11 @@ class CreateCommForm extends FormModel
     public function getDropdown($parentid)
     {
         if ($parentid > 0) {
-            if ($this->iscomment == 1) {
-                $dropdown = [
-                    "type"        => "hidden",
-                    "value"       => "comment",
-                ];
-                $this->headline = "Skriv en kommentar";
-            } else {
-                $dropdown = [
-                    "type"        => "hidden",
-                    "value"       => "answer",
-                ];
-                $this->headline = "Skriv ett svar";
-            }
+            return $this->notQuestion();
         } else {
-            $dropdown = [
+            $this->headline = "Gör ett inlägg";
+            $this->iscomment = null;
+            return [
                 "type"        => "select-multiple",
                 "label"       => "Taggar, minst en:",
                 "description" => "Håll ner Ctrl (windows) / Command (Mac) knapp för att välja flera taggar.<br />Default tagg är Elbil.",
@@ -82,11 +97,7 @@ class CreateCommForm extends FormModel
                     "heat"   => "värme"
                 ],
             ];
-            $this->headline = "Gör ett inlägg";
-            $this->iscomment = null;
         }
-
-        return $dropdown;
     }
 
 

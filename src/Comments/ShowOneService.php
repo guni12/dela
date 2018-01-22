@@ -37,8 +37,8 @@ class ShowOneService
 
         $session = $this->di->get("session");
         $this->sess = $session->get("user");
-
         $this->isadmin = $this->sess['isadmin'] == 1 ? true : false;
+
         $this->commtext = "";
         $this->linkup = "";
         $this->linkdown = "";
@@ -51,15 +51,9 @@ class ShowOneService
     */
     public function getComments($sort, $id)
     {
-        if ($sort == 1) {
-            $orderby = "`points` DESC"; //ORDER BY by AR
-            $params = [$id];
-            $this->comments = $this->getParentOrderDetails($orderby, $params);
-        } else {
-            $orderby = "`created` DESC"; //ORDER BY by AR
-            $params = [$id];
-            $this->comments = $this->getParentOrderDetails($orderby, $params);
-        }        
+        $orderby = $sort == 1 ? "`points` DESC" : "`created` DESC";//ORDER BY fixed by ActiveRecord
+        $params = [$id];
+        $this->comments = $this->getParentOrderDetails($orderby, $params);
     }
 
 
@@ -96,7 +90,7 @@ class ShowOneService
         /**
      * Get details on item to load form with.
      *
-     * @param string $orderby - column and DESC or ASS
+     * @param string $orderby - column and DESC or ASC
      * @param array $params get details on item with id parentid.
      *
      * @return Comm
@@ -139,26 +133,17 @@ class ShowOneService
 
     /**
      * Returns json_decoded title and text
-     * If lead text, headline is larger font
      * @param object $item
      * @return string htmlcode
      */
-    public function getDecode(Comm $item, $lead = null, $iscomment = null)
+    public function getDecode(Comm $item, $iscomment = null)
     {
         $comt = json_decode($item->comment);
-        if ($comt->frontmatter->title) {
-            $til = $comt->frontmatter->title;
-        } else {
-            $til = $item->title;
-        }
+        $til = $comt->frontmatter->title ? $comt->frontmatter->title : $item->title;
         $comt = $comt->text;
 
-        if ($lead) {
-            return '<h3>' . $til . '</h3>' . $comt;
-        } elseif ($iscomment) {
-            return '<h5>' . $til . '</h5>' . '<span class = "pcomment">' . $comt . '</span>';
-        }
-        return '<h4>' . $til . '</h4>' . $comt;
+        $text = $iscomment ? '<h5>' . $til . '</h5>' . '<span class = "pcomment">' . $comt . '</span>' : '<h4>' . $til . '</h4>' . $comt;
+        return $text;
     }
 
 
@@ -176,22 +161,11 @@ class ShowOneService
         $acceptlink = $this->setUrlCreator("comm/accept");
         $faaccept = '<i class="fa fa-smile-o" aria-hidden="true"></i>';
 
-        $link = "";
+        $open = ' | <a href="' . $acceptlink . '/' . $id . '">';
+        $open .= '<span class="canaccept"><span class="canaccepttext">Klicka för att acceptera</span>' . $faaccept . '</span></a><hr />';
+        $closed = ' | <span class="canaccept"><span class="canaccepttext">Accepterat svar</span>' . $faaccept . '</span><hr />';
 
-        if ($toaccept > 0) {
-            $link = ' | <a href="' . $acceptlink . '/' . $id . '">';
-            $link .= '<span class="canaccept"><span class="canaccepttext">Klicka för att acceptera</span>';
-            $link .= $faaccept;
-            $link .= '</span></a>';            
-        } elseif ($isaccepted == $id) {
-            $link = ' | <span class="canaccept"><span class="canaccepttext">Accepterat svar</span>';
-            $link .= $faaccept;
-            $link .= '</span>'; 
-        } else {
-            $link = "";
-        }
-
-        return $link;
+        return $toaccept > 0 ? $open : ($isaccepted == $id ? $closed : "");
     }
 
     /**
@@ -240,6 +214,36 @@ class ShowOneService
 
 
     /**
+    * @param obj $value - commentobject
+    *
+    * @return string html-text for voting
+    */
+    public function voteChoices($value)
+    {
+        $voteup = $this->setUrlCreator("comm/voteup");
+        $votedown = $this->setUrlCreator("comm/votedown");
+
+        $arr_decoded = json_decode($value->hasvoted);
+        $faup = '<i class="fa fa-thumbs-up" aria-hidden="true"></i>';
+        $fadown = '<i class="fa fa-thumbs-down" aria-hidden="true"></i>';
+
+        if ($this->sess == null) {
+            $this->noMember();
+        } elseif ($arr_decoded && in_array($this->sess['id'], $arr_decoded)) {
+            $this->votedMember();
+        } elseif ($this->sess['id'] == $value->userid) {
+            $this->commentOwner();
+        } else {
+            $this->canVote($voteup, $votedown, $value->id);
+        }
+        $points = $value->points ? ' | <span class = "smaller">[' . $value->points . ']</span>' : "";
+
+        return ' | ' . $this->linkup . $faup . $this->linkend . ' | ' . $this->linkdown . $fadown . $this->linkend . $points;
+    }
+
+
+
+    /**
      *
      * @param obj $value
      *
@@ -247,31 +251,7 @@ class ShowOneService
      */
     public function getVoteHtml($value)
     {
-        $html = "";
-        if ((string)$value->userid !== (string)$this->sess['id'])
-        {
-            $voteup = $this->setUrlCreator("comm/voteup");
-            $votedown = $this->setUrlCreator("comm/votedown");
-
-            $arr_decoded = json_decode($value->hasvoted);
-            $faup = '<i class="fa fa-thumbs-up" aria-hidden="true"></i>';
-            $fadown = '<i class="fa fa-thumbs-down" aria-hidden="true"></i>';
-
-            if ($this->sess == null) {
-                $this->noMember();
-            } elseif ($arr_decoded && in_array($this->sess['id'], $arr_decoded)) {
-                $this->votedMember();
-            } elseif ($this->sess['id'] == $value->userid) {
-                $this->commentOwner();
-            } else {
-                $this->canVote($voteup, $votedown, $value->id);
-            }
-            $points = $value->points ? ' | <span class = "smaller">[' . $value->points . ']</span>' : "";
-
-            $html = ' | ' . $this->linkup . $faup . $this->linkend;
-            $html  .= ' | ' . $this->linkdown . $fadown . $this->linkend . $points;
-        }
-        return $html;
+        return ((string)$value->userid !== (string)$this->sess['id']) ? $this->voteChoices($value) : "";
     }
 
 
@@ -286,15 +266,10 @@ class ShowOneService
         $create = $this->setUrlCreator("comm/create");
         $commentpath = $this->setUrlCreator("comm/comment");
 
+        $notloggedin = '<a href="' . $loginurl . '">Logga in om du vill svara</a></p>';
+        $hasloggedin = '<a href="' . $create . '/' . $this->comment->id . '">Svara</a>' . ' | <a href="' . $commentpath . '/' . $this->comment->id . '">Kommentera</a>';
 
-        $htmlcomment = '<a href="' . $loginurl . '">Logga in om du vill svara</a></p>';
-
-        if ($this->sess && $this->sess['id']) {
-            $htmlcomment = '<a href="' . $create . '/' . $this->comment->id . '">Svara</a>';
-            $htmlcomment .= ' | <a href="' . $commentpath . '/' . $this->comment->id . '">Kommentera</a>';
-            $htmlcomment .= $this->getVoteHtml($this->comment);
-        }
-        return $htmlcomment;
+        return $this->sess && $this->sess['id'] ? $hasloggedin : $notloggedin;
     }
 
 
@@ -310,13 +285,9 @@ class ShowOneService
     public function getEdit($userid, $id, $htmlcomment)
     {
         $update = $this->setUrlCreator("comm/update");
-        if ($this->isadmin || $userid == $this->sess['id']) {
-            $edit = '<p><a href="' . $update . '/' . $id . '">Redigera</a> | ';
-            $edit .= $htmlcomment;
-        } else {
-            $edit = "<p>" . $htmlcomment . "</p>";
-        }
-        return $edit;
+        $admintext = '<p><a href="' . $update . '/' . $id . '">Redigera</a> | ' . $htmlcomment;
+        $normal = "<p>" . $htmlcomment . "</p>";
+        return $this->isadmin || $userid == $this->sess['id'] ? $admintext : $normal;
     }
 
 
@@ -327,11 +298,7 @@ class ShowOneService
      */
     public function getDelete($userid, $del, $id)
     {
-        $delete = "";
-        if ($this->isadmin || $userid == $this->sess['id']) {
-            $delete = ' | <a href="' .  $del . '/' . $id . '">Ta bort inlägget</a></p>';
-        }
-        return $delete;
+        return $this->isadmin || $userid == $this->sess['id'] ? ' | <a href="' .  $del . '/' . $id . '">Ta bort inlägget</a></p>' : "";
     }
 
 
@@ -342,13 +309,8 @@ class ShowOneService
      */
     public function getCommCommVal($value)
     {
-        $lead = null;
-        $text = '<div class = "move20">';
-        $text .= '<hr />';
-        $text .= $this->getValHtml($value, $lead, 1);
-        if ((string)$value->userid !== (string)$this->sess['id']) {
-            $text .= $this->getVoteHtml($value);
-        }
+        $text = '<div class = "move20"><hr />' . $this->getValHtml($value, 1);
+        $text .= (string)$value->userid !== (string)$this->sess['id'] ? $this->getVoteHtml($value) : "";
         $text .= "</div>";
         return $text;
     }
@@ -369,15 +331,12 @@ class ShowOneService
 
     /**
      * If a comment is accepted by questioner
-     * @return integer - if comment is accepted, else string
+     * @return integer - if comment is not accepted, else string
      */
     public function getToAccept()
     {
-        $toaccept = "";
-        if ((string)$this->comment->userid == (string)$this->sess['id'] && $this->comment->accept < 1) {
-            $toaccept = $this->comment->id;
-        }
-        return $toaccept;
+        $test = ((string)$this->comment->userid == (string)$this->sess['id'] && $this->comment->accept < 1) ? $this->comment->id : "";
+        return $test;
     }
 
     /**
@@ -388,7 +347,7 @@ class ShowOneService
      *
      * @return string htmlcod
      */
-    public function getValHtml(Comm $item, $lead = null, $iscomment = null)
+    public function getValHtml(Comm $item, $iscomment = null)
     {
         $userController = $this->di->get("userController");
         $curruser = $userController->getOne($item->userid);
@@ -397,7 +356,7 @@ class ShowOneService
         $gravatar = $this->getGravatar($email);
         $updated = isset($item->updated) ? '| Ändrad: ' . $item->updated : "";
         
-        $text = $this->getDecode($item, $lead, $iscomment);
+        $text = $this->getDecode($item, $iscomment);
         $text .= '<p><span class="smaller">' . $email . '</span> ' . $gravatar . '<br />';
         $text .= '<span class="smaller">Skrevs: ' . $item->created . ' ' . $updated . '</span>';
         
@@ -412,27 +371,31 @@ class ShowOneService
      */
     public function getHTMLItem($value, $commentpath)
     {
-        $text = "";
-        if ($value->iscomment == 0) {
-            $toaccept = 0;
+        $params = [$value->id];
+        $toaccept = $value->iscomment == 0 ? $this->getToAccept() : "";
+        $text = $value->iscomment == 0 ? $this->getValHtml($value) . '<br /><a href="' . $commentpath . '/' . $value->id . '">Kommentera</a>' . $this->getVoteHtml($value) : "";
+        $text .= $value->iscomment == 0 ? $this->getAcceptIcon($toaccept, $this->comment->accept, $value->id) : "";
+        $commcomments = $value->iscomment == 0 ? $this->getParentDetails($params) : null;
+        $text .= ($commcomments) ? $this->getCommComments($commcomments)  : "";
+        $this->commtext .= $value->iscomment == 1 ? $this->getValHtml($value, 1) . $this->getVoteHtml($value) . '<hr />' : "";
+        return $text;
+    }
 
-            $text .= $this->getValHtml($value);
-            $text .= '<br /><a href="' . $commentpath . '/' . $value->id . '">Kommentera</a>';
-            $text .= $this->getVoteHtml($value);
-            $toaccept = $this->getToAccept();
-            $text .= $this->getAcceptIcon($toaccept, $this->comment->accept, $value->id);
-            $params = [$value->id];
-            $commcomments = $this->getParentDetails($params);
-            $text .= ($commcomments) ? $this->getCommComments($commcomments) : "";
-            $text .= '<hr />';
-        } 
-        if ($value->iscomment == 1) {
-            $this->commtext .= $this->getValHtml($value, null, 1);
-            $this->commtext .= $this->getVoteHtml($value);
-            $this->commtext .= '<hr />';
+
+    /**
+     * @param string $commentpath
+     * @return string htmlcode for comments
+     */
+    public function getCommentItem($commentpath)
+    {
+        $text = "";
+        foreach ($this->comments as $value) {
+            $text .= $this->getHTMLItem($value, $commentpath);
         }
         return $text;
     }
+
+
 
     /**
      * Returns all text for the view
@@ -446,21 +409,15 @@ class ShowOneService
         $commpage = $this->setUrlCreator("comm");
         $pointsort = $this->setUrlCreator("comm/commentpoints");
         $datesort = $this->setUrlCreator("comm/view-one");
-        $voteup = $this->setUrlCreator("comm/voteup");
-        $votedown = $this->setUrlCreator("comm/votedown");
         
         $htmlcomment = $this->getLoginurl();
         $edit = $this->getEdit($this->comment->userid, $this->comment->id, $htmlcomment);
         $delete = $this->getDelete($this->comment->userid, $del, $this->comment->id);
 
         $text = '<h2>Svar <span class = "smallpoints"><a href="' . $pointsort . '/' . $this->comment->id . '">rankordning</a> | <a href="' . $datesort . '/' . $this->comment->id . '"> datumordning</a></span></h2>';
-
-        if ($this->comments) {
-            $this->commtext .= "<h3>Kommentarer</h3>";
-            foreach ($this->comments as $value) {
-                $text .= $this->getHTMLItem($value, $commentpath);
-            }
-        }
+        
+        $this->commtext = $this->comments ? "<h3>Kommentarer</h3>" : "";
+        $text .= $this->comments ? $this->getCommentItem($commentpath) : "";
 
         $html = '<div class="col-sm-12 col-xs-12"><div class="col-lg-6 col-sm-7 col-xs-12">';
         $html .= $this->getValHtml($this->comment);

@@ -90,7 +90,6 @@ class UserLoginForm extends FormModel
                 'email' => $user->email
             ];
             $this->session->set('user', $inlogg);
-            $red == true;
             $this->di->get("response")->redirect("comm/front");
         }
     }
@@ -109,7 +108,6 @@ class UserLoginForm extends FormModel
         $acronym       = $this->form->value("user");
         $password      = $this->form->value("password");
         $inlogg = [];
-        $red = false;
 
         $user = new User();
         $user->setDb($this->di->get("db"));

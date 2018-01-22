@@ -22,6 +22,8 @@ class User extends ActiveRecordModel
     public $id;
     public $acronym;
     public $password;
+    public $email;
+    public $profile;
     public $created;
     public $updated;
     public $deleted;

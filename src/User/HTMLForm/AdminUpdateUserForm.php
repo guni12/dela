@@ -33,14 +33,7 @@ class AdminUpdateUserForm extends FormModel
      */
     public function aForm($id)
     {
-        $checked = false;
-        var_dump($this->user->isadmin);
-
-        if ($this->user->isadmin == 1) {
-            $checked = true;
-        } else {
-            $checked = false;
-        }
+        $checked = $this->user->isadmin == 1 ? true : false;
 
         $this->form->create(
             [
@@ -159,14 +152,13 @@ class AdminUpdateUserForm extends FormModel
             return false;
         }
 
-
-        if (isset($this->form->value("acronym"))) {
+        if(!empty($this->form->value("acronym"))) {
             $user->acronym = $this->form->value("acronym");
         }
-        if (isset($this->form->value("email"))) {
+        if (!empty($this->form->value("email"))) {
             $user->email = $this->form->value("email");
         }
-        if (isset($this->form->value("password-again"))) {
+        if (!empty($this->form->value("password-again"))) {
             $user->setPassword($this->form->value("password-again"));
         }
         $user->isadmin = $this->form->value("isadmin");

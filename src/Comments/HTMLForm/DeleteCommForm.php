@@ -2,7 +2,7 @@
 
 namespace Guni\Comments\HTMLForm;
 
-use \Anax\HTMLForm\FormModel;
+use \Guni\Comments\HTMLForm\FormModel;
 use \Anax\DI\DIInterface;
 use \Guni\Comments\Comm;
 

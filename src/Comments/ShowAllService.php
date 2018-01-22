@@ -18,6 +18,7 @@ class ShowAllService
     protected $users;
     protected $user;
     protected $userController;
+    protected $isadmin;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -35,6 +36,7 @@ class ShowAllService
         $this->userController = $this->di->get("userController");
         $this->users = $this->userController->getAllUsers();
         $this->user = $this->userController->getOne($this->sess['id']);
+        $this->isadmin = $this->sess['isadmin'] === 1 ? true : false;
     }
 
     /**
@@ -100,18 +102,17 @@ class ShowAllService
     /**
      * Returns correct loginlink
      *
-     * @param boolean $isadmin
      * @param string $create
      * @param string $del
      *
      * @return string htmlcode
      */
-    public function getLoginLink($isadmin, $create, $del)
+    public function getLoginLink($create, $del)
     {
         $loggedin = '<a href="user/login">Logga in om du vill kommentera</a>';
         if ($this->sess['id']) {
             $loggedin = ' <a href="' . $create .'">Skriv ett inlägg</a>';
-            if ($isadmin === true) {
+            if ($this->isadmin === true) {
                 $loggedin .= ' | <a href="' . $del . '">Ta bort ett inlägg</a>';
             }
         }
@@ -137,24 +138,28 @@ class ShowAllService
 
 
     /**
+    * @param obj $item - current comment
     * @param string $viewone - path
-    * @param integer $id - current comment 
-    * @param string $showid - if admin more info
-    * @param string $title - comment-title
     * @param string $answers - if exist
     * @param string $comments - if exist
     * @param string $points - if exist
     * @param string $when - when comment was created
     * @param string $email
-    * @param string $gravatar
     *
     * @return string $html
     */
-    public function getTheText($viewone, $id, $showid, $title, $answers, $comments, $points, $when, $email, $gravatar)
+    public function getTheText($item, $numbers, $when, $email)
     {
-        $html = '<div class="clearfix"><h4><a href="' . $viewone . '/' . $id . '">';
-        $html .= $showid . ' ' . $title . '</a><span class = "smaller"> ' . $answers . $comments . $points . '</span></h4><p class="by">';
-        $html .= $when . ' ' . $email . ' </span>' . $gravatar . '</p></div><hr class="border" />';
+        $gravatar = $this->getGravatar($email);
+        $showid = $this->isadmin === true ? '(' . $item->id . '): ' : "";
+        $viewone = $this->setUrlCreator("comm/view-one");
+        $answers = $numbers[0];
+        $comments = $numbers[1];
+        $points = $numbers[2];
+
+        $html = '<div class="clearfix"><h4><a href="' . $viewone . '/' . $item->id . '">';
+        $html .= $showid . ' ' . $item->title . '</a><span class = "smaller"> ' . $answers . $comments . $points . '</span></h4><p>';
+        $html .= $gravatar . '<span class="move20 by">' . $when . ' ' . $email . ' </span></p></div><hr class="border" />';
         return $html;
     }
 
@@ -163,12 +168,11 @@ class ShowAllService
      * Returns html for each item
      *
      * @param object $item
-     * @param boolean $isadmin
      * @param string $viewone
      *
      * @return string htmlcode
      */
-    public function getValHtml(Comm $item, $email, $isadmin, $viewone)
+    public function getValHtml(Comm $item, $email)
     {
         $answersct = 0;
         $commentsct = 0;
@@ -176,18 +180,13 @@ class ShowAllService
         $answers = "";
         $comments = "";
 
-        $gravatar = $this->getGravatar($email);
         $when = $this->getWhen($item);
-        $showid = $isadmin === true ? '(' . $item->id . '): ' : "";
 
         $commcomments = $this->getParentDetails("parentid = ?", $item->id);
 
         foreach ($commcomments as $key => $value) {
-            if ($value->iscomment > 0) {
-                $commentsct += 1;
-            } else {
-                $answersct += 1;
-            }
+            $commentsct = $value->iscomment > 0 ? $commentsct + 1 : $commentsct;
+            $answersct = $value->iscomment <= 0 ? $answersct + 1 : $answersct;
         }
         
         if ($answersct > 0) {
@@ -198,8 +197,9 @@ class ShowAllService
 
         $points = $answersct > 0 ? ", " : "";
         $points .= $item->points !== null && $item->points > 0 ? 'rank: ' . $item->points : "";
+        $numbers = [$answers, $comments, $points];
 
-        return $this->getTheText($viewone, $item->id, $showid, $item->title, $answers, $comments, $points, $when, $email, $gravatar);
+        return $this->getTheText($item, $numbers, $when, $email);
     }
 
 
@@ -213,13 +213,10 @@ class ShowAllService
         $loggedin = "";
         $html = "";
 
-        $isadmin = $this->sess['isadmin'] === 1 ? true : false;
-
         $create = $this->setUrlCreator("comm/create");
         $del = $this->setUrlCreator("comm/admindelete");
-        $viewone = $this->setUrlCreator("comm/view-one");
 
-        $loggedin = $this->getLoginLink($isadmin, $create, $del);
+        $loggedin = $this->getLoginLink($create, $del);
 
         $html .= '<div class="col-lg-10 col-sm-12 col-xs-12"><div class="movesome">
 
@@ -231,7 +228,7 @@ class ShowAllService
                 continue;
             }
             $curruser = $this->userController->getOne($value->userid);
-            $html .= $this->getValHtml($value, $curruser['email'], $isadmin, $viewone);
+            $html .= $this->getValHtml($value, $curruser['email']);
         }
         
         $html .= '</div></div>';
