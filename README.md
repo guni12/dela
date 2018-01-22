@@ -6,6 +6,7 @@ Anax comment
 [![Build Status](https://scrutinizer-ci.com/g/guni12/dela/badges/build.png?b=master)](https://scrutinizer-ci.com/g/guni12/dela/build-status/master)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/guni12/dela/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/guni12/dela/?branch=master)
 [![Code Coverage](https://scrutinizer-ci.com/g/guni12/dela/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/guni12/dela/?branch=master)
+[![Code Intelligence Status](https://scrutinizer-ci.com/g/guni12/dela/badges/code-intelligence.svg?b=master)](https://scrutinizer-ci.com/code-intelligence)
 [![Maintainability](https://api.codeclimate.com/v1/badges/2faf2369720e7502efd6/maintainability)](https://codeclimate.com/github/guni12/dela/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/2faf2369720e7502efd6/test_coverage)](https://codeclimate.com/github/guni12/dela/test_coverage)
 
