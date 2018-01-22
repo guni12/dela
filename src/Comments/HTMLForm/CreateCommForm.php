@@ -2,7 +2,7 @@
 
 namespace Guni\Comments\HTMLForm;
 
-use \Anax\HTMLForm\FormModel;
+use \Guni\Comments\HTMLForm\FormModel;
 use \Anax\DI\DIInterface;
 use \Guni\Comments\Comm;
 
@@ -161,27 +161,31 @@ class CreateCommForm extends FormModel
 
 
     /**
-    * adds array through frontmatter to $comment
     *
+    */
+    public function tagsToArray($tags)
+    {
+        $elcar = is_array($tags) && in_array("elcar", $tags) ? "elcar" : null;
+        $safety = is_array($tags) && in_array("safety", $tags) ? "safety" : null;
+        $light = is_array($tags) && in_array("light", $tags) ? "light" : null;
+        $heat = is_array($tags) && in_array("heat", $tags) ? "heat" : null;
+
+        $elcar = ($elcar == null && $safety == null && $light == null && $heat == null) ? "elcar" : $elcar;
+
+        return [$elcar, $safety, $light, $heat];
+    }
+
+
+    /**
+    * adds array through frontmatter to $comment
+    * @param $tags - input from form
+    *
+    * @return $tags - if key "tags" it must have tags
     */
     public function handleTags($tags)
     {
-        if ($tags == "comment" || $tags == "answer") {
-            $comment->frontmatter['tags'] = $tags;
-        } elseif (is_array($tags)) {
-            $elcar = in_array("elcar", $tags) ? "elcar" : null;
-            $safety = in_array("safety", $tags) ? "safety" : null;
-            $light = in_array("light", $tags) ? "light" : null;
-            $heat = in_array("heat", $tags) ? "heat" : null;
-
-            if ($elcar == null && $safety == null && $light == null && $heat == null) {
-                $elcar = "elcar";
-            }
-
-            $comment->frontmatter['tags'] = [$elcar, $safety, $light, $heat];
-        } else {
-            echo "Not ok", $tags;
-        }
+        $tags = ($tags == "comment" || $tags == "answer") ? $tags : $this->tagsToArray($tags);
+        return $tags;
     }
 
 
@@ -204,7 +208,7 @@ class CreateCommForm extends FormModel
         $this->form->rememberValues();
 
         $tags = $this->form->value("tags");
-        $this->handleTags($tags);
+        $comment->frontmatter['tags'] = $this->handleTags($tags);
 
         $comment = json_encode($comment);
 

@@ -147,32 +147,27 @@ class AdminUpdateUserForm extends FormModel
      */
     public function callbackSubmit()
     {
-        $now = date("Y-m-d");
-
-        $newpassword      = $this->form->value("newpassword");
-        $passwordAgain = $this->form->value("password-again");
-        $email = $this->form->value("email");
-        $acronym = $this->form->value("acronym");
+        $user = new User();
+        $user->setDb($this->di->get("db"));
+        $user->find("id", $this->form->value("id"));
+        $user->updated = date("Y-m-d");
 
         // Check password matches
-        if ($newpassword !== $passwordAgain) {
+        if ($this->form->value("newpassword") !== $this->form->value("password-again")) {
             $this->form->rememberValues();
             $this->form->addOutput("Lösenorden stämde inte.");
             return false;
         }
 
-        $user = new User();
-        $user->setDb($this->di->get("db"));
-        $user->find("id", $this->form->value("id"));
-        $user->updated = $now;
-        if (isset($acronym)) {
-            $user->acronym = $acronym;
+
+        if (isset($this->form->value("acronym"))) {
+            $user->acronym = $this->form->value("acronym");
         }
-        if (isset($email)) {
+        if (isset($this->form->value("email"))) {
             $user->email = $this->form->value("email");
         }
-        if (isset($newpassword)) {
-            $user->setPassword($passwordAgain);
+        if (isset($this->form->value("password-again"))) {
+            $user->setPassword($this->form->value("password-again"));
         }
         $user->isadmin = $this->form->value("isadmin");
 

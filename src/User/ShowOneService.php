@@ -19,6 +19,7 @@ class ShowOneService
     protected $chosenid;
     protected $comments;
     protected $grav;
+    protected $comm;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -163,6 +164,15 @@ class ShowOneService
     }
 
 
+    public function getTagLink($val)
+    {
+        $base = $this->setUrlCreator("comm/tags/");
+        if ($val) {
+            return '<a href="' . $base . "/" . $val . '">' . $this->getName($val) . "</a>, ";
+        }
+    }
+
+
     /**
      * @param object $item
      *
@@ -170,15 +180,10 @@ class ShowOneService
      */
     public function getTags($item)
     {
-        $base = $this->setUrlCreator("comm/tags/");
         $taglinks = "";
         if (is_array($item)) {
             foreach ($item as $key => $val) {
-                if ($val == null || $val == "null") {
-                    continue;
-                } else {
-                    $taglinks .= '<a href="' . $base . "/" . $val . '">' . $this->getName($val) . "</a>, ";
-                }
+                $taglinks .= $this->getTagLink($val);
             }
         }
         $taglinks = substr($taglinks, 0, -2);
@@ -224,7 +229,8 @@ class ShowOneService
      */
     public function getCommentHTML($item, $viewone)
     {
-        $parent = $this->comm->findOne($item['iscomment']);
+        $comm = $this->di->get("commController");
+        $parent = $comm->findOne($item['iscomment']);
         $color = "";
         if ($parent->parentid == null) { //Comment to question
             $color = "delared";
@@ -250,7 +256,8 @@ class ShowOneService
      */
     public function getAnswersHTML($item, $viewone)
     {
-        $parent = $this->comm->findOne($item['isanswer']);
+        $comm = $this->di->get("commController");
+        $parent = $comm->findOne($item['isanswer']);
         $color = "";
         if ($parent->parentid == null) {
             $color = "delared";
@@ -259,7 +266,6 @@ class ShowOneService
         }
         $decodeMarkdown = json_decode($parent->comment);
         $tag = $this->getTags($decodeMarkdown->frontmatter->tags);
-        //var_dump($tag);
         $parenttitel = $parent->title;
 
         $text = "<td><a href='" . $viewone . "/" . $item['id'] . "'><span class='delablue'>" . $item['comm']->frontmatter->title . "</span></a></td><td></td>";

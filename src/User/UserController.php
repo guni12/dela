@@ -188,8 +188,6 @@ class UserController implements
     public function getPostUpdateUser($id)
     {
         $title      = "Uppdatera användaren";
-        $view       = $this->di->get("view");
-        $pageRender = $this->di->get("pageRender");
 
         $sess = $this->getSess();
         $userid = isset($sess['id']) ? $sess['id'] : "";

@@ -18,6 +18,9 @@ class ShowOneService
     protected $sess;
     protected $isadmin;
     protected $commtext;
+    protected $linkup;
+    protected $linkend;
+    protected $linkdown;
 
 
     /**
@@ -30,24 +33,33 @@ class ShowOneService
     {
         $this->di = $di;
         $this->comment = $this->getItemDetails($id);
-
-        if ($sort == 1) {
-            $where = "parentid = ?";
-            $orderby = "`points` DESC"; //ORDER BY by AR
-            $params = [$id];
-            $this->comments = $this->getParentOrderDetails($where, $orderby, $params);
-        } else {
-            $where = "parentid = ?";
-            $orderby = "`created` DESC"; //ORDER BY by AR
-            $params = [$id];
-            $this->comments = $this->getParentOrderDetails($where, $orderby, $params);
-        }
+        $this->getComments($sort, $id);
 
         $session = $this->di->get("session");
         $this->sess = $session->get("user");
 
         $this->isadmin = $this->sess['isadmin'] == 1 ? true : false;
         $this->commtext = "";
+        $this->linkup = "";
+        $this->linkdown = "";
+        $this->linkend = "";
+    }
+
+
+    /**
+    * Get the comments int the order we want
+    */
+    public function getComments($sort, $id)
+    {
+        if ($sort == 1) {
+            $orderby = "`points` DESC"; //ORDER BY by AR
+            $params = [$id];
+            $this->comments = $this->getParentOrderDetails($orderby, $params);
+        } else {
+            $orderby = "`created` DESC"; //ORDER BY by AR
+            $params = [$id];
+            $this->comments = $this->getParentOrderDetails($orderby, $params);
+        }        
     }
 
 
@@ -70,32 +82,30 @@ class ShowOneService
         /**
      * Get details on item to load form with.
      *
-     * @param string $where
      * @param array $params get details on item with id parentid.
      *
      * @return Comm
      */
-    public function getParentDetails($where, $params)
+    public function getParentDetails($params)
     {
         $comm = new Comm();
         $comm->setDb($this->di->get("db"));
-        return $comm->findAllWhere($where, $params);
+        return $comm->findAllWhere("parentid = ?", $params);
     }
 
         /**
      * Get details on item to load form with.
      *
-     * @param string $where
      * @param string $orderby - column and DESC or ASS
      * @param array $params get details on item with id parentid.
      *
      * @return Comm
      */
-    public function getParentOrderDetails($where, $orderby, $params)
+    public function getParentOrderDetails($orderby, $params)
     {
         $comm = new Comm();
         $comm->setDb($this->di->get("db"));
-        return $comm->findOrderBy($where, $orderby, $params);
+        return $comm->findOrderBy("parentid = ?", $orderby, $params);
     }
 
 
@@ -184,6 +194,50 @@ class ShowOneService
         return $link;
     }
 
+    /**
+    * sets variables for when not a member
+    */
+    public function noMember()
+    {
+        $this->linkup = '<span class="hasvoted">';
+        $this->linkdown = '<span class="hasvoted">';
+        $this->linkend = '</span>';
+    }
+
+
+    /**
+    * sets variables for when member has voted
+    */
+    public function votedMember()
+    {
+        $this->linkup = '<span class="hasvoted"><span class="hasvotedtext">Man kan bara rösta en gång</span>';
+        $this->linkdown = '<span class="hasvoted"><span class="hasvotedtext">Man kan bara rösta en gång</span>';
+        $this->linkend = '</span>';        
+    }
+
+
+    /**
+    * sets variables for when commentowner
+    */
+    public function commentOwner()
+    {
+        $this->linkup = '<span class="hasvoted"><span class="hasvotedtext">Det går inte rösta på sig själv</span>';
+        $this->linkdown = '<span class="hasvoted">';
+        $this->linkend = '</span>';
+    }
+
+
+    /**
+    * sets variables for when member can vote
+    */
+    public function canVote($voteup, $votedown, $id)
+    {
+        $this->linkup = '<a href="' . $voteup . '/' . $id . '"><span class="canvote"><span class="canvotetext">+1</span>';
+        $this->linkdown = '<a href="' . $votedown . '/' . $id . '"><span class="canvote"><span class="canvotetext">-1</span>';
+        $this->linkend = '</span></a>';
+    }
+
+
 
     /**
      *
@@ -204,26 +258,18 @@ class ShowOneService
             $fadown = '<i class="fa fa-thumbs-down" aria-hidden="true"></i>';
 
             if ($this->sess == null) {
-                $linkup = '<span class="hasvoted">';
-                $linkdown = '<span class="hasvoted">';
-                $linkend = '</span>';
+                $this->noMember();
             } elseif ($arr_decoded && in_array($this->sess['id'], $arr_decoded)) {
-                $linkup = '<span class="hasvoted"><span class="hasvotedtext">Man kan bara rösta en gång</span>';
-                $linkdown = '<span class="hasvoted"><span class="hasvotedtext">Man kan bara rösta en gång</span>';
-                $linkend = '</span>';
+                $this->votedMember();
             } elseif ($this->sess['id'] == $value->userid) {
-                $linkup = '<span class="hasvoted"><span class="hasvotedtext">Det går inte rösta på sig själv</span>';
-                $linkdown = '<span class="hasvoted">';
-                $linkend = '</span>';
+                $this->commentOwner();
             } else {
-                $linkup = '<a href="' . $voteup . '/' . $value->id . '"><span class="canvote"><span class="canvotetext">+1</span>';
-                $linkdown = '<a href="' . $votedown . '/' . $value->id . '"><span class="canvote"><span class="canvotetext">-1</span>';
-                $linkend = '</span></a>';
+                $this->canVote($voteup, $votedown, $value->id);
             }
             $points = $value->points ? ' | <span class = "smaller">[' . $value->points . ']</span>' : "";
 
-            $html = ' | ' . $linkup . $faup . $linkend;
-            $html  .= ' | ' . $linkdown . $fadown . $linkend . $points;
+            $html = ' | ' . $this->linkup . $faup . $this->linkend;
+            $html  .= ' | ' . $this->linkdown . $fadown . $this->linkend . $points;
         }
         return $html;
     }
@@ -294,7 +340,7 @@ class ShowOneService
      *
      * @return string htmlcode
      */
-    public function getCommComments($value)
+    public function getCommCommVal($value)
     {
         $lead = null;
         $text = '<div class = "move20">';
@@ -304,6 +350,21 @@ class ShowOneService
             $text .= $this->getVoteHtml($value);
         }
         $text .= "</div>";
+        return $text;
+    }
+
+    /**
+     * @param object $commcomments - commentlist
+     *
+     * @return string htmlcode
+     */
+    public function getCommComments($commcomments)
+    {
+        $text = "";
+        foreach ($commcomments as $key => $value) {
+            $text .= $this->getCommCommVal($value);
+        }
+        return $text;
     }
 
     /**
@@ -351,8 +412,6 @@ class ShowOneService
      */
     public function getHTMLItem($value, $commentpath)
     {
-        $where = "parentid = ?";
-        $lead = null;
         $text = "";
         if ($value->iscomment == 0) {
             $toaccept = 0;
@@ -360,22 +419,18 @@ class ShowOneService
             $text .= $this->getValHtml($value);
             $text .= '<br /><a href="' . $commentpath . '/' . $value->id . '">Kommentera</a>';
             $text .= $this->getVoteHtml($value);
-            $params = [$value->id];
-            $commcomments = $this->getParentDetails($where, $params);
             $toaccept = $this->getToAccept();
             $text .= $this->getAcceptIcon($toaccept, $this->comment->accept, $value->id);
-            if ($commcomments) {
-                foreach ($commcomments as $key => $value) {
-                    $text .= $this->getCommComments($value);
-                }
-            }
+            $params = [$value->id];
+            $commcomments = $this->getParentDetails($params);
+            $text .= ($commcomments) ? $this->getCommComments($commcomments) : "";
             $text .= '<hr />';
-        } elseif ($value->iscomment == 1) {
-            $this->commtext .= $this->getValHtml($value, $lead, 1);
+        } 
+        if ($value->iscomment == 1) {
+            $this->commtext .= $this->getValHtml($value, null, 1);
             $this->commtext .= $this->getVoteHtml($value);
             $this->commtext .= '<hr />';
         }
-
         return $text;
     }
 
@@ -409,14 +464,9 @@ class ShowOneService
 
         $html = '<div class="col-sm-12 col-xs-12"><div class="col-lg-6 col-sm-7 col-xs-12">';
         $html .= $this->getValHtml($this->comment);
-        $html .= '<br />' . $edit;
-        $html .=  $delete;
-        $html .= '<hr />';
-        $html .= $this->commtext;
+        $html .= '<br />' . $edit . $delete . '<hr />' . $this->commtext;
         $html .=  '<p><a href="' . $commpage . '">Till Frågor</a></p>';
-        $html .=  '</div><div class="col-sm-5 col-xs-12">';
-        $html .= $text;
-        $html .= '</div></div>';
+        $html .=  '</div><div class="col-sm-5 col-xs-12">' . $text . '</div></div>';
         return $html;
     }
 }

@@ -18,6 +18,10 @@ class IndexPage
     protected $user;
     protected $userController;
     protected $isadmin;
+    protected $elcar;
+    protected $safety;
+    protected $light;
+    protected $heat;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -27,6 +31,15 @@ class IndexPage
     public function __construct(DIInterface $di)
     {
         $this->di = $di;
+        $this->initiate();
+    }
+
+
+    /**
+    * Initiates some global variables
+    */
+    public function initiate()
+    {
         $this->comments = $this->getAll();
         $session = $this->di->get("session");
         $this->sess = $session->get("user");
@@ -36,6 +49,10 @@ class IndexPage
         $this->users = $this->userController->getAllUsers();
         $this->user = $this->userController->getOne($this->sess['id']);
         $this->isadmin = $this->sess['isadmin'] === 1 ? true : false;
+        $this->elcar = 0;
+        $this->safety = 0;
+        $this->light = 0;
+        $this->heat = 0;
     }
 
     /**
@@ -80,6 +97,34 @@ class IndexPage
 
 
     /**
+    *
+    */
+    public function isUpdated($item)
+    {
+        if ($item->parentid !== null) {
+            return 'Svar: ' . $item->created . ', Ändrad: ' . $item->updated;
+        } else {
+            return 'Fråga: ' . $item->created . ', Ändrad: ' . $item->updated;
+        }
+    }
+
+
+
+    /**
+    *
+    */
+    public function isNotUpdated($item)
+    {
+        if ($item->parentid !== null) {
+            return 'Svar: ' . $item->created;
+        } else {
+            return 'Fråga: ' . $item->created;
+        }
+    }
+
+
+
+    /**
      * Returns when created or updated
      *
      * @param object $item
@@ -87,20 +132,7 @@ class IndexPage
      */
     public function getWhen($item)
     {
-        $when = "";
-        if ($item->updated) {
-            if ($item->parentid !== null) {
-                $when .= 'Svar: ' . $item->created . ', Ändrad: ' . $item->updated;
-            } else {
-                $when .= 'Fråga: ' . $item->created . ', Ändrad: ' . $item->updated;
-            }
-        } else {
-            if ($item->parentid !== null) {
-                $when .= 'Svar: ' . $item->created;
-            } else {
-                $when .= 'Fråga: ' . $item->created;
-            }
-        }
+        $when = $item->updated ? $this->isUpdated($item) : $this->isNotUpdated($item);
         return $when;
     }
 
@@ -119,8 +151,8 @@ class IndexPage
         $curruser = $this->userController->getOne($item->userid);
         $email = $curruser['email'];
         $gravatar = $this->getGravatar($email);
-        //$when = $this->getWhen($item);
-        $when = $item->created;
+        //$when = $item->created;
+        $when = $this->getWhen($item);
         if ($this->isadmin === true) {
             $showid = '(' . $item->id . '): ';
         }
@@ -179,6 +211,7 @@ class IndexPage
      */
     public function getDecode($item, $lead = null)
     {
+        //var_dump($item);
         $comt = json_decode($item);
         $tags = [];
         if ($comt->frontmatter->tags) {
@@ -190,38 +223,43 @@ class IndexPage
 
 
     /**
+    * @param obj $value - comment with tag perhaps
+    */
+    public function countTags($value)
+    {
+        $test = $this->getDecode($value->comment);
+
+        if ($test[0] == "elcar") {
+            $this->elcar += 1;
+        }
+        if ($test[1] == "safety") {
+            $this->safety += 1;
+        }
+        if ($test[2] == "light") {
+            $this->light += 1;
+        }
+        if ($test[0] == "heat") {
+            $this->heat += 1;
+        }
+    }
+
+
+
+    /**
      * Returns list of taginfo
      * 
      * @param object $comments
      * @return array
      */
     public function getTagarr() {
-        $elcar = 0;
-        $safety = 0;
-        $light = 0;
-        $heat = 0;
-
         foreach ($this->comments as $key => $value) {
-            $test = $this->getDecode($value->comment);
-
-            if ($test[0] == "elcar") {
-                $elcar += 1;
-            }
-            if ($test[1] == "safety") {
-                $safety += 1;
-            }
-            if ($test[2] == "light") {
-                $light += 1;
-            }
-            if ($test[0] == "heat") {
-                $heat += 1;
-            }
+            $this->countTags($value);
         }
 
-        $arr['elcar'] = [$elcar, "Elbil"];
-        $arr['safety'] = [$safety, "Säkerhet"];
-        $arr['light'] = [$light, "Belysning"];
-        $arr['heat'] = [$heat, "Värme"];
+        $arr['elcar'] = [$this->elcar, "Elbil"];
+        $arr['safety'] = [$this->safety, "Säkerhet"];
+        $arr['light'] = [$this->light, "Belysning"];
+        $arr['heat'] = [$this->heat, "Värme"];
 
         arsort($arr);
 
@@ -245,6 +283,7 @@ class IndexPage
 
 
     /**
+    * @param string $viewone - path
     * @return string $html - htmltext for the questions
     */
     public function getLatestQuestions($viewone)
@@ -253,16 +292,11 @@ class IndexPage
         $ct = 0;
         $reversed = array_reverse($this->comments);
         $html = "";
+        //$value->parentid means it is respons to a parent
 
         foreach ($reversed as $value) {
-            if ((int)$value->parentid > 0) {
-                continue;
-            }
-            if ($ct >= 5) {
-                break;
-            }
-            $html .= $this->getValHtml($value, $viewone);
-            $ct += 1;
+            $html .= ((int)$value->parentid <= 0) && $ct < 5 ? $this->getValHtml($value, $viewone) : "";
+            $ct = ((int)$value->parentid <= 0) ? $ct + 1 : $ct;
         }
         return $html;
     }

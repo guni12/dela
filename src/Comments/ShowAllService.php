@@ -89,9 +89,9 @@ class ShowAllService
     {
         $when = "";
         if ($item->updated) {
-            $when .= 'Ändrad: ' . $item->updated;
+            $when .= '<span class="smaller">Ändrad: ' . $item->updated;
         } else {
-            $when .= 'Frågad: ' . $item->created;
+            $when .= '<span class="smaller">Frågad: ' . $item->created;
         }
         return $when;
     }
@@ -135,6 +135,30 @@ class ShowAllService
     }
 
 
+
+    /**
+    * @param string $viewone - path
+    * @param integer $id - current comment 
+    * @param string $showid - if admin more info
+    * @param string $title - comment-title
+    * @param string $answers - if exist
+    * @param string $comments - if exist
+    * @param string $points - if exist
+    * @param string $when - when comment was created
+    * @param string $email
+    * @param string $gravatar
+    *
+    * @return string $html
+    */
+    public function getTheText($viewone, $id, $showid, $title, $answers, $comments, $points, $when, $email, $gravatar)
+    {
+        $html = '<div class="clearfix"><h4><a href="' . $viewone . '/' . $id . '">';
+        $html .= $showid . ' ' . $title . '</a><span class = "smaller"> ' . $answers . $comments . $points . '</span></h4><p class="by">';
+        $html .= $when . ' ' . $email . ' </span>' . $gravatar . '</p></div><hr class="border" />';
+        return $html;
+    }
+
+
     /**
      * Returns html for each item
      *
@@ -146,7 +170,6 @@ class ShowAllService
      */
     public function getValHtml(Comm $item, $email, $isadmin, $viewone)
     {
-        $where = "parentid = ?";
         $answersct = 0;
         $commentsct = 0;
         $points = "";
@@ -157,7 +180,7 @@ class ShowAllService
         $when = $this->getWhen($item);
         $showid = $isadmin === true ? '(' . $item->id . '): ' : "";
 
-        $commcomments = $this->getParentDetails($where, $item->id);
+        $commcomments = $this->getParentDetails("parentid = ?", $item->id);
 
         foreach ($commcomments as $key => $value) {
             if ($value->iscomment > 0) {
@@ -176,10 +199,7 @@ class ShowAllService
         $points = $answersct > 0 ? ", " : "";
         $points .= $item->points !== null && $item->points > 0 ? 'rank: ' . $item->points : "";
 
-        $html = '<div class="clearfix"><h4><a href="' . $viewone . '/' . $item->id . '">';
-        $html .= $showid . ' ' . $item->title . '</a><span class = "smaller"> ' . $answers . $comments . $points . '</span></h4><p class="by">';
-        $html .= $when . ' ' . $email . ' ' . $gravatar . '</p></div><hr class="border" />';
-        return $html;
+        return $this->getTheText($viewone, $item->id, $showid, $item->title, $answers, $comments, $points, $when, $email, $gravatar);
     }
 
 
@@ -201,8 +221,8 @@ class ShowAllService
 
         $loggedin = $this->getLoginLink($isadmin, $create, $del);
 
-        $html .= '<div class="col-sm-12 col-xs-12">
-        <div class="col-lg-10 col-sm-12 col-xs-12">
+        $html .= '<div class="col-lg-10 col-sm-12 col-xs-12"><div class="movesome">
+
         <h3>Gruppinlägg <span class="small">' . $loggedin . '</span></h3>
         <hr />';
 

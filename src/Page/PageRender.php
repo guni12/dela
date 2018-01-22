@@ -21,7 +21,7 @@ class PageRender implements PageRenderInterface, InjectionAwareInterface
     }
 
 
-    public function addViewContent($view, $text, $region, $data, $status)
+    public function addViewContent($view, $text, $region, $data)
     {
         $navbar = $this->di->get("navbar");
 
@@ -38,11 +38,6 @@ class PageRender implements PageRenderInterface, InjectionAwareInterface
             ], $region, 0);
         
         $view->add("view/layout", $data, "layout");
-        $body = $view->renderBuffered("layout");
-
-        $this->di->get("response")->setBody($body)
-                                  ->send($status);
-        exit;
     }
 
 
@@ -81,6 +76,10 @@ class PageRender implements PageRenderInterface, InjectionAwareInterface
             ], $meta['views']['links']['region'], 0);
         }
 
-        $this->addViewContent($view, $text, $region, $data, $status);
+        $this->addViewContent($view, $text, $region, $data);
+        $body = $view->renderBuffered("layout");
+        $this->di->get("response")->setBody($body)
+                                  ->send($status);
+        exit;
     }
 }

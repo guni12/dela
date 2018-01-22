@@ -24,6 +24,27 @@ class Navbar implements
      * Sets the callable to use for creating routes.
      *
      * @param obj $url - di_connection
+     * @param string $create - path
+     * @param string $navpath
+     *
+     * @return string $loginout - htmltext
+     */
+    public function getToLogin($create, $navpath)
+    {
+        $navtext = "Logga in";
+        $loginout = '<li><a href = "' . $create . '">Bli medlem</span></a></li>';
+        $loginout .= '<li><a href="' . $navpath . '"><span class="glyphicon glyphicon-log-in">';
+        $loginout .= '</span> ' . $navtext . '</a></li>';
+        return $loginout;
+    }
+
+
+
+
+    /**
+     * Sets the callable to use for creating routes.
+     *
+     * @param obj $url - di_connection
      * @param string $update - pathbase
      * @param obj $sess - session_info
      * @param string $grav - gravator_htmltext
@@ -123,23 +144,16 @@ EOD;
         }
 
         $comm = $this->di->get("commController");
-        $grav = $comm->getGravatar($sess['email']);
-        $grav = "<img src='" . $grav . "' />";
+        $grav = "<img src='" . $comm->getGravatar($sess['email']) . "' />";
 
-        $span = '<span class="icon-bar"></span>';
-        $spans = $span . $span . $span;
+        $spans = '<span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>';
 
-        $links = "";
-        $navtext = "Logga in";
-
-        $loginout = '<li><a href = "' . $create . '">Bli medlem</span></a></li>';
-        $loginout .= '<li><a href="' . $navpath . '"><span class="glyphicon glyphicon-log-in">';
-        $loginout .= '</span> ' . $navtext . '</a></li>';
-
+        $loginout = $this->getToLogin($create, $navpath);
         if ($sess) {
             $loginout = $this->getIsLoggedin($url, $update, $sess, $grav);
         }
 
+        $links = "";
         foreach ($this->config['items'] as $val) {
             $links .= $this->getNavLink($url, $val);
         }

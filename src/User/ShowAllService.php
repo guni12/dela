@@ -84,15 +84,12 @@ class ShowAllService
     }
 
 
-    public function getHTML()
+    /**
+    * @return htmltext to start table
+    */
+    public function tableStart($create, $del)
     {
-        $html = $this->getMembers();
-
-        $create = $this->setUrlCreator("user/admincreate");
-        $adminupdate = $this->setUrlCreator("user/adminupdate");
-        $del = $this->setUrlCreator("user/admindelete");
-
-        $html .= '<h1>Alla medlemmar</h1>';
+        $html = '<h1>Alla medlemmar</h1>';
         $html .= '<p><span class="button"><a href="' . $create . '">Lägg Till Medlem</a></span>';
         $html .= ' | <span class="button"><a href="' . $del . '">Ta bort Medlem</a></span></p>';
 
@@ -106,6 +103,19 @@ class ShowAllService
         <th class="updated">Uppdaterades</th>
         <th class="active">Aktiv</th>
         </tr>';
+        return $html;
+    }
+
+
+    public function getHTML()
+    {
+        $html = $this->getMembers();
+
+        $create = $this->setUrlCreator("user/admincreate");
+        $adminupdate = $this->setUrlCreator("user/adminupdate");
+        $del = $this->setUrlCreator("user/admindelete");
+
+        $html .= $this->tableStart($create, $del);
 
         foreach ($this->users as $value) {
             $html .= '<tr><td>';

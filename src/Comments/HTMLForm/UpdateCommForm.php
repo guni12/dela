@@ -2,7 +2,7 @@
 
 namespace Guni\Comments\HTMLForm;
 
-use \Anax\HTMLForm\FormModel;
+use \Guni\Comments\HTMLForm\FormModel;
 use \Anax\DI\DIInterface;
 use \Guni\Comments\Comm;
 
@@ -11,6 +11,8 @@ use \Guni\Comments\Comm;
  */
 class UpdateCommForm extends FormModel
 {
+    protected $comm;
+
     /**
      * Constructor injects with DI container and the id to update.
      *
@@ -20,13 +22,13 @@ class UpdateCommForm extends FormModel
     public function __construct(DIInterface $di, $id, $sessid)
     {
         parent::__construct($di);
-        $comm = $this->getCommDetails($id);
+        $this->comm = $this->getCommDetails($id);
 
-        $comt = $this->decode($comm->comment);
-        $tags = $this->decodeTags($comm->comment);
+        $comt = $this->decode($this->comm->comment);
+        $tags = $this->decodeTags($this->comm->comment);
         //var_dump($comt);
 
-        $this->aForm($id, $sessid, $comm, $comt, $tags);
+        $this->aForm($id, $sessid, $comt, $tags);
     }
 
 
@@ -47,6 +49,24 @@ class UpdateCommForm extends FormModel
     }
 
 
+
+    /**
+    * @param array $array - tags
+    *
+    * @return array $checked - with checked tags
+    */
+    public function fillArrayChecked($array)
+    {
+        $checked = [];
+        foreach ($array as $val) {
+            if ($val !== null) {
+                array_push($checked, $val);
+            }
+        }
+        return $checked;
+    }
+
+
     /**
     * Converts json-string back to variables
     *
@@ -57,17 +77,7 @@ class UpdateCommForm extends FormModel
     {
         $array = json_decode($fromjson);
         $array = isset($array->frontmatter->tags) ? $array->frontmatter->tags : [];
-        $checked = [];
-        //var_dump($fromjson, $array);
-        if (is_array($array)) {
-            foreach ($array as $val) {
-                if ($val !== null) {
-                    array_push($checked, $val);
-                }
-            }
-        } else {
-            $checked = $array;
-        }
+        $checked = is_array($array) ? $this->fillArrayChecked($array) : $array;
         return $checked;
     }
 
@@ -119,7 +129,7 @@ class UpdateCommForm extends FormModel
      * Create the form.
      *
      */
-    public function aForm($id, $sessid, $comm, $comt, $tags)
+    public function aForm($id, $sessid, $comt, $tags)
     {
         $dropdown = $this->getDropdown($tags);
 
@@ -128,20 +138,21 @@ class UpdateCommForm extends FormModel
                 "id" => "wmd-button-bar",
                 "legend" => "Uppdatera ditt konto",
                 "wmd" => "wmd-button-bar",
+                "preview" => "wmd-preview",
             ],
             [   
                 "sessid" => ["type"  => "hidden", "value" => $sessid],
                 "id" => ["type"  => "hidden", "value" => $id],
-                "userid" => ["type"  => "hidden", "value" => $comm->userid],
+                "userid" => ["type"  => "hidden", "value" => $this->comm->userid],
                 "parentid" => [
                     "type"  => "hidden",
-                    "value" => $comm->parentid
+                    "value" => $this->comm->parentid
                 ],
                 "title" => [
                     "type" => "text",
                     "label" => "Titel",
                     "validation" => ["not_empty"],
-                    "value" => $comm->title,
+                    "value" => $this->comm->title,
                     "wrapper-element-class" => "form-group",
                     "class" => "form-control"
                 ],
@@ -193,8 +204,7 @@ class UpdateCommForm extends FormModel
         if ($elcar == null && $safety == null && $light == null && $heat == null) {
                 $elcar = "elcar";
             }
-
-        $comment->frontmatter['tags'] = [$elcar, $safety, $light, $heat];
+        return [$elcar, $safety, $light, $heat];
     }
 
 
@@ -219,7 +229,7 @@ class UpdateCommForm extends FormModel
         $comment->frontmatter['title'] = $this->form->value("title");
 
         $tags = $this->form->value("tags");
-        $this->handleTags($tags);
+        $comment->frontmatter['tags'] = $this->handleTags($tags);
 
         $comment = json_encode($comment);
 

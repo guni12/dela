@@ -395,6 +395,10 @@ td.parenttag {
     padding-left: 20px;
 }
 
+.movesome {
+    padding-left: 250px;
+}
+
 .pcomment {
     font-size: 0.7em;
 }
@@ -425,6 +429,13 @@ td.parenttag {
     }
 }
 
+
+@media (max-width: 999px) {
+    .movesome {
+        padding-left: 150px;
+    }
+}
+
 @media (max-width: 800px) {
     .inner {
         margin: 2%;
@@ -432,6 +443,9 @@ td.parenttag {
     }
     .member {
         width: 100%;
+    }
+    .movesome {
+        padding-left: 100px;
     }
 }
 
@@ -455,6 +469,9 @@ td.parenttag {
         padding-right: 3%;
         width: 30%;
     }
+    .movesome {
+        padding-left: 30px;
+    }
 }
 
 @media (max-width: 450px) {
@@ -467,6 +484,9 @@ td.parenttag {
     .inner {
         margin: 2%;
         width: 44%;
+    }
+    .movesome {
+        padding-left: 0px;
     }
 }
 
