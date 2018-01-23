@@ -106,16 +106,4 @@ EOD;
 
         $this->assertEquals($exp, $res, "Empty form missmatch.");
     }
-
-
-    /**
-     * Init the REM server without dataset throws exception.
-     *
-     * //expectedException Exception
-     */
-    public function testFail()
-    {
-        $test = true;
-        $this->assertTrue($test);        
-    }
 }

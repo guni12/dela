@@ -37,7 +37,7 @@ HELPTEXT = $(ECHO) "$(ACTION)--->" `egrep "^\# target: $(1) " $(THIS_MAKEFILE) |
 #
 BIN     := .bin
 PHPUNIT := $(BIN)/phpunit
-PHPLOC 	:= $(BIN)/phploc
+PHPLOC  := $(BIN)/phploc
 PHPCS   := $(BIN)/phpcs
 PHPCBF  := $(BIN)/phpcbf
 PHPMD   := $(BIN)/phpmd
@@ -193,6 +193,7 @@ check-tools-php:
 phpunit: prepare
 	@$(call HELPTEXT,$@)
 	[ ! -d "test" ] || $(PHPUNIT) --configuration .phpunit.xml
+
 
 
 

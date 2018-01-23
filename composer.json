@@ -30,5 +30,7 @@
             "Guni\\": "src/",
             "Anax\\": "src/"
         }
+    },
+    "require-dev": {
     }
 }

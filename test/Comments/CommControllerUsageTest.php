@@ -17,7 +17,6 @@ class CommControllerUsageTest extends \PHPUnit_Framework_TestCase
     public function setUp()
     {
         $this->di = new \Anax\DI\DIFactoryConfig("di.php");
-        //$this->interface = new \Anax\DI\DIInterface("di.php");
     }
 
         public function testBasic()
@@ -28,8 +27,5 @@ class CommControllerUsageTest extends \PHPUnit_Framework_TestCase
         $email = $comm->getGravatar("gunvor@behovsbo.se", 50);
         $exp = "https://www.gravatar.com/avatar/2438dc720f1ca2c32c27a5bb658229c4?s=50&d=mm&r=g";
         $this->assertEquals($exp, $email);
-
-        //$taglist = $comm->getTagList($this->interface);
-        //$this->assertEquals(null, $taglist);
     }
 }

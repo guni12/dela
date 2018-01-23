@@ -4,16 +4,20 @@ namespace Guni\Comments;
 
 use \Anax\DI\DIInterface;
 use \Guni\User\User;
+use \Guni\User\UserController;
+use \Guni\User\HTMLForm\UserLoginForm;
+
 
 /**
- * HTML Form elements.
+ * Tests.
  */
 class UserUsageTest extends \PHPUnit_Framework_TestCase
 {
     public $di;
 
+
     /**
-     * Setup before each testcase
+     * Testcase
      */
     public function setUp()
     {
@@ -32,12 +36,32 @@ class UserUsageTest extends \PHPUnit_Framework_TestCase
         $user2->setPassword("mumintrollet");
         $test2 = [$user->email, $user->password];
 
-        //$this->assertEquals($user, $user2);
-        //$this->assertContains('email', $user);
         $this->assertObjectHasAttribute('email', $user);
         //$this->assertArrayHasKey('email', $user);
         //$this->assertEmpty($test2);
-        //$this->assertEquals($user->password, $user2->password);
+
+
+        $control = new UserController();
+        $this->assertInstanceOf("\Guni\User\UserController", $control);
+
+        /*$stub = $this->createMock($user);
+
+        $stub->method('getPostAdminCreateUser')
+             ->willReturn('foo');
+
+        $this->assertEquals('foo', $stub->getPostAdminCreateUser());*/
+
+        $loginDetails = array(
+            'user'   => "Gunvor",
+            'password' => 'password',
+        );
+
+        $login = new UserLoginForm($this->di);
+        $form = ["test"];
+
+        $formmodel = $this->createMock('\Anax\HTMLForm\FormModel', array(), array($this->di, $form));
+
+        $this->assertInstanceOf("\Anax\HTMLForm\FormModel", $formmodel);
 
     }
 }

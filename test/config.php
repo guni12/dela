@@ -25,4 +25,5 @@ require ANAX_INSTALL_PATH . "/vendor/autoload.php";
 /**
  * Include other files to test, for example mock files.
  */
-//require "View/MockViewHelper.php";
+require "data/database_sqlite.php";
+require "data/datadi.php";
