@@ -149,7 +149,6 @@ class ActiveRecordModel
     public function findWhere($where, $value)
     {
         $this->checkDb();
-        //var_dump($where, $value);
         $params = is_array($value) ? $value : [$value];
         return $this->db->connect()
                         ->select()
@@ -276,7 +275,6 @@ class ActiveRecordModel
     {
         $this->checkDb();
         $properties = $this->getProperties();
-        var_dump("properties", $properties);
         unset($properties[$this->tableIdColumn]);
         $columns = array_keys($properties);
         $values  = array_values($properties);
