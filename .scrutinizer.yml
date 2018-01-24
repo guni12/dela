@@ -1,24 +1,9 @@
 # .scrutinizer.yml
-imports:
-    - php
-
-filter:
-    excluded_paths: [vendor/*, test/*]
-
 build:
+    environment:
+        php:
+            version: 5.6       # Common versions: 5.4, 5.5, 5.6, 7.0, 7.1, or hhvm
 
-    dependencies:
-        before:
-            -
-                command: "mkdir build"
-
-    tests:
-        override:
-            -
-                command: "phpunit --configuration .phpunit.xml"
-                coverage:
-                    file: "build/coverage.clover"
-                    format: "php-clover"
 
 checks:
     php:
