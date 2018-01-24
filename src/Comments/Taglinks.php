@@ -9,7 +9,9 @@ use \Anax\DI\DIInterface;
  */
 class Taglinks
 {
-        /**
+    protected $di;
+
+    /**
      * Constructor injects with DI container and the id to update.
      *
      * @param Anax\DI\DIInterface $di a service container

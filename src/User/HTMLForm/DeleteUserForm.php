@@ -68,16 +68,13 @@ class DeleteUserForm extends FormModel
      */
     public function callbackSubmit()
     {
-        $acronym;
         $user = new User();
         $user->setDb($this->di->get("db"));
         $user->find("id", $this->form->value("id"));
-        $acronym = $user->acronym;
         $user->delete();
 
         $session = $this->di->get("session");
         $session->delete('user');
-        //$this->form->addOutput($acronym . ": kastad.");
         $this->di->get("response")->redirect("user/login");
     }
 }

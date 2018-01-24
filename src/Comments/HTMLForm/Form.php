@@ -51,7 +51,6 @@ class Form implements \ArrayAccess
      */
     public function offsetSet($offset, $value)
     {
-        var_dump($offset);
         if (is_null($offset)) {
             $this->elements[] = $value;
         } else {

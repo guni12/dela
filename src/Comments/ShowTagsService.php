@@ -18,6 +18,7 @@ class ShowTagsService
     protected $name;
     protected $isadmin;
     protected $sess;
+    protected $di;
 
 
     /**
@@ -134,32 +135,11 @@ class ShowTagsService
             case "light":
                 return "Belysning";
                 break;
-            default:
-                $headline = "Värme";
+            case "heat":
+                return "Värme";
         }
     }
 
-
-    /**
-     * Returns html for each item
-     *
-     * @param object $item
-     * @param string $can
-     *
-     * @return string htmlcod
-     */
-    public function getValHtml(Comm $item, $can)
-    {
-        $gravatar = $this->getGravatar($item->email);
-        $updated = isset($item->updated) ? '| Uppdaterades: ' . $item->updated : "";
-        
-        $text = $this->getDecode($item);
-        $text .= '<p><span class="smaller">' . $item->email . '</span> ' . $gravatar . '<br />';
-        $text .= 'Skrevs: ' . $item->created . ' ' . $updated;
-        $text .= $can;
-        $text .= '<hr />';
-        return $text;
-    }
 
 
     /**
@@ -211,9 +191,7 @@ class ShowTagsService
      */
     public function getHTML()
     {
-        $view = $this->setUrlCreator("tags/view-one");
         $viewcomm = $this->setUrlCreator("comm/view-one");
-        $base = $this->setUrlCreator("comm/tags/");
 
         $html = $this->getTableStart();
 

@@ -22,6 +22,7 @@ class IndexPage
     protected $safety;
     protected $light;
     protected $heat;
+    protected $di;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -151,7 +152,6 @@ class IndexPage
         $curruser = $this->userController->getOne($item->userid);
         $email = $curruser['email'];
         $gravatar = $this->getGravatar($email);
-        //$when = $item->created;
         $when = $this->getWhen($item);
         if ($this->isadmin === true) {
             $showid = '(' . $item->id . '): ';
@@ -173,7 +173,6 @@ class IndexPage
      */
     public function getUsersHtml($item, $viewone)
     {
-        $showid = "";
         $viewone = $this->setUrlCreator("user/view-one") . "/";
         $gravatar = $this->getGravatar($item['email']);
         $html = '<div class="clearfix">';
@@ -205,7 +204,6 @@ class IndexPage
 
     /**
      * Returns json_decoded title and text
-     * If lead text, headline is larger font
      * @param object $item
      * @return string htmlcode
      */
@@ -215,9 +213,8 @@ class IndexPage
         $comt = json_decode($item);
         $tags = [];
         if ($comt->frontmatter->tags) {
-            if (is_array($comt->frontmatter->tags)) {
-                return $comt->frontmatter->tags;
-            }
+            return is_array($comt->frontmatter->tags) ? $comt->frontmatter->tags : [];
+            
         }
     }
 
@@ -229,17 +226,11 @@ class IndexPage
     {
         $test = $this->getDecode($value->comment);
 
-        if ($test[0] == "elcar") {
-            $this->elcar += 1;
-        }
-        if ($test[1] == "safety") {
-            $this->safety += 1;
-        }
-        if ($test[2] == "light") {
-            $this->light += 1;
-        }
-        if ($test[0] == "heat") {
-            $this->heat += 1;
+        if (count($test) > 3) {
+            $this->elcar = $test[0] == "elcar" ? $this->elcar + 1 : $this->elcar;
+            $this->safety = $test[1] == "safety" ? $this->safety + 1 : $this->safety;
+            $this->light = $test[2] == "light" ? $this->light + 1 : $this->light;
+            $this->heat = $test[3] == "heat" ? $this->heat + 1 : $this->heat;
         }
     }
 

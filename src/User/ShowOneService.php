@@ -20,6 +20,7 @@ class ShowOneService
     protected $comments;
     protected $grav;
     protected $comm;
+    protected $di;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -231,7 +232,6 @@ class ShowOneService
     {
         $comm = $this->di->get("commController");
         $parent = $comm->findOne($item['iscomment']);
-        $color = "";
         if ($parent->parentid == null) { //Comment to question
             $color = "delared";
         } else {
@@ -239,7 +239,6 @@ class ShowOneService
         }
         $decodeMarkdown = json_decode($parent->comment);
         $tag = $this->getTags($decodeMarkdown->frontmatter->tags);
-        $parenttitel = $parent->title;
         $text = "<td><a href='" . $viewone . "/" . $item['id'] . "'><span class='delagreen'>" . $item['comm']->frontmatter->title . "</span></a></td>";
         $text .= "<td></td>";
         $text .= "<td class = 'parent'><a href='" . $viewone . "/" . $parent->id . "'><span class='" . $color . "'>"  . $parent->title . "</span></a></td>";
@@ -258,7 +257,6 @@ class ShowOneService
     {
         $comm = $this->di->get("commController");
         $parent = $comm->findOne($item['isanswer']);
-        $color = "";
         if ($parent->parentid == null) {
             $color = "delared";
         } else {
@@ -266,7 +264,6 @@ class ShowOneService
         }
         $decodeMarkdown = json_decode($parent->comment);
         $tag = $this->getTags($decodeMarkdown->frontmatter->tags);
-        $parenttitel = $parent->title;
 
         $text = "<td><a href='" . $viewone . "/" . $item['id'] . "'><span class='delablue'>" . $item['comm']->frontmatter->title . "</span></a></td><td></td>";
         $text .= "<td class = 'parent'><a href='" . $viewone . "/" . $parent->id . "'><span class='" . $color . "'>"  . $parent->title . "</span></a></td>";
@@ -334,6 +331,7 @@ class ShowOneService
      */    
     public function populateArray($comments)
     {
+        $array = [];
         foreach ($comments as $key => $val) {
             $obj = [];
             $obj['comm'] = json_decode($val->comment);

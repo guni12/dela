@@ -181,7 +181,7 @@ class CreateCommForm extends FormModel
         $light = is_array($tags) && in_array("light", $tags) ? "light" : null;
         $heat = is_array($tags) && in_array("heat", $tags) ? "heat" : null;
 
-        $elcar = ($elcar == null && $safety == null && $light == null && $heat == null) ? "elcar" : $elcar;
+        $elcar = ($elcar === null && $safety === null && $light === null && $heat === null) ? "elcar" : $elcar;
 
         return [$elcar, $safety, $light, $heat];
     }
@@ -210,8 +210,6 @@ class CreateCommForm extends FormModel
     {
         $textfilter = $this->di->get("textfilter");
 
-        $userController = $this->di->get("userController");
-        $userdetails = $userController->getOne($this->form->value("id"));
         $parses = ["yamlfrontmatter", "shortcode", "markdown", "titlefromheader"];
         $comment = $textfilter->parse($this->form->value("comment"), $parses);
         $comment->frontmatter['title'] = $this->form->value("title");

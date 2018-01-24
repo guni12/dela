@@ -104,10 +104,8 @@ class UserLoginForm extends FormModel
      */
     public function callbackSubmit()
     {
-        // Get values from the submitted form
         $acronym       = $this->form->value("user");
         $password      = $this->form->value("password");
-        $inlogg = [];
 
         $user = new User();
         $user->setDb($this->di->get("db"));
@@ -119,7 +117,7 @@ class UserLoginForm extends FormModel
             return false;
         }
 
-        $inlogg = $this->checkUser($user);
+        $this->checkUser($user);
 
         return true;
     }

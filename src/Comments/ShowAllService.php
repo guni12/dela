@@ -19,6 +19,7 @@ class ShowAllService
     protected $user;
     protected $userController;
     protected $isadmin;
+    protected $di;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -140,9 +141,7 @@ class ShowAllService
     /**
     * @param obj $item - current comment
     * @param string $viewone - path
-    * @param string $answers - if exist
-    * @param string $comments - if exist
-    * @param string $points - if exist
+    * @param array $numbers - counted points, answers and comments
     * @param string $when - when comment was created
     * @param string $email
     *
@@ -176,7 +175,6 @@ class ShowAllService
     {
         $answersct = 0;
         $commentsct = 0;
-        $points = "";
         $answers = "";
         $comments = "";
 
@@ -210,15 +208,12 @@ class ShowAllService
      */
     public function getHTML()
     {
-        $loggedin = "";
-        $html = "";
-
         $create = $this->setUrlCreator("comm/create");
         $del = $this->setUrlCreator("comm/admindelete");
 
         $loggedin = $this->getLoginLink($create, $del);
 
-        $html .= '<div class="col-lg-10 col-sm-12 col-xs-12"><div class="movesome">
+        $html = '<div class="col-lg-10 col-sm-12 col-xs-12"><div class="movesome">
 
         <h3>Gruppinlägg <span class="small">' . $loggedin . '</span></h3>
         <hr />';

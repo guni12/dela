@@ -21,6 +21,7 @@ class ShowOneService
     protected $linkup;
     protected $linkend;
     protected $linkdown;
+    protected $di;
 
 
     /**
@@ -62,7 +63,7 @@ class ShowOneService
      *
      * @param integer $id get details on item with id.
      *
-     * @return Comm
+     * @return object $comm - actual comment
      */
     public function getItemDetails($id)
     {

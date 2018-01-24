@@ -63,18 +63,13 @@ class AdminDeleteUserForm extends FormModel
 
 
     /**
-     * Callback for submit-button which should return true if it could
-     * carry out its work and false if something failed.
-     *
-     * @return boolean true if okey, false if something went wrong.
+     * deletes user with chosen id
      */
     public function callbackSubmit()
     {
-        $acronym = "";
         $user = new User();
         $user->setDb($this->di->get("db"));
         $user->find("id", $this->form->value("select"));
-        $acronym = $user->acronym;
         $user->delete();
         $this->di->get("response")->redirect("user");
     }

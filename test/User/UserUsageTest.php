@@ -34,7 +34,7 @@ class UserUsageTest extends \PHPUnit_Framework_TestCase
 
         $user->setPassword("mumintrollet");
         $user2->setPassword("mumintrollet");
-        $test2 = [$user->email, $user->password];
+        //$test2 = [$user->email, $user->password];
 
         $this->assertObjectHasAttribute('email', $user);
         //$this->assertArrayHasKey('email', $user);
@@ -51,12 +51,9 @@ class UserUsageTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals('foo', $stub->getPostAdminCreateUser());*/
 
-        $loginDetails = array(
-            'user'   => "Gunvor",
-            'password' => 'password',
-        );
+        //$loginDetails = array('user' => "Gunvor",'password' => 'password',);
 
-        $login = new UserLoginForm($this->di);
+        //$login = new UserLoginForm($this->di);
         $form = ["test"];
 
         $formmodel = $this->createMock('\Anax\HTMLForm\FormModel', array(), array($this->di, $form));

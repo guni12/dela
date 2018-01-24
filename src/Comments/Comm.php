@@ -27,6 +27,7 @@ class Comm extends ActiveRecordModel
     public $iscomment;
     public $points;
     public $hasvoted;
+    public $accept;
     public $created;
     public $updated;
 

@@ -92,13 +92,10 @@ class UserController implements
     public function getPostOneUser($id)
     {
         $title = "Användare " . $id;
-        $sess = $this->getSess();
-
 
         $text = new ShowOneService($this->di, $id);
         $text = $text->getHTML();
         $data = ["content" => $text];
-
 
         $crud = "user/crud/view-one";
         $this->toRender($title, $crud, $data);
@@ -141,8 +138,6 @@ class UserController implements
     public function getPostLogout()
     {
         $title      = "Logga ut";
-        $view       = $this->di->get("view");
-        $pageRender = $this->di->get("pageRender");
         $text       = new UserLogout($this->di);
 
         $data = [
@@ -163,8 +158,6 @@ class UserController implements
     public function getPostCreateUser()
     {
         $title      = "Skapa användare";
-        $view       = $this->di->get("view");
-        $pageRender = $this->di->get("pageRender");
         $form       = new CreateUserForm($this->di);
 
         $form->check();
@@ -230,8 +223,6 @@ class UserController implements
     public function getPostDeleteUser($id)
     {
         $title      = "Avanmäl användare";
-        $view       = $this->di->get("view");
-        $pageRender = $this->di->get("pageRender");
 
         $sess = $this->getSess();
         $userid = isset($sess['id']) ? $sess['id'] : "";
@@ -297,8 +288,6 @@ class UserController implements
     {
         $title      = "Uppdatera användaren";
         $sess = $this->getSess();
-        $view       = $this->di->get("view");
-        $pageRender = $this->di->get("pageRender");
 
         if ($sess['isadmin'] == 1) {
             $form       = new AdminUpdateUserForm($this->di, $id);
@@ -330,8 +319,6 @@ class UserController implements
     {
         $title      = "Avanmäl användare";
         $sess = $this->getSess();
-        $view       = $this->di->get("view");
-        $pageRender = $this->di->get("pageRender");
 
         if ($sess['isadmin'] == 1) {
             $form       = new AdminDeleteUserForm($this->di);
@@ -366,7 +353,6 @@ class UserController implements
         $user = new User();
         $user->setDb($this->di->get("db"));
         $one = $user->find("id", $id);
-        //var_dump($id);
 
         if ($one) {
             $data = [

@@ -201,7 +201,7 @@ class UpdateCommForm extends FormModel
         $light = in_array("light", $tags) ? "light" : null;
         $heat = in_array("heat", $tags) ? "heat" : null;
 
-        if ($elcar == null && $safety == null && $light == null && $heat == null) {
+        if ($elcar === null && $safety === null && $light === null && $heat === null) {
                 $elcar = "elcar";
             }
         return [$elcar, $safety, $light, $heat];
@@ -220,9 +220,6 @@ class UpdateCommForm extends FormModel
         $now = date("Y-m-d H:i:s");
 
         $textfilter = $this->di->get("textfilter");
-
-        $userController = $this->di->get("userController");
-        $userdetails = $userController->getOne($this->form->value("sessid"));
 
         $parses = ["yamlfrontmatter", "shortcode", "markdown", "titlefromheader"];
         $comment = $textfilter->parse($this->form->value("comment"), $parses);

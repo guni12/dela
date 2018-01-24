@@ -15,6 +15,7 @@ class ShowAllService
     */
     protected $sess;
     protected $users;
+    protected $di;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -63,7 +64,6 @@ class ShowAllService
     {
         $html = "";
         $html .= '<div class="flex">';
-        $count = 0;
         $comm = $this->di->get("commController");
         $one = $this->setUrlCreator("user/view-one/");
 
