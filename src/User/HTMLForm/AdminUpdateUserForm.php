@@ -24,14 +24,14 @@ class AdminUpdateUserForm extends FormModel
         parent::__construct($di);
         $this->user = $this->getUserDetails($id);
 
-        $this->aForm($id);
+        $this->aForm();
     }
 
         /**
      * Create the form.
      *
      */
-    public function aForm($id)
+    public function aForm()
     {
         $checked = $this->user->isadmin == 1 ? true : false;
 
@@ -62,17 +62,11 @@ class AdminUpdateUserForm extends FormModel
                     "label"      => "Uppdaterad",
                 ],
 
-                "active" => [
-                    "type" => "datetime",
-                    "readonly" => true,
-                    "value" => $this->user->active,
-                    "label"      => "Aktiv",
-                ],
-
                 "acronym" => [
                     "type" => "text",
                     "validation" => ["not_empty"],
                     "value" => $this->user->acronym,
+                    "class" => "form-control"
                 ],
 
                 "email" => [
@@ -80,6 +74,17 @@ class AdminUpdateUserForm extends FormModel
                     "label"       => "Epost",
                     "value" => $this->user->email,
                     "validation" => ["email"],
+                    "class" => "form-control"
+                ],
+
+
+                "profile" => [
+                    "type"        => "text",
+                    "label"       => "Hemort",
+                    "value" => $this->user->profile,
+                    "validation" => ["not_empty"],
+                    "wrapper-element-class" => "form-group",
+                    "class" => "form-control",
                 ],
 
                 "isadmin" => [
@@ -152,7 +157,7 @@ class AdminUpdateUserForm extends FormModel
             return false;
         }
 
-        if(!empty($this->form->value("acronym"))) {
+        if (!empty($this->form->value("acronym"))) {
             $user->acronym = $this->form->value("acronym");
         }
         if (!empty($this->form->value("email"))) {
@@ -162,6 +167,7 @@ class AdminUpdateUserForm extends FormModel
             $user->setPassword($this->form->value("password-again"));
         }
         $user->isadmin = $this->form->value("isadmin");
+        $user->profile = $this->form->value("profile");
 
         $user->save();
         $this->di->get("response")->redirect("user");

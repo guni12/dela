@@ -73,19 +73,18 @@ class VoteService
             $comm->find("id", $this->comment->parentid);
             $comm->accept = $answerid;
             $comm->save();
-            $pagerender->redirect("comm/view-one/" . $answerid);
+            $pagerender->redirect("comm/view-one/" . $commentid);
         }
     }
 
 
     /**
     *
-    * @return array $arr_decoded - info of votedcomment
+    * @return array $arrDecoded - info of votedcomment
     */
     public function getDecodedArray()
     {
-        if (!$this->comment->hasvoted)
-        {
+        if (!$this->comment->hasvoted) {
             return [0];
         } else {
             return json_decode($this->comment->hasvoted);
@@ -96,13 +95,13 @@ class VoteService
 
     /**
     * Saves updated vote to db
-    * @param string $arr_decoded - decoded votecontent
+    * @param string $arrDecoded - decoded votecontent
     * @param obj $pagerender -connection to class
     */
-    public function saveVote($arr_decoded, $pagerender, $back)
+    public function saveVote($arrDecoded, $pagerender, $back)
     {
-        array_push($arr_decoded, $this->sess['id']);
-        $json = json_encode($arr_decoded);
+        array_push($arrDecoded, $this->sess['id']);
+        $json = json_encode($arrDecoded);
         $this->comm->hasvoted = $json;
         $this->comm->save();
         $pagerender->redirect("comm" . $back);
@@ -122,10 +121,10 @@ class VoteService
         $pagerender = $this->di->get("pageRender");
         $points = 0 + $this->comment->points;
 
-        $arr_decoded = $this->getDecodedArray();
+        $arrDecoded = $this->getDecodedArray();
         $this->comm->find("id", $this->comment->id);
-        $this->comm->points = $vote == "voteup" ? $points + 1 : $vote == "votedown" ? $points - 1 : $this->comm->points;
+        $this->comm->points = $vote == "voteup" ? $points + 1 : ($vote == "votedown" ? $points - 1 : $this->comm->points);
 
-        ($arr_decoded && in_array($this->sess['id'], $arr_decoded)) ? $pagerender->redirect("comm" . $back) : $this->saveVote($arr_decoded, $pagerender, $back);
+        ($arrDecoded && in_array($this->sess['id'], $arrDecoded)) ? $pagerender->redirect("comm" . $back) : $this->saveVote($arrDecoded, $pagerender, $back);
     }
 }

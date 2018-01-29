@@ -1,4 +1,5 @@
 ---
+title: dela
 ...
 Om dELa
 =========================
@@ -28,8 +29,6 @@ Webbplatsen skall finnas på GitHub, tillsammans med en README som beskriver hur
 Webbplatsen skall finnas i drift med innehåll på studentservern.
 
 Kommandot make test skall passera för källkoden.
-
-Repot på GitHub skall vara länkat till en byggtjänst likt Travis/CircleCI och till en tjänst för kodkvalitet likt Scrutinizer/CodeClimate. README-filen på GitHub innehåller motsvarande badges.
 
 Redovisning
 

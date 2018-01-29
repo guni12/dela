@@ -27,7 +27,7 @@ class PageRender implements PageRenderInterface, InjectionAwareInterface
         $view->add("view/header", [], "header");
         
         $view->add("view/footer", [
-            "footeradd" => "<br />"
+            "footeradd" => ""
         ], "footer", 1);
         $view->add("default1/article", [
                 "content" => $text

@@ -38,7 +38,10 @@ class AdminCreateUserForm extends FormModel
             ],
             [
                 "acronym" => [
-                "type"        => "text",
+                    "type"        => "text",
+                    "label" => "Användarnamn",
+                    "wrapper-element-class" => "form-group",
+                    "class" => "form-control",
                 ],
 
                 "email" => [
@@ -47,11 +50,23 @@ class AdminCreateUserForm extends FormModel
                     "validation" => [
                         "email",
                         "not_empty"],
+                    "wrapper-element-class" => "form-group",
+                    "class" => "form-control",
+                ],
+
+                "profile" => [
+                    "type"        => "text",
+                    "label"       => "Hemort",
+                    "validation" => ["not_empty"],
+                    "wrapper-element-class" => "form-group",
+                    "class" => "form-control",
                 ],
 
                 "password" => [
                     "type"        => "password",
                     "label"      => "Lösenord",
+                    "wrapper-element-class" => "form-group",
+                    "class" => "form-control",
                 ],
 
                 "password-again" => [
@@ -60,6 +75,8 @@ class AdminCreateUserForm extends FormModel
                         "match" => "password"
                     ],
                     "label"      => "Lösenord igen",
+                    "wrapper-element-class" => "form-group",
+                    "class" => "form-control",
                 ],
 
                 "isadmin" => [
@@ -103,6 +120,7 @@ class AdminCreateUserForm extends FormModel
         $user->setDb($this->di->get("db"));
         $user->acronym = $acronym;
         $user->email = $this->form->value("email");
+        $user->profile = $this->form->value("profile");
         $user->setPassword($password);
         $user->created = $now;
         $user->isadmin = $this->form->value("isadmin");

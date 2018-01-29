@@ -77,8 +77,9 @@ class ShowOneService
     {
         $dbComm = new Comm();
         $dbComm->setDb($this->di->get("db"));
-        $parentid = "parentid = ? AND iscomment < 1";
-        return $dbComm->findAllWhere($parentid, $id);
+        $parentid = "parentid = ? AND iscomment < 1 OR parentid = ? AND iscomment IS NULL";
+        $params = [$id, $id];
+        return $dbComm->findAllWhere($parentid, $params);
     }
 
 
@@ -183,7 +184,7 @@ class ShowOneService
     {
         $taglinks = "";
         if (is_array($item)) {
-            foreach ($item as $key => $val) {
+            foreach ($item as $val) {
                 $taglinks .= $this->getTagLink($val);
             }
         }
@@ -198,21 +199,22 @@ class ShowOneService
      *
      * @return string - html-text for the qustions
      */
-    public function getQuestionHTML($item, $viewone) {
+    public function getQuestionHTML($item, $viewone)
+    {
         $tag = $this->getTags($item['comm']->frontmatter->tags);
         $hasanswers = "";
         $hascomments = "";
 
-        $text = "<td><a href='" . $viewone . "/" . $item['id'] . "'><span class='delared'>" . $item['comm']->frontmatter->title . "</span></a></td>";
-        $text .= "<td class = 'tag'>" . $tag . "</td>";
-        $text .= "<td></td>";
-        $text .= "<td></td>";
-        $text .= "<td class = 'answercomments'>";
+        $text = "<td class = 'title'><a href='" . $viewone . "/" . $item['id'] . "'><span class='delared'>" . $item['comm']->frontmatter->title . "</span></a></td>";
+        $text .= "<td class = 'tag em06'>" . $tag . "</td>";
+        $text .= "<td class = 'parent em08'></td>";
+        $text .= "<td class = 'parenttag em06'></td>";
+        $text .= "<td class = 'answercomments em08'>";
         if ($item['hasanswer']) {
-            $hasanswers = "<span class='delablue'> [" . count($item['hasanswer']) . " ] </span>";
+            $hasanswers = "<span class='delablue'> [" . count($item['hasanswer']) . "] </span>";
         }
         if ($item['hascomments']) {
-            $hascomments = "<span class='delagreen'> [" . count($item['hascomments']) . " ] </span>";
+            $hascomments = "<span class='delagreen'> [" . count($item['hascomments']) . "] </span>";
         }
         $text .= $hasanswers;
         $text .= $hascomments;
@@ -239,10 +241,10 @@ class ShowOneService
         }
         $decodeMarkdown = json_decode($parent->comment);
         $tag = $this->getTags($decodeMarkdown->frontmatter->tags);
-        $text = "<td><a href='" . $viewone . "/" . $item['id'] . "'><span class='delagreen'>" . $item['comm']->frontmatter->title . "</span></a></td>";
-        $text .= "<td></td>";
-        $text .= "<td class = 'parent'><a href='" . $viewone . "/" . $parent->id . "'><span class='" . $color . "'>"  . $parent->title . "</span></a></td>";
-        $text .= "<td class = 'parenttag'>" . $tag . "</td><td></td></tr>";
+        $text = "<td class = 'title'><a href='" . $viewone . "/" . $item['id'] . "'><span class='delagreen'>" . $item['comm']->frontmatter->title . "</span></a></td>";
+        $text .= "<td class = 'tag em06'></td>";
+        $text .= "<td class = 'parent em08'><a href='" . $viewone . "/" . $parent->id . "'><span class='" . $color . "'>"  . $parent->title . "</span></a></td>";
+        $text .= "<td class = 'parenttag em06'>" . $tag . "</td><td class = 'answercomments em08'></td></tr>";
         return $text;
     }
 
@@ -265,9 +267,9 @@ class ShowOneService
         $decodeMarkdown = json_decode($parent->comment);
         $tag = $this->getTags($decodeMarkdown->frontmatter->tags);
 
-        $text = "<td><a href='" . $viewone . "/" . $item['id'] . "'><span class='delablue'>" . $item['comm']->frontmatter->title . "</span></a></td><td></td>";
-        $text .= "<td class = 'parent'><a href='" . $viewone . "/" . $parent->id . "'><span class='" . $color . "'>"  . $parent->title . "</span></a></td>";
-        $text .= "<td class = 'parenttag'>" . $tag . "</td><td></td></tr>";
+        $text = "<td class = 'title'><a href='" . $viewone . "/" . $item['id'] . "'><span class='delablue'>" . $item['comm']->frontmatter->title . "</span></a></td class = 'tag em06'><td></td>";
+        $text .= "<td class = 'parent em08'><a href='" . $viewone . "/" . $parent->id . "'><span class='" . $color . "'>"  . $parent->title . "</span></a></td>";
+        $text .= "<td class = 'parenttag em06'>" . $tag . "</td><td class = 'answercomments em08'></td></tr>";
 
         return $text;
     }
@@ -290,19 +292,19 @@ class ShowOneService
 
         $questionssql = 'SELECT *,COUNT(*) as count FROM `comm` WHERE userid = ' . $this->chosenid . ' AND parentid IS NULL';
 
-        $questionscount = $dbComm->findSql($questionssql)[0]->count;
+        $questionscount = $dbComm->findSql($questionssql)[0]->count ? $dbComm->findSql($questionssql)[0]->count : 0;
 
         $answersql = 'SELECT *,COUNT(*) as count FROM `comm` WHERE userid = ' . $this->chosenid . ' AND iscomment = 0 AND parentid IS NOT NULL OR userid = ' . $this->chosenid . ' AND iscomment IS NULL AND parentid IS NOT NULL';
 
-        $answercount = $dbComm->findSql($answersql)[0]->count;
+        $answercount = $dbComm->findSql($answersql)[0]->count ? $dbComm->findSql($answersql)[0]->count : 0;
 
         $commentsql = 'SELECT *,COUNT(*) as count FROM `comm` WHERE userid = ' . $this->chosenid . ' AND iscomment = 1 AND parentid IS NOT NULL';
 
-        $commentcount = $dbComm->findSql($commentsql)[0]->count;
+        $commentcount = $dbComm->findSql($commentsql)[0]->count ? $dbComm->findSql($commentsql)[0]->count : 0;
 
         $pointssql = 'SELECT SUM(`points`) AS count FROM `comm` WHERE userid = ' . $this->chosenid;
 
-        $pointcount = $dbComm->findSql($pointssql)[0]->count;
+        $pointcount = $dbComm->findSql($pointssql)[0]->count ? $dbComm->findSql($pointssql)[0]->count : 0;
 
         return '<p>Rykte: ' . $reputation . ', Poäng: ' . $pointcount . ', ' . 'Röstat: ' . $votedcount . '<br />Frågor: ' . $questionscount . ', Svar: ' . $answercount . ', Kommentarer: ' . $commentcount . '</p>';
     }
@@ -354,7 +356,7 @@ class ShowOneService
     public function getTableHead()
     {
         $text = '<table class = "member tagpage"><tr>';
-        $text .= '<th class = "title"><span class = "delared">Fråga</span> | <span class = "delablue">Svar</span> | <span class = "delagreen">Kommentar</span></th><th class = "tag">Taggar</th><th class = "parent">Till <span class = "delared">Fråga</span> | <span class = "delablue">Svar</span></th><th class = "parenttag">Taggar</th><th class = "answercomments">Har <span class = "delablue">Svar</span> | <span class = "delagreen">Kommentarer</span></th></tr>';
+        $text .= '<th class = "title"><span class = "delared">Fråga</span> | <span class = "delablue">Svar</span> | <span class = "delagreen">Kommentar</span></th><th class = "tag em06">Taggar</th><th class = "parent em08">Till <span class = "delared">Fråga</span> | <span class = "delablue">Svar</span></th><th class = "parenttag em06">Taggar</th><th class = "answercomments em08">Har <span class = "delablue">Svar</span> | <span class = "delagreen">Kommentarer</span></th></tr>';
         return $text;
     }
 
@@ -380,7 +382,7 @@ class ShowOneService
             $virgin = false;
         }
 
-        foreach ($array as $key => $value) {
+        foreach ($array as $value) {
             $text .= '<tr>';
 
             if ($value['isanswer'] == null && $value['iscomment'] == null) {
@@ -389,15 +391,13 @@ class ShowOneService
                 $points = $value['points'] + 0.5;
                 $questionValue = $points * 3;
                 $reputation += $questionValue;
-            }
-            elseif ($value['iscomment']) {
+            } elseif ($value['iscomment']) {
                 $text .= $this->getCommentHTML($value, $viewone);
 
                 $points = $value['points'] + 0.5;
                 $commentValue = $points * 2;
                 $reputation += $commentValue;
-            }
-            elseif ($value['isanswer']) {
+            } elseif ($value['isanswer']) {
                 $text .= $this->getAnswersHTML($value, $viewone);
 
                 $points = $value['points'] + 0.5;
@@ -424,6 +424,7 @@ class ShowOneService
         $html .= '<h1>' . $this->person->acronym . '</h1>';
         $html .= $startinfo;
         $html .= $text;
+        $html .= '</div>';
 
         return $html;
     }

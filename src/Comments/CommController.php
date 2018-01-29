@@ -71,7 +71,6 @@ class CommController implements
         $text = new IndexPage($this->di);
         $arr = $text->getHTML();
         $data = ['items' => $arr];
-        //$tags = $comm->
         $crud = "comm/crud/index";
         $this->toRender($title, $crud, $data);
     }
@@ -246,8 +245,6 @@ class CommController implements
     public function getPostShow($id)
     {
         $title      = "Inlägg";
-        $sess = $this->getSess();
-
         $text       = new ShowOneService($this->di, $id);
 
         $data = [
@@ -268,7 +265,6 @@ class CommController implements
     {
         $title      = "Inlägg-poängsort";
         $sort = 1;
-        $sess = $this->getSess();
 
         $text       = new ShowOneService($this->di, $id, $sort);
 
@@ -326,7 +322,6 @@ class CommController implements
         $text = new ShowTagsService($this->di, $id);
         $arr = $text->getHTML();
         $data = ['items' => $arr];
-        //$tags = $comm->
         $crud = "comm/crud/view-one";
         $this->toRender($title, $crud, $data);
     }
@@ -334,20 +329,20 @@ class CommController implements
 
     public function makeVoteUp($id)
     {
-        $up = "voteup";
-        $text = new VoteService($this->di, $id, $up);
+        $voteup = "voteup";
+        new VoteService($this->di, $id, $voteup);
     }
 
 
     public function makeVoteDown($id)
     {
         $down = "votedown";
-        $text = new VoteService($this->di, $id, $down);
+        new VoteService($this->di, $id, $down);
     }
 
     public function makeAccept($id)
     {
         $accept = "accept";
-        $text = new VoteService($this->di, $id, $accept);
+        new VoteService($this->di, $id, $accept);
     }
 }

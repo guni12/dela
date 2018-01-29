@@ -24,14 +24,14 @@ class UpdateUserForm extends FormModel
         parent::__construct($di);
         $this->user = $this->getUserDetails($id);
 
-        $this->aForm($id);
+        $this->aForm();
     }
 
     /**
      * Create the form.
      *
      */
-    public function aForm($id)
+    public function aForm()
     {
         $this->form->create(
             [
@@ -101,6 +101,8 @@ class UpdateUserForm extends FormModel
     }
 
 
+
+
     /**
      * Get details on item to load form with.
      *
@@ -144,6 +146,7 @@ class UpdateUserForm extends FormModel
         $user->updated = $now;
         $user->acronym = $this->form->value("acronym");
         $user->email = $this->form->value("email");
+        $user->profile = $this->form->value("profile");
         $user->setPassword($passwordAgain);
         $user->save();
         $this->di->get("response")->redirect("user/login");

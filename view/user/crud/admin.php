@@ -6,7 +6,6 @@ namespace Anax\View;
  * View to display all members.
  */
 
-// Gather incoming variables and use default values if not set
 $users = isset($users) ? $users : null;
 
 ?>

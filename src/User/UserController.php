@@ -256,8 +256,6 @@ class UserController implements
     {
         $title      = "Skapa användare_admin";
         $sess = $this->getSess();
-        $view       = $this->di->get("view");
-        $pageRender = $this->di->get("pageRender");
 
         if ($sess['isadmin'] == 1) {
             $form       = new AdminCreateUserForm($this->di);
@@ -359,7 +357,7 @@ class UserController implements
                 "email" => $one->email,
                 "id" => $one->id,
                 "acronym" => $one->acronym,
-                "active" => $one->active,
+                "profile" => $one->profile,
                 "created" => $one->created,
                 "isadmin" => $one->isadmin,
             ];

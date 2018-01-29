@@ -124,7 +124,8 @@ class ShowTagsService
     }
 
 
-    public function getHeadline($name) {
+    public function getHeadline($name)
+    {
         switch ($name) {
             case "elcar":
                 return "Elbil";
@@ -137,6 +138,9 @@ class ShowTagsService
                 break;
             case "heat":
                 return "Värme";
+                break;
+            default:
+                return "Elbil";
         }
     }
 
@@ -170,11 +174,11 @@ class ShowTagsService
         $answers = "";
         $comments = "";
         $children = $this->getChildrenDetails($val->id);
-        foreach ($children as $count => $item) {
+        foreach ($children as $item) {
             if ($item->iscomment == 1) {
-                $comments .= '<a href = "' . $viewcomm . '/' . $item->id . '">' . $item->title . '</a>, ';
+                $comments .= '<a href = "' . $viewcomm . '/' . $item->id . '"><span class = "delagreen">' . $item->title . '</span></a>, ';
             } else {
-                $answers .= '<a href = "' . $viewcomm . '/' . $item->id . '">' . $item->title . '</a>, ';
+                $answers .= '<a href = "' . $viewcomm . '/' . $item->id . '"><span class = "delablue">' . $item->title . '</span></a>, ';
             }
         }
         $answers = rtrim($answers, ', ');
@@ -197,15 +201,15 @@ class ShowTagsService
 
         $userController = $this->di->get("userController");
 
-        foreach ($this->tagset as $key => $val) {
+        foreach ($this->tagset as $val) {
             $childrentext = $this->getChildrenText($val, $viewcomm);
             $html .= "<tr>";
             $user = $userController->getOne($val->userid);
             $grav = $this->getGravatar($user['email']);
             $acronym = $user['acronym'];
-            $html .= '<td class = "itis"><span class="smaller">' . $acronym . '</span></td>';
-            $html .= '<td>' . $grav . '</td>';
-            $html .= "<td><a href = '" . $viewcomm . "/" . $val->id . "'>" . $val->title . "</td>";
+            $html .= '<td class = "itis"><span class="smaller em06">' . $acronym . '</span></td>';
+            $html .= '<td class = "grav">' . $grav . '</td>';
+            $html .= "<td class = 'text'><a href = '" . $viewcomm . "/" . $val->id . "'><span class = 'delared'>" . $val->title . "</span></td>";
             $html .= $childrentext;
             $html .= '</tr>';
         }

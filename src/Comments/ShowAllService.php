@@ -20,6 +20,8 @@ class ShowAllService
     protected $userController;
     protected $isadmin;
     protected $di;
+    protected $answersct;
+    protected $commentsct;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -38,6 +40,8 @@ class ShowAllService
         $this->users = $this->userController->getAllUsers();
         $this->user = $this->userController->getOne($this->sess['id']);
         $this->isadmin = $this->sess['isadmin'] === 1 ? true : false;
+        $this->answersct = 0;
+        $this->commentsct = 0;
     }
 
     /**
@@ -94,7 +98,7 @@ class ShowAllService
         if ($item->updated) {
             $when .= '<span class="smaller">Ändrad: ' . $item->updated;
         } else {
-            $when .= '<span class="smaller">Frågad: ' . $item->created;
+            $when .= '<span class="smaller">' . $item->created;
         }
         return $when;
     }
@@ -147,19 +151,37 @@ class ShowAllService
     *
     * @return string $html
     */
-    public function getTheText($item, $numbers, $when, $email)
+    public function getTheText($item, $numbers, $when, $user)
     {
-        $gravatar = $this->getGravatar($email);
+        $gravatar = $this->getGravatar($user[0]);
         $showid = $this->isadmin === true ? '(' . $item->id . '): ' : "";
         $viewone = $this->setUrlCreator("comm/view-one");
         $answers = $numbers[0];
         $comments = $numbers[1];
         $points = $numbers[2];
 
-        $html = '<div class="clearfix"><h4><a href="' . $viewone . '/' . $item->id . '">';
-        $html .= $showid . ' ' . $item->title . '</a><span class = "smaller"> ' . $answers . $comments . $points . '</span></h4><p>';
-        $html .= $gravatar . '<span class="move20 by">' . $when . ' ' . $email . ' </span></p></div><hr class="border" />';
+        $title = '<a href="' . $viewone . '/' . $item->id . '">';
+        $title .= $showid . ' ' . $item->title . '</a>';
+
+        $html = '<tr><td class = "allmember">' . $gravatar . ' ' . $user[1] . '</td>';
+        $html .= '<td class = "alltitle">' . $title . '</td>';
+        $html .= '<td class = "asked">' . $when . '</td>';
+        $html .= '<td = "respons"><span class = "smaller">' . $answers . $comments . $points . '</span></td>';
+        $html .= '</tr>';
         return $html;
+    }
+
+
+    
+    /**
+    * @param object $commcomments - comments to at parentcomment
+    */
+    public function countResponses($commcomments)
+    {
+        foreach ($commcomments as $value) {
+            $this->commentsct = $value->iscomment > 0 ? $this->commentsct + 1 : $this->commentsct;
+            $this->answersct = $value->iscomment <= 0 ? $this->answersct + 1 : $this->answersct;
+        }
     }
 
 
@@ -171,33 +193,29 @@ class ShowAllService
      *
      * @return string htmlcode
      */
-    public function getValHtml(Comm $item, $email)
+    public function getValHtml(Comm $item, $email, $acronym)
     {
-        $answersct = 0;
-        $commentsct = 0;
         $answers = "";
         $comments = "";
 
         $when = $this->getWhen($item);
-
         $commcomments = $this->getParentDetails("parentid = ?", $item->id);
 
-        foreach ($commcomments as $key => $value) {
-            $commentsct = $value->iscomment > 0 ? $commentsct + 1 : $commentsct;
-            $answersct = $value->iscomment <= 0 ? $answersct + 1 : $answersct;
-        }
+        $this->countResponses($commcomments);
+
         
-        if ($answersct > 0) {
-            $answers = $answersct . ' svar';
-            $answers .= $commentsct > 0 ? ", " : "";
-            $comments = $commentsct > 0 ? $commentsct . " kommentarer" : "";
+        if ($this->answersct > 0) {
+            $answers = $this->answersct . ' svar';
+            $answers .= $this->commentsct > 0 || $item->points > 0 ? ", " : "";
+            $comments = $this->commentsct > 0 ? $this->commentsct . " kommentarer" : "";
         }
 
-        $points = $answersct > 0 ? ", " : "";
-        $points .= $item->points !== null && $item->points > 0 ? 'rank: ' . $item->points : "";
+        $comma = $this->commentsct > 0 ? ", " : "";
+        $points = $item->points !== null && $item->points > 0 ? $comma . 'rank: ' . $item->points : "";
         $numbers = [$answers, $comments, $points];
+        $user = [$email, $acronym];
 
-        return $this->getTheText($item, $numbers, $when, $email);
+        return $this->getTheText($item, $numbers, $when, $user);
     }
 
 
@@ -213,19 +231,21 @@ class ShowAllService
 
         $loggedin = $this->getLoginLink($create, $del);
 
-        $html = '<div class="col-lg-10 col-sm-12 col-xs-12"><div class="movesome">
+        $html = '<div class="col-lg-12 col-sm-12 col-xs-12"><div class="">
 
         <h3>Gruppinlägg <span class="small">' . $loggedin . '</span></h3>
         <hr />';
+
+        $html .= '<table class = "member tagpage"><tr><th class="allmember">Medlem</th><th class="alltitle">Rubrik</th><th class="asked">Frågad</th><th class="respons">Respons</th></tr>';
 
         foreach ($this->comments as $value) {
             if ((int)$value->parentid > 0) {
                 continue;
             }
             $curruser = $this->userController->getOne($value->userid);
-            $html .= $this->getValHtml($value, $curruser['email']);
+            $html .= $this->getValHtml($value, $curruser['email'], $curruser['acronym']);
         }
-        
+        $html .= '</table>';
         $html .= '</div></div>';
         return $html;
     }

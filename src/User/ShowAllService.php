@@ -62,7 +62,7 @@ class ShowAllService
 
     public function getMembers()
     {
-        $html = "";
+        $html = '<div class = "col-sm-12 col-xs-12 col-lg-12 col-md-12">';
         $html .= '<div class="flex">';
         $comm = $this->di->get("commController");
         $one = $this->setUrlCreator("user/view-one/");
@@ -94,14 +94,14 @@ class ShowAllService
         $html .= ' | <span class="button"><a href="' . $del . '">Ta bort Medlem</a></span></p>';
 
 
-        $html .= '<table class = "user"><tr>
+        $html .= '<table class = "member tagpage"><tr>
         <th class="userid">Id</th>
         <th class="acronym">Acronym</th>
         <th class="useremail">Email</th>
+        <th class="profile">Profil</th>
         <th class="isadmin">Adm</th>
         <th class="created">Skapades</th>
         <th class="updated">Uppdaterades</th>
-        <th class="active">Aktiv</th>
         </tr>';
         return $html;
     }
@@ -122,10 +122,10 @@ class ShowAllService
             $html .= '<a href="' . $adminupdate . '/' . $value->id . '">' . $value->id . '</a></td>';
             $html .= '<td>' . $value->acronym . '</td>';
             $html .= '<td>' . $value->email . '</td>';
+            $html .= '<td>' . $value->profile . '</td>';
             $html .= '<td>' . $value->isadmin . '</td>';
             $html .= '<td>' . $value->created . '</td>';
-            $html .= '<td>' . $value->updated . '</td>';
-            $html .= '<td>' . $value->active . '</td></tr>';
+            $html .= '<td>' . $value->updated . '</td></tr>';
         }
         $html .= '</table>';
 
@@ -147,12 +147,12 @@ class ShowAllService
         $text = '<p><span class="button"><a href="' . $create . '">Skapa ett nytt konto</a></span>';
         if ($isadmin == 1) {
             $text .= ' | <span class="button"><a href="' . $members . '">Till Admin</a></span></p>';
-
         } else if ((int)$userid > 0) {
             $text .= ' | <span class="button"><a href="' . $update . '/' . $userid . '">';
             $text .= 'Redigera ditt konto</a></span><br /><span class="button">';
             $text .= '<a href="' . $delete . '/' . $userid . '">Ta bort ditt konto</a></span></p>';
         }
+        $text .= '</div>';
         return $text;
     }
 }

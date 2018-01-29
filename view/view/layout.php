@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
     <title><?= $title ?></title>
     <link rel="stylesheet" 
       href="//cdn.rawgit.com/balpha/pagedown/master/demo/browser/demo.css" />
@@ -19,21 +19,21 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/pagedown/1.0/Markdown.Sanitizer.js"></script>
 
 </head>
-<body>
-<div class='shade'>
+<body class="<?= $title ?> font20">
+<div class='shade'></div>
 
 <?php if ($this->regionHasContent("header")) : ?>
-<div class="header-wrap">
+<div class="header-wrap col-sm-12 col-xs-12 col-lg-12 col-md-12">
     <?php $this->renderRegion("header") ?>
 </div>
 <?php endif; ?>
 
 <?php if ($this->regionHasContent("navbar")) : ?>
-<div class="navbar-wrap">
+<div class="navbar-wrap col-sm-12 col-xs-12 col-lg-12 col-md-12">
     <?php $this->renderRegion("navbar") ?>
 </div>
 <?php endif; ?>
-<div class="container">
+<div class="page">
 <?php if ($this->regionHasContent("flash")) : ?>
 <div class="flash-wrap col-sm-12 col-xs-12 col-lg-12 col-md-12">
     <?php $this->renderRegion("flash") ?>
@@ -41,7 +41,7 @@
 <?php endif; ?>
 
 <?php if ($this->regionHasContent("main")) : ?>
-<div class="main-wrap col-sm-12 col-xs-12 col-lg-12 col-md-12">
+<div class="main-wrap">
     <?php $this->renderRegion("main") ?>
 </div>
 <?php endif; ?>
@@ -71,10 +71,9 @@
 <div class="col-sm-9 col-xs-12">
     <?php $this->renderRegion("blogright") ?>
 </div>
-</div>
 <?php endif; ?>
 </div>
-
+<div class="push"></div>
 <?php if ($this->regionHasContent("footer")) : ?>
 <div class="footer-wrap col-sm-12 col-xs-12 col-lg-12 col-md-12">
     <?php $this->renderRegion("footer") ?>

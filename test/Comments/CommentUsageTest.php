@@ -58,17 +58,17 @@ class CommentUsageTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf("\Guni\Comments\HTMLForm\CreateCommForm", $create);
         $array = ["elcar", "heat"];
         $test = $create->handleTags($array);
-        $exp = Array (0 => 'elcar', 1 => null, 2 => null, 3 => 'heat');
-        $exp2 = Array ('type' => 'hidden', 'value' => 'answer');
-        $exp3 = Array (0 => 'elcar', 1 => null, 2 => null, 3 => null);
-        $exp4 =  Array ('type' => 'select-multiple', 'label' => 'Taggar, minst en:', 'description' => 'Håll ner Ctrl (windows) / Command (Mac) knapp för att välja flera taggar.<br />Default tagg är Elbil.', 'size' => 5, 'options' => Array ("elcar" => "elbil", "safety" => "säkerhet", "light"  => "belysning", "heat"   => "värme"));
+        $exp = array (0 => 'elcar', 1 => null, 2 => null, 3 => 'heat');
+        $exp2 = array ('type' => 'hidden', 'value' => 'answer');
+        $exp3 = array (0 => 'elcar', 1 => null, 2 => null, 3 => null);
+        $exp4 =  array ('type' => 'select-multiple', 'label' => 'Taggar, minst en:', 'description' => 'Håll ner Ctrl (windows) / Command (Mac) knapp för att välja flera taggar.<br />Default tagg är Elbil.', 'size' => 5, 'options' => array ("elcar" => "elbil", "safety" => "säkerhet", "light"  => "belysning", "heat"   => "värme"));
 
         $this->assertEquals($exp, $test);
 
         $comment = $create->notQuestion();
         $this->assertEquals($exp2, $comment);
 
-        $tagdefault = $create->tagsToArray("");
+        $tagdefault = $create->tagsToArray([]);
         $this->assertEquals($exp3, $tagdefault);
 
         $dropdownSelection = $create->getDropdown(0);

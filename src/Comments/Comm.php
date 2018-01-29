@@ -11,7 +11,7 @@ class Comm extends ActiveRecordModel
     /**
      * @var string $tableName name of the database table.
      */
-    protected $tableName = "Comm";
+    protected $tableName = "comm";
 
 
     /**

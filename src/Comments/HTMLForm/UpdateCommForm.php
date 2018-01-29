@@ -202,8 +202,8 @@ class UpdateCommForm extends FormModel
         $heat = in_array("heat", $tags) ? "heat" : null;
 
         if ($elcar === null && $safety === null && $light === null && $heat === null) {
-                $elcar = "elcar";
-            }
+            $elcar = "elcar";
+        }
         return [$elcar, $safety, $light, $heat];
     }
 
@@ -226,6 +226,7 @@ class UpdateCommForm extends FormModel
         $comment->frontmatter['title'] = $this->form->value("title");
 
         $tags = $this->form->value("tags");
+        $tags = is_array($tags) ? $tags : [$tags];
         $comment->frontmatter['tags'] = $this->handleTags($tags);
 
         $comment = json_encode($comment);

@@ -172,14 +172,14 @@ class CreateCommForm extends FormModel
 
 
     /**
-    *
+    * @param array or string $tags - what we want to save in tags
     */
     public function tagsToArray($tags)
     {
-        $elcar = is_array($tags) && in_array("elcar", $tags) ? "elcar" : null;
-        $safety = is_array($tags) && in_array("safety", $tags) ? "safety" : null;
-        $light = is_array($tags) && in_array("light", $tags) ? "light" : null;
-        $heat = is_array($tags) && in_array("heat", $tags) ? "heat" : null;
+        $elcar = in_array("elcar", $tags) ? "elcar" : null;
+        $safety = in_array("safety", $tags) ? "safety" : null;
+        $light = in_array("light", $tags) ? "light" : null;
+        $heat = in_array("heat", $tags) ? "heat" : null;
 
         $elcar = ($elcar === null && $safety === null && $light === null && $heat === null) ? "elcar" : $elcar;
 
@@ -195,7 +195,7 @@ class CreateCommForm extends FormModel
     */
     public function handleTags($tags)
     {
-        $tags = ($tags == "comment" || $tags == "answer") ? $tags : $this->tagsToArray($tags);
+        $tags = ($tags == "comment" || $tags == "answer") ? $tags : ( is_array($tags) ? $this->tagsToArray($tags) : ["elcar", null, null, null]);
         return $tags;
     }
 
@@ -234,8 +234,14 @@ class CreateCommForm extends FormModel
         $comm->save();
 
         $this->form->rememberValues();
+
+        $session = $this->di->get("session");
+        $sess = $session->get("user");
+        var_dump($sess);
+
+        $where = $this->iscomment ? $this->getCommDetails($comm->parentid)->parentid : $this->form->value("parentid");
         
-        $back = (int)$this->form->value("parentid") > 0 ? "/view-one/" . $this->form->value("parentid") : "";
+        $back = (int)$this->form->value("parentid") > 0 ? "/view-one/" . $where : "";
 
         $pagerender = $this->di->get("pageRender");
         $pagerender->redirect("comm" . $back);

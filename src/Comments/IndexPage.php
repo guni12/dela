@@ -146,19 +146,19 @@ class IndexPage
      *
      * @return string htmlcode
      */
-    public function getValHtml(Comm $item, $viewone)
+    public function getValHtml(Comm $item, $viewone, $arr)
     {
         $showid = "";
         $curruser = $this->userController->getOne($item->userid);
         $email = $curruser['email'];
         $gravatar = $this->getGravatar($email);
-        $when = $this->getWhen($item);
         if ($this->isadmin === true) {
             $showid = '(' . $item->id . '): ';
         }
-        $html = '<div class="clearfix"><h4><a href="' . $viewone . '/' . $item->id . '">';
-        $html .= $showid . ' ' . $item->title . '</a></h4><p class="smalltext">';
-        $html .= $when . ' ' . $curruser['acronym'] . ' ' . $gravatar . '</p></div><hr class="border" />';
+        $title = '<a href="' . $viewone . '/' . $item->id . '">' . $showid . ' ' . $item->title . '</a>';
+        $when = '<span class="smaller em06">' . $this->getWhen($item) . '</span>';
+
+        $html = '<tr><td class = "indgrav">' . $gravatar . '</td><td class = "indauthor">' . $curruser['acronym'] . '</td><td class = "latest">' . $title . '</td><td class = "when">' . $when . '</td><td class = "itis">' . $arr['gravatar'] . '</td><td class = "eager">' . $arr['acronym'] . '</td><td class = "number">' . $arr['count'] . '</td></tr>';
         return $html;
     }
 
@@ -175,24 +175,27 @@ class IndexPage
     {
         $viewone = $this->setUrlCreator("user/view-one") . "/";
         $gravatar = $this->getGravatar($item['email']);
-        $html = '<div class="clearfix">';
-        $html .= '<h4><a href="' . $viewone . $item['id'] . '">' . $gravatar . ' ' . $item['acronym'] . '</a></h4>';
-        return $html;
+        $arr['acronym'] = '<a href="' . $viewone . $item['id'] . '">' . $item['acronym'] . '</a>';
+        $arr['gravatar'] = '<a href="' . $viewone . $item['id'] . '">' . $gravatar . '</a>';
+        return $arr;
     }
 
     /**
      * Sort list of dates
      *
-     * @param string $a, $b - dates
+     * @param string $first, $second - dates
      *
      * @return sorted dates
      */
-    public function dateSort($a, $b)
+    public function dateSort($first, $second)
     {
-        return strtotime($a->created) - strtotime($b->created);
+        return strtotime($first->created) - strtotime($second->created);
     }
 
 
+    /**
+    * return members that has made comments
+    */
     public function getActives()
     {
         $comm = new Comm();
@@ -207,14 +210,11 @@ class IndexPage
      * @param object $item
      * @return string htmlcode
      */
-    public function getDecode($item, $lead = null)
+    public function getDecode($item)
     {
-        //var_dump($item);
         $comt = json_decode($item);
-        $tags = [];
         if ($comt->frontmatter->tags) {
             return is_array($comt->frontmatter->tags) ? $comt->frontmatter->tags : [];
-            
         }
     }
 
@@ -242,8 +242,9 @@ class IndexPage
      * @param object $comments
      * @return array
      */
-    public function getTagarr() {
-        foreach ($this->comments as $key => $value) {
+    public function getTagarr()
+    {
+        foreach ($this->comments as $value) {
             $this->countTags($value);
         }
 
@@ -261,13 +262,13 @@ class IndexPage
     /**
     * @return string $html - htmltext for the tags
     */
-    public function getTaginfo($base) {
+    public function getTaginfo($base)
+    {
         $arr = $this->getTagarr();
-        $html = '<h4>';
+        $html = '';
         foreach ($arr as $key => $value) {
-            $html .= '<a href = "' . $base . '/' . $key . '">' . $value[1] . '<span class="tagsize">[ ' . $value[0] . ' ]</span></a>  ';
+            $html .= '<span class="tagsquare"><a href = "' . $base . '/' . $key . '">' . $value[1] . ' <span class="tagsize em06">[ ' . $value[0] . ' ]</span></a></span>';
         }
-        $html .= '</h4><hr class="border" />';
         return $html;
     }
 
@@ -280,14 +281,14 @@ class IndexPage
     public function getLatestQuestions($viewone)
     {
         usort($this->comments, array($this, "dateSort"));
-        $ct = 0;
+        $count = 0;
         $reversed = array_reverse($this->comments);
         $html = "";
-        //$value->parentid means it is respons to a parent
+        $test = $this->getActivesInfo($viewone);
 
-        foreach ($reversed as $value) {
-            $html .= ((int)$value->parentid <= 0) && $ct < 5 ? $this->getValHtml($value, $viewone) : "";
-            $ct = ((int)$value->parentid <= 0) ? $ct + 1 : $ct;
+        foreach ($reversed as $key => $value) {
+            $html .= ((int)$value->parentid <= 0) && $count < 5 ? $this->getValHtml($value, $viewone, $test[$count]) : "";
+            $count = ((int)$value->parentid <= 0) ? $count + 1 : $count;
         }
         return $html;
     }
@@ -300,21 +301,23 @@ class IndexPage
     {
         $actives = $this->getActives();
         $userController = $this->di->get("userController");
-        $html = "";
+        $arr = [];
 
         $count = 0;
 
-        foreach ($actives as $val) {
+        foreach ($actives as $key => $val) {
             if ($count >= 5) {
                 break;
             }
             $one = $userController->getOne($val->userid);
-            $html .= $this->getUsersHtml($one, $viewone);
-            $html .= "<p class='smalltext'>" . $val->count . " inlägg ";
-            $html .=  '</div><hr class="border" />';
+            $item = $this->getUsersHtml($one, $viewone);
+            $test['gravatar'] = $item['gravatar'];
+            $test['acronym'] = $item['acronym'];
+            $test['count'] = $val->count;
+            $arr[$key] = $test;
             $count += 1;
         }
-        return $html;
+        return $arr;
     }
 
 
@@ -331,19 +334,21 @@ class IndexPage
         $viewone = $this->setUrlCreator("comm/view-one");
         $base = $this->setUrlCreator("comm/tags/");
 
-        $html .= '<div class="col-lg-6 col-sm-6 col-xs-12">';
-        $html .= '<div class="margin-right">';
-        $html .= '<h3>Senaste frågorna</h3><hr />';
-        $html .= $this->getLatestQuestions($viewone);
-
-        $html .= '</div></div><div class="col-lg-6 col-sm-6 col-xs-12">';
-        $html .= '<h3>Våra Taggar</h3>';
+        $html .= '<div class="col-lg-12 col-sm-12 col-xs-12">';
         $html .= $this->getTaginfo($base);
 
-        $html .= '<h3>Flitigaste användarna</h3><hr />';
-        $html .= $this->getActivesInfo($viewone);
-
-        $html .= "</div";
+        $html .= '<table class = "indexmember tagpage font20"><tbody><tr>';
+        $html .= '<th class = "indgrav"></th>';
+        $html .= '<th class = "indauthor"></th>';
+        $html .= '<th class = "latest">Senast</th>';
+        $html .= '<th class = "when">Skrevs</th>';
+        $html .= '<th class = "itis"></th>';
+        $html .= '<th class = "eager">Flitigast</th>';
+        $html .= '<th class = "number">Inlägg</th>';
+        $html .= '</tr>';
+        $html .= $this->getLatestQuestions($viewone);
+        $html .= '</table>';
+        $html .= '</div>';
 
         return $html;
     }

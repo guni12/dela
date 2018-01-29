@@ -79,7 +79,6 @@ class AdminDeleteCommForm extends FormModel
 
         foreach ($all as $obj) {
             if ($obj->parentid && $obj->parentid == $one) {
-                echo 'Ja: ' . $obj->parentid . ' kastar ' . $obj->id . '<br />';
                 $comm->find("id", $obj->id);
                 $objects .= $comm->title . ", ";
                 $comm->delete();
@@ -89,9 +88,7 @@ class AdminDeleteCommForm extends FormModel
         $comm->find("id", $this->form->value("select"));
         $titles = $objects . $comm->title;
         $comm->delete();
-        $this->form->addOutput($titles . ": kastad.");
-
-        $pagerender = $this->di->get("pageRender");
-        $pagerender->redirect("comm");
+        $this->form->addOutput($titles . " har kastats.");
+        return true;
     }
 }

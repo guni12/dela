@@ -19,7 +19,7 @@ class CommControllerUsageTest extends \PHPUnit_Framework_TestCase
         $this->di = new \Anax\DI\DIFactoryConfig("di.php");
     }
 
-        public function testBasic()
+    public function testBasic()
     {
         $comm = new \Guni\Comments\CommController();
         $this->assertInstanceOf("\Guni\Comments\CommController", $comm);

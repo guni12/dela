@@ -26,7 +26,7 @@ class NavbarTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf("\Guni\Navbar\Navbar", $nav);
 
         $res = $nav->getToLogin("create", "comm");
-        $exp = '<li><a href = "create">Bli medlem</span></a></li><li><a href="comm"><span class="glyphicon glyphicon-log-in"></span> Logga in</a></li>';
+        $exp = '<li><a href = "create"><i class="fa fa-hand-o-right" aria-hidden="true"></i> Bli medlem</span></a></li><li><a href="comm"><span class="glyphicon glyphicon-log-in"></span> Logga in</a></li>';
         $this->assertEquals($exp, $res);
 
         $eod = $nav->getEOD("spans", "home", "links", "loginout");

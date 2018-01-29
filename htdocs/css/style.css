@@ -1,12 +1,27 @@
 /** css for kmom10 */
+html, body {
+  height: 100%;
+  margin: 0;
+}
 
 body {
+    padding:0;
     background: #fbf8f3;
     color: #838281;
-    text-align: center;
-    font-size: 16px;
+    text-align: left;
     line-height: 1.5;
 }
+
+.page {
+    min-height: 100%;
+    margin-bottom: -110px;
+}
+
+.dela {
+    text-align: left;
+}
+
+/* Colors */
 
 .deladark {
     color: #838281;
@@ -40,12 +55,30 @@ body {
     color: #30B4CB;
 }
 
+a {
+    color: #30B4CB;
+}
+
 .delagreen {
     color: green;
 }
 
 .delagreen a {
     color: green;
+}
+
+/* Fonts */
+
+.font20 {
+    font-size: 20px;
+}
+
+.em06 {
+    font-size: 0.6em;
+}
+
+.em08 {
+    font-size: 0.8em;
 }
 
 .shade {
@@ -57,8 +90,12 @@ body {
     width: 100%;
 }
 
+
+/* navbar */
+
+
 .navbar-wrap {
-    max-width: 1300px;
+    max-width: 2000px;
     margin: 0 auto;
 }
 
@@ -98,7 +135,19 @@ body {
 }
 
 
+
+/* main */
+
+.main-wrap {
+    min-height: 600px;
+    max-width: 1600px;
+    margin-left: 10%;
+    margin-right: 10%;
+}
+
+
 /* User page */
+
 .auser {
     padding-left: 5%;
     padding-right: 5%;
@@ -107,22 +156,10 @@ body {
 .auser a {
     color: #30B4CB;
 }
-.header-flash {
-    background: url("../img/header.png") no-repeat;
-    height: 60px;
-    background-size:100%;
-}
 
-.container {
-    margin: 0 auto;
-    text-align: left;
-    width: 90%;
-    max-width: 1200px;
-    margin: 0 auto;
-}
 
 .flex {
-    display: flex; /* or inline-flex */
+    display: flex;
     flex-wrap: wrap;
 }
 
@@ -136,15 +173,15 @@ body {
     width: 25%;
 }
 
-.left img{
+.left img {
     height: auto;
+    padding: 10px;
     width: 100%;
-    padding: 2%;
 }
 
 .right {
     float: left;
-    padding-left: 2%; 
+    padding-left: 10px; 
     width: 70%;
 }
 
@@ -152,15 +189,20 @@ body {
     margin-right: 10%;
 }
 
+
 .footer-wrap {
-    clear: both;
     background-color: #594a3c;
-    color: #ccc;
-    text-align: center;
-    margin-top: 20px;
+    clear: both;
+    
 }
 
-.footer-wrap a {
+.footer, .push {
+    color: #ccc;
+    text-align: center;
+    height: 40px;
+}
+
+.footer a {
     color: #30B4CB;
 }
 
@@ -174,10 +216,8 @@ body {
     width: 100%;
 }
 
-.smalltext {
-    float: right;
-    font-size: 0.6em;
-    font-style: italic;
+.indexmember {
+    margin-top: 10px;
 }
 
 .border {
@@ -185,45 +225,52 @@ body {
 }
 
 th, td {
-    padding-right: 1%;
+    padding-right: 10px;
 }
 
 th {
-    padding-bottom: 1%;
+    padding-bottom: 5px;
 }
 
 .title {
     width: 32%;
 }
 
-.tag {
+.alltitle {
+    width: 50%;
+}
+
+.allmember {
+    width: 15%;
+}
+
+.asked {
     width: 20%;
-    padding-right: 5%;
-    font-size: 0.8em;
 }
 
-td.tag {
-    font-size: 0.6em;
+.respons {
+    width: 15%;
 }
 
-.parent {
+.tag {
+    padding-right: 15px;
+    width: 20%;
+}
+
+
+.parent {   
     width: 25%;
-    font-size: 0.8em;
 }
+
 
 .parenttag {
     width: 20%;
-    font-size: 0.8em;
 }
 
 .answercomments {
-    font-size: 0.8em;
     width: 3%;
 }
 
-td.parenttag {
-    font-size: 0.6em;
-}
 
 .canvote {
     color: #30B4CB;
@@ -239,7 +286,6 @@ td.parenttag {
     text-align: center;
     border-radius: 6px;
     padding: 2px 0;
-    font-size: 0.8em;
 
     /* Position the tooltip */
     position: absolute;
@@ -265,7 +311,6 @@ td.parenttag {
     text-align: center;
     border-radius: 6px;
     padding: 2px 0;
-    font-size: 0.8em;
 
     /* Position the tooltip */
     position: absolute;
@@ -292,7 +337,6 @@ td.parenttag {
     text-align: center;
     border-radius: 6px;
     padding: 2px 0;
-    font-size: 0.8em;
 
     /* Position the tooltip */
     position: absolute;
@@ -318,7 +362,6 @@ td.parenttag {
     text-align: center;
     border-radius: 6px;
     padding: 2px 0;
-    font-size: 0.8em;
 
     /* Position the tooltip */
     position: absolute;
@@ -328,6 +371,30 @@ td.parenttag {
 }
 
 .userupdate:hover .userupdatetext {
+    visibility: visible;
+}
+
+.pcomm {
+    position: relative;
+    display: inline-block;
+}
+
+.pcomm .pcommtext {
+    visibility: hidden;
+    width: 60px;
+    background-color: #ccc;
+    color: black;
+    text-align: center;
+    border-radius: 6px;
+    padding: 2px 0;
+
+    /* Position the tooltip */
+    position: absolute;
+    top: 20px;
+    z-index: 1;
+}
+
+.pcomm:hover .pcommtext {
     visibility: visible;
 }
 
@@ -381,14 +448,22 @@ td.parenttag {
 }
 
 .smaller {
-    font-size: 0.6em;
     padding-right: 0;
 }
 
+.tagsquare {
+    background-color: #838281;
+    background-color: #594a3c;
+    margin-right: 2%;
+    padding: 2px 5px;
+}
+
+.tagsquare a {
+    color: #30B4CB;
+}
+
 .tagsize {
-    font-size: 0.6em;
-    padding-right: 1%;
-    color: #838281;
+    color: #FBF8F3;
 }
 
 .move20 {
@@ -399,58 +474,87 @@ td.parenttag {
     padding-left: 250px;
 }
 
-.pcomment {
-    font-size: 0.7em;
-}
-
-.pcomment p {
-    font-size: inherit;
-}
-
-.smallpoints {
-    font-size: 0.4em;
-}
 
 .wmd-preview { 
     margin-bottom: 40px;
-    width: 90%;
     margin-left: 5%;
     margin-right: 5%;
+    width: 90%;
 }
 
+.indgrav {
+    width: 2%;
+}
 
+.indauthor {
+    width: 2%;
+}
 
 /*/////////////Mediaqueries///////////////*/
 
-
 @media (min-width: 1000px) {
-    .member {
-        width: 90%;
+    .indexmember {
+        width: 97%;
     }
 }
 
 
 @media (max-width: 999px) {
-    .movesome {
-        padding-left: 150px;
+    .font20 {
+        font-size: 18px;
     }
 }
 
+
+@media (max-width: 900px) {
+    .font20 {
+        font-size: 15px;
+    }
+    .footer-wrap {
+        font-size: 1.2em;
+    }
+    .main-wrap {
+        min-height: 500px;
+    }
+}
+
+
 @media (max-width: 800px) {
+    .font20 {
+        font-size: 14px;
+    }
     .inner {
         margin: 2%;
         width: 28%;
     }
     .member {
         width: 100%;
+        font-size: 0.8em;
     }
-    .movesome {
-        padding-left: 100px;
+    .grav {
+        padding-right: 10px;
     }
 }
 
+
+@media (max-width: 768px) {
+    .navbar-header {
+        background-color: #30B4CB;
+        margin-left: -30px !important;
+        margin-right: -30px !important;
+    }
+    .icon-bar {
+        background-color: #FBF8F3;
+    }
+    .main-wrap {
+        min-height: 500px;
+    }
+}
+
+
+
 @media (max-width: 550px) {
-    .parent, .parenttag, .itis {
+    .parent, .parenttag, .itis, .indauthor {
         display: none;
         width: 0;
     }
@@ -469,9 +573,6 @@ td.parenttag {
         padding-right: 3%;
         width: 30%;
     }
-    .movesome {
-        padding-left: 30px;
-    }
 }
 
 @media (max-width: 450px) {
@@ -485,12 +586,5 @@ td.parenttag {
         margin: 2%;
         width: 44%;
     }
-    .movesome {
-        padding-left: 0px;
-    }
 }
-
-
-
-
 

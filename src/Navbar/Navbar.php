@@ -17,7 +17,6 @@ class Navbar implements
     // \Anax\Common\AppInjectableTrait;
 
     private $currentUrl;
-    private $htmlNavbar;
 
 
     /**
@@ -32,7 +31,8 @@ class Navbar implements
     public function getToLogin($create, $navpath)
     {
         $navtext = "Logga in";
-        $loginout = '<li><a href = "' . $create . '">Bli medlem</span></a></li>';
+        $attention = '<i class="fa fa-hand-o-right" aria-hidden="true"></i>';
+        $loginout = '<li><a href = "' . $create . '">' . $attention . ' Bli medlem</span></a></li>';
         $loginout .= '<li><a href="' . $navpath . '"><span class="glyphicon glyphicon-log-in">';
         $loginout .= '</span> ' . $navtext . '</a></li>';
         return $loginout;
@@ -56,7 +56,7 @@ class Navbar implements
         $navtext = "Logga ut";
         $navpath = call_user_func([$url, "create"], "user/logout");
 
-        $loginout = '<li><a href="' . $update . '/' . $sess['id'] . '"><span class="userupdate"><span class="userupdatetext">Ändra ' . $sess['acronym'] . ' profil</span>' . $grav . '</span></a></li>';
+        $loginout = '<li><a href="' . $update . '/' . $sess['id'] . '"><span class="userupdate em08"><span class="userupdatetext">Uppdatera ' . $sess['acronym'] . '\'s uppgifter</span>' . $grav . '</span></a></li>';
         $loginout .= '<li><a href="' . $navpath . '"><span class="glyphicon glyphicon-log-out">';
         $loginout .= '</span> ' . $navtext . '</a></li>';
         return $loginout;

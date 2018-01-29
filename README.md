@@ -4,7 +4,6 @@ Anax comment
 [![Build Status](https://travis-ci.org/guni12/dela.svg?branch=master)](https://travis-ci.org/guni12/dela)
 [![Build Status](https://scrutinizer-ci.com/g/guni12/dela/badges/build.png?b=master)](https://scrutinizer-ci.com/g/guni12/dela/build-status/master)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/guni12/dela/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/guni12/dela/?branch=master)
-[![Code Coverage](https://scrutinizer-ci.com/g/guni12/dela/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/guni12/dela/?branch=master)
 [![Maintainability](https://api.codeclimate.com/v1/badges/2faf2369720e7502efd6/maintainability)](https://codeclimate.com/github/guni12/dela/maintainability)
 
 
@@ -19,12 +18,28 @@ Install using composer and then integrate the module with your Anax installation
 
 
 
+### Clone the dELa Frontend Code
+
+```
+git clone https://github.com/guni12/dela.git
+```
+or you can download the zip
+
+
+### Fix the database
+
+Look in the sql-folder. There you find the structure of the database tables. Use it and/or modify the content according to your needs.
+
+You also find an example of how to set up the mysql database.php file. You can change to sqlite if you prefer.
+
+
 ### Install with composer
 
 ```
-composer require anax/common anax/database anax/di anax/page anax/request anax/url anax/router anax/response anax/view anax/session anax/configure anax/textfilter guni12/comment mos/cimage symfony/yaml   
+composer install
 ```
 
+Now you should be ready to go!
 
 
 License
