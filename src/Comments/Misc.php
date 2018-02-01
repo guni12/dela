@@ -262,28 +262,15 @@ class Misc
      *
      * @return string htmlcode
      */
-    public function getLoginLink($create, $del, $isloggedin, $isadmin)
+    public function getLoginLink($isloggedin, $isadmin)
     {
         $loggedin = '<a href="user/login">Logga in om du vill kommentera</a>';
         if ($isloggedin) {
-            $loggedin = ' <a href="' . $create .'">Skriv ett inlägg</a>';
+            $loggedin = ' <a href="' . $this->setUrlCreator("comm/create") .'">Skriv ett inlägg</a>';
             if ($isadmin === true) {
-                $loggedin .= ' | <a href="' . $del . '">Ta bort ett inlägg</a>';
+                $loggedin .= ' | <a href="' . $this->setUrlCreator("comm/admindelete") . '">Ta bort ett inlägg</a>';
             }
         }
         return $loggedin;
-    }
-
-
-    /**
-    * @param $edit, $answer, $comment, $delete - paths/links
-    *
-    */
-    public function makeLoginText($edit, $answer, $comment, $delete)
-    {
-        $line = $edit && $answer ? ' | ' : "";
-        $line2 = $answer && $comment || $edit && $comment ? ' | ' : "";
-        $line3 = $comment && $delete || $edit && $delete || $answer && $delete? ' | ' : "";
-        return $edit . $line . $answer . $line2 . $comment . $line3 . $delete;
     }
 }

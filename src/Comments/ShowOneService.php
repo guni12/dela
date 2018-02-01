@@ -197,14 +197,13 @@ class ShowOneService
         $loginurl = $this->misc->setUrlCreator("user/login");
         $notloggedin = $this->isquestion ? '<a href="' . $loginurl . '">Logga in om du vill svara</a></p>' : "";
 
-        $answer = $this->isquestion ? $this->misc->getAnswerLink($commentid) : "";
-        $comment = $this->iscomment ? "" : $this->misc->getCommentLink($commentid);
+        $answer = $this->isquestion ? ' | ' . $this->misc->getAnswerLink($commentid) : "";
+        $comment = $this->iscomment ? "" : ' | ' . $this->misc->getCommentLink($commentid);
         $edit = $this->getEditLink($commentid);
-        $delete = $this->getDeleteLink($commentid);
+        $delete = ' | ' . $this->getDeleteLink($commentid) . " ";
 
-        $hasloggedin = $this->misc->makeLoginText($edit, $answer, $comment, $delete);
+        $hasloggedin = $edit . $answer . $comment . $delete;
 
-        
 
         return $this->isadmin || $this->sess && $this->sess['id'] ? $hasloggedin : $notloggedin;
     }
@@ -221,8 +220,7 @@ class ShowOneService
      */
     public function getEditLink($commentid)
     {
-        $editpath = $this->misc->setUrlCreator("comm/update");
-        return '<a href="' . $editpath . '/' . $commentid . '">Redigera</a>';
+        return '<a href="' . $this->misc->setUrlCreator("comm/update") . '/' . $commentid . '">Redigera</a>';
     }
 
 
@@ -233,9 +231,8 @@ class ShowOneService
     public function getDeleteLink($commentid)
     {
         $del = $this->isadmin ? "comm/admindelete" : "comm/delete";
-        $deletepath = $this->misc->setUrlCreator($del);
         $end = $this->isadmin ? '">Ta bort inlägget</a>' : '/' . $commentid . '">Ta bort inlägget</a>';
-        return '<a href="' . $deletepath . $end;
+        return '<a href="' . $this->misc->setUrlCreator($del) . $end;
     }
 
 
@@ -257,7 +254,7 @@ class ShowOneService
     }
 
     /**
-     * @param object $commcomments - commentlist
+     * @param array $commcomments - commentlist
      *
      * @return string htmlcode
      */
@@ -310,18 +307,57 @@ class ShowOneService
      * @param object $value - the questionitem
      * @return string htmlcode
      */
+    public function getStarted($value)
+    {
+        return $value->iscomment == 0 ? $this->getValHtml($value) . '<br />' . $this->getLoginurl($value->id) . $this->getVoteHtml($value) : "";
+    }
+
+
+
+    /**
+     * Returns htmltext for each answer item
+     * @param object $value - the questionitem
+     * @return string htmlcode
+     */
+    public function getNextBit($value)
+    {
+        $toaccept = $value->iscomment == 0 ? $this->getToAccept() : "";
+        return $value->iscomment == 0 ? $this->getAcceptIcon($toaccept, $this->comment->accept, $value->id) : "";
+    }
+
+
+
+    /**
+     * Returns htmltext for each answer item
+     * @param object $value - the questionitem
+     */
+    public function makeCommentText($value)
+    {
+        $this->commtext .= $value->iscomment == 1 ? $this->getValHtml($value, 1, null) . '<br />' . $this->getLoginurl($value->id) . $this->getVoteHtml($value) . '<hr />' : "";
+    }
+
+
+
+    /**
+     * Returns htmltext for each answer item
+     * @param object $value - the questionitem
+     * @return string htmlcode
+     */
     public function getHTMLItem($value)
     {
         $this->isquestion = 0;
         $this->iscomment = $value->iscomment == 1 ? 1 : 0;
         $this->isanswer = $value->iscomment == 1 ? 0 : 1;
         $params = [$value->id];
-        $toaccept = $value->iscomment == 0 ? $this->getToAccept() : "";
-        $text = $value->iscomment == 0 ? $this->getValHtml($value) . '<br />' . $this->getLoginurl($value->id) . $this->getVoteHtml($value) : "";
-        $text .= $value->iscomment == 0 ? $this->getAcceptIcon($toaccept, $this->comment->accept, $value->id) : "";
+
+        $text = $this->getStarted($value);
+        $text .= $this->getNextBit($value);
+
         $commcomments = $value->iscomment == 0 ? $this->misc->findAllWhere("parentid = ?", $params) : null;
         $text .= ($commcomments) ? $this->getCommComments($commcomments)  : "";
-        $this->commtext .= $value->iscomment == 1 ? $this->getValHtml($value, 1, null) . '<br />' . $this->getLoginurl($value->id) . $this->getVoteHtml($value) . '<hr />' : "";
+
+        $this->makeCommentText($value);
+
         return $text;
     }
 
@@ -347,17 +383,13 @@ class ShowOneService
      */
     public function getHTML()
     {
-        $commpage = $this->misc->setUrlCreator("comm");
-        $pointsort = $this->misc->setUrlCreator("comm/commentpoints");
-        $datesort = $this->misc->setUrlCreator("comm/view-one");
-
         $this->isquestion = 1;
         $this->isanswer = 0;
         $this->iscomment = 0;
         
         $mainCommentLinks = $this->getLoginurl($this->comment->id);
 
-        $text = '<h2>Svar <span class = "em06"><a href="' . $pointsort . '/' . $this->comment->id . '">rankordning</a> | <a href="' . $datesort . '/' . $this->comment->id . '"> datumordning</a></span></h2>';
+        $text = '<h2>Svar <span class = "em06"><a href="' . $this->misc->setUrlCreator("comm/commentpoints") . '/' . $this->comment->id . '">rankordning</a> | <a href="' . $this->misc->setUrlCreator("comm/view-one") . '/' . $this->comment->id . '"> datumordning</a></span></h2>';
         
         $this->commtext = $this->comments ? "<h3>Kommentarer</h3>" : "";
         $text .= $this->comments ? $this->getCommentItem() : "";
@@ -365,7 +397,7 @@ class ShowOneService
         $html = '<div class="col-sm-12 col-xs-12"><div class="col-lg-6 col-sm-7 col-xs-12">';
         $html .= $this->getValHtml($this->comment, 0, 1);
         $html .= '<br />' . $mainCommentLinks . '<hr />' . $this->commtext;
-        $html .=  '<p><a href="' . $commpage . '">Till Frågor</a></p>';
+        $html .=  '<p><a href="' . $this->misc->setUrlCreator("comm") . '">Till Frågor</a></p>';
         $html .=  '</div><div class="col-sm-5 col-xs-12">' . $text . '</div></div>';
         return $html;
     }

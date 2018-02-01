@@ -6,6 +6,7 @@ use \Anax\DI\DIInterface;
 use \Guni\Comments\Comm;
 use \Guni\Comments\ShowOneService;
 use \Guni\Comments\Misc;
+use \Guni\User\UserHelp;
 
 /**
  * 
@@ -32,85 +33,15 @@ class ShowTagsService
     {
         $this->di = $di;
         $this->name = $id;
+
+        $this->misc = new Misc($di);
         $search = "%" . $id . "%";
-        $this->tagset = $this->getTags($search);
+        $this->tagset = $this->misc->findAllWhere('comment LIKE ?', $search);
 
         $session = $this->di->get("session");
         $this->sess = $session->get("user");
 
         $this->isadmin = $this->sess['isadmin'] == 1 ? true : false;
-
-        $this->misc = new Misc($di);
-    }
-
-
-    /**
-     * Get details on item to load form with.
-     *
-     * @param integer $id get details on item with id.
-     *
-     * @return Comm
-     */
-    public function getTags($search)
-    {
-        $comm = new Comm();
-        $comm->setDb($this->di->get("db"));
-        //$sql = 'SELECT * FROM `comm` WHERE comment LIKE "%elcar%"';
-
-        return $comm->findAllWhere('comment LIKE ?', $search);
-    }
-
-
-    /**
-     * Get details on item to load form with.
-     *
-     * @param string $where
-     * @param array $params get details on item with id parentid.
-     *
-     * @return Comm
-     */
-    public function getChildrenDetails($childid)
-    {
-        $searchChosenid = "parentid = ?";
-        $comm = new Comm();
-        $comm->setDb($this->di->get("db"));
-        return $comm->findAllWhere($searchChosenid, $childid);
-    }
-
-
-    /**
-     * Sets the callable to use for creating routes.
-     *
-     * @param callable $urlCreate to create framework urls.
-     *
-     * @return void
-     */
-    public function setUrlCreator($route)
-    {
-        $url = $this->di->get("url");
-        return call_user_func([$url, "create"], $route);
-    }
-
-
-    /**
-     * Returns json_decoded title and text
-     * If lead text, headline is larger font
-     * @param object $item
-     * @return string htmlcode
-     */
-    public function getDecode(Comm $item, $lead = null)
-    {
-        $comt = json_decode($item->comment);
-        if ($comt->frontmatter->title) {
-            $til = $comt->frontmatter->title;
-        } else {
-            $til = $item->title;
-        }
-        $comt = $comt->text;
-        if ($lead) {
-            return '<h3>' . $til . '</h3><p>' . $comt . '</p>';
-        }
-        return '<h4>' . $til . '</h4><p>' . $comt . '</p>';
     }
 
 
@@ -163,7 +94,7 @@ class ShowTagsService
     {
         $answers = "";
         $comments = "";
-        $children = $this->getChildrenDetails($val->id);
+        $children = $this->misc->findAllWhere("parentid = ?", $val->id);
         foreach ($children as $item) {
             if ($item->iscomment == 1) {
                 $comments .= '<a href = "' . $viewcomm . '/' . $item->id . '"><span class = "delagreen">' . $item->title . '</span></a>, ';
@@ -185,16 +116,16 @@ class ShowTagsService
      */
     public function getHTML()
     {
-        $viewcomm = $this->setUrlCreator("comm/view-one");
+        $viewcomm = $this->misc->setUrlCreator("comm/view-one");
 
         $html = $this->getTableStart();
 
-        $userController = $this->di->get("userController");
+        $userhelp = new UserHelp($this->di);
 
         foreach ($this->tagset as $val) {
             $childrentext = $this->getChildrenText($val, $viewcomm);
             $html .= "<tr>";
-            $user = $userController->getOne($val->userid);
+            $user = $userhelp->getOne($val->userid);
             $grav = $this->misc->getGravatar($user['email']);
             $acronym = $user['acronym'];
             $html .= '<td class = "itis"><span class="smaller em06">' . $acronym . '</span></td>';

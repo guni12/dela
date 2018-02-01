@@ -120,10 +120,7 @@ class ShowAllService
      */
     public function getHTML()
     {
-        $create = $this->misc->setUrlCreator("comm/create");
-        $del = $this->misc->setUrlCreator("comm/admindelete");
-
-        $loggedin = $this->misc->getLoginLink($create, $del, $this->sess['id'], $this->isadmin);
+        $loggedin = $this->misc->getLoginLink($this->sess['id'], $this->isadmin);
 
         $html = '<div class="col-lg-12 col-sm-12 col-xs-12"><div class="">
 
