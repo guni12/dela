@@ -15,6 +15,7 @@ use \Guni\Comments\ShowOneService;
 use \Guni\Comments\ShowAllService;
 use \Guni\Comments\Taglinks;
 use \Guni\Comments\VoteService;
+use \Guni\Comments\Misc;
 
 /**
  * A controller class.
@@ -25,6 +26,19 @@ class CommController implements
 {
     use ConfigureTrait,
         InjectionAwareTrait;
+
+
+    /**
+    *
+    * @return sessionobject
+    */
+    public function getSess()
+    {
+        $session = $this->di->get("session");
+        $sess = $session->get("user");
+        return $sess;
+    }
+
 
 
     /**
@@ -92,8 +106,11 @@ class CommController implements
             $form       = new CreateCommForm($this->di, $iscomment, $sess['id'], $id, $parentid);
             $form->check();
 
+            $text = '<div class="col-lg-12 col-sm-12 col-xs-12">';
+            $text .= $form->getHTML() . '</div>';
+
             $data = [
-                "form" => $form->getHTML(),
+                "form" => $text,
             ];
         } else {
             $data = [
@@ -121,8 +138,11 @@ class CommController implements
             $form       = new CreateCommForm($this->di, $iscomment, $sess['id'], $id);
             $form->check();
 
+            $text = '<div class="col-lg-12 col-sm-12 col-xs-12">';
+            $text .= $form->getHTML() . '</div>';
+
             $data = [
-                "form" => $form->getHTML(),
+                "form" => $text,
             ];
         } else {
             $data = [
@@ -132,17 +152,6 @@ class CommController implements
 
         $crud = "comm/crud/create";
         $this->toRender($title, $crud, $data);
-    }
-
-    /**
-    *
-    * @return sessionobject
-    */
-    public function getSess()
-    {
-        $session = $this->di->get("session");
-        $sess = $session->get("user");
-        return $sess;
     }
 
 
@@ -156,14 +165,18 @@ class CommController implements
         $title      = "Ta bort ett inlägg";
         $sess = $this->getSess();
 
-        $comm = $this->findOne($id);
+        $misc = new Misc($this->di);
+        $comm = $this->getItemDetails($id);
 
         if ($sess && $sess['id'] == $comm->userid) {
             $form       = new DeleteCommForm($this->di, $id);
             $form->check();
 
+            $text = '<div class="col-lg-12 col-sm-12 col-xs-12">';
+            $text .= $form->getHTML() . '</div>';
+
             $data = [
-                "form" => $form->getHTML(),
+                "form" => $text,
             ];
         } else {
             $data = [
@@ -191,9 +204,11 @@ class CommController implements
             $form       = new AdminDeleteCommForm($this->di);
 
             $form->check();
+            $text = '<div class="col-lg-12 col-sm-12 col-xs-12">';
+            $text .= $form->getHTML() . '</div>';
 
             $data = [
-                "form" => $form->getHTML(),
+                "form" => $text,
             ];
         } else {
             $data = [
@@ -217,14 +232,18 @@ class CommController implements
         $title      = "Uppdatera ditt inlägg";
         $sess = $this->getSess();
 
-        $comm = $this->findOne($id);
+        $misc = new Misc($this->di);
+        $comm = $misc->getItemDetails($id);
 
         if ($sess && $sess['id'] == $comm->userid || $sess['isadmin'] == 1) {
             $form       = new UpdateCommForm($this->di, $id, $sess['id']);
             $form->check();
 
+            $text = '<div class="col-lg-12 col-sm-12 col-xs-12">';
+            $text .= $form->getHTML() . '</div>';
+
             $data = [
-                "form" => $form->getHTML(),
+                "form" => $text,
             ];
         } else {
             $data = [
@@ -274,33 +293,6 @@ class CommController implements
 
         $crud = "comm/crud/view-one";
         $this->toRender($title, $crud, $data);
-    }
-
-    /**
-    *
-    *
-    */
-    public function getGravatar($email, $size = 20)
-    {
-        $dim = 'mm';
-        $rad = 'g';
-        $url = 'https://www.gravatar.com/avatar/';
-        $url .= md5(strtolower(trim($email)));
-        $url .= "?s=$size&d=$dim&r=$rad";
-        return $url;
-    }
-
-
-    /**
-    * @param string id to check
-    * @return idobject
-    */
-    public function findOne($id)
-    {
-        $comm = new Comm();
-        $comm->setDb($this->di->get("db"));
-        $one = $comm->find("id", $id);
-        return $one;
     }
 
 

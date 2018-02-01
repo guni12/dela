@@ -5,6 +5,7 @@ namespace Guni\Comments\HTMLForm;
 use \Guni\Comments\HTMLForm\FormModel;
 use \Anax\DI\DIInterface;
 use \Guni\Comments\Comm;
+use \Guni\Comments\Misc;
 
 /**
  * Form to create an item.
@@ -14,6 +15,7 @@ class CreateCommForm extends FormModel
     protected $tags;
     protected $headline;
     protected $iscomment;
+    protected $misc;
 
 
     /**
@@ -28,24 +30,10 @@ class CreateCommForm extends FormModel
     {
         parent::__construct($di);
         $this->iscomment = $iscomment;
+
+        $this->misc = new Misc($di);
         
         $this->aForm($id, $parentid);
-    }
-
-
-    /**
-     * Get details on item to load form with.
-     *
-     * @param integer $id get details on item with id.
-     *
-     * @return Comm
-     */
-    public function getCommDetails($parentid)
-    {
-        $comm = new Comm();
-        $comm->setDb($this->di->get("db"));
-        $comm->find("id", $parentid);
-        return $comm;
     }
 
 
@@ -235,11 +223,7 @@ class CreateCommForm extends FormModel
 
         $this->form->rememberValues();
 
-        $session = $this->di->get("session");
-        $sess = $session->get("user");
-        var_dump($sess);
-
-        $where = $this->iscomment ? $this->getCommDetails($comm->parentid)->parentid : $this->form->value("parentid");
+        $where = $this->iscomment ? $this->misc->getItemDetails($comm->parentid)->parentid : $this->form->value("parentid");
         
         $back = (int)$this->form->value("parentid") > 0 ? "/view-one/" . $where : "";
 

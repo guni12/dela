@@ -3,6 +3,8 @@
 namespace Guni\Comments;
 
 use \Anax\DI\DIInterface;
+use \Guni\Comments\Comm;
+use \Guni\User\UserHelp;
 
 /**
  * Helper for html-code
@@ -16,13 +18,14 @@ class IndexPage
     protected $sess;
     protected $users;
     protected $user;
-    protected $userController;
     protected $isadmin;
     protected $elcar;
     protected $safety;
     protected $light;
     protected $heat;
     protected $di;
+    protected $misc;
+    protected $userhelp;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -32,23 +35,25 @@ class IndexPage
     public function __construct(DIInterface $di)
     {
         $this->di = $di;
-        $this->initiate();
+        $this->initiate($di);
     }
 
 
     /**
     * Initiates some global variables
     */
-    public function initiate()
+    public function initiate($di)
     {
-        $this->comments = $this->getAll();
+        $this->misc = new Misc($di);
+        $this->userhelp = new UserHelp($di);
+
+        $this->comments = $this->misc->getAll();
         $session = $this->di->get("session");
         $this->sess = $session->get("user");
-        $addsess = isset($this->sess) ? $this->sess : null;
-        $this->sess = $addsess;
-        $this->userController = $this->di->get("userController");
-        $this->users = $this->userController->getAllUsers();
-        $this->user = $this->userController->getOne($this->sess['id']);
+        $this->sess = isset($this->sess) ? $this->sess : null;
+        
+        $this->users = $this->userhelp->getAllUsers();
+        $this->user = $this->userhelp->getOne($this->sess['id']);
         $this->isadmin = $this->sess['isadmin'] === 1 ? true : false;
         $this->elcar = 0;
         $this->safety = 0;
@@ -56,86 +61,6 @@ class IndexPage
         $this->heat = 0;
     }
 
-    /**
-     * Get details on all comments.
-     *
-     * @return Comm
-     */
-    public function getAll()
-    {
-        $comm = new Comm();
-        $comm->setDb($this->di->get("db"));
-        return $comm->findAll();
-    }
-
-    /**
-     * Sets the callable to use for creating routes.
-     *
-     * @param callable $urlCreate to create framework urls.
-     *
-     * @return void
-     */
-    public function setUrlCreator($route)
-    {
-        $url = $this->di->get("url");
-        return call_user_func([$url, "create"], $route);
-    }
-
-
-    /**
-     * Returns link for gravatar img
-     *
-     * @param object $item
-     *
-     * @return string htmlcode
-     */
-    public function getGravatar($item)
-    {
-        $comm = new Comm();
-        $gravatar = $comm->getGravatar($item);
-        return '<img src="' . $gravatar . '" alt=""/>';
-    }
-
-
-    /**
-    *
-    */
-    public function isUpdated($item)
-    {
-        if ($item->parentid !== null) {
-            return 'Svar: ' . $item->created . ', Ändrad: ' . $item->updated;
-        } else {
-            return 'Fråga: ' . $item->created . ', Ändrad: ' . $item->updated;
-        }
-    }
-
-
-
-    /**
-    *
-    */
-    public function isNotUpdated($item)
-    {
-        if ($item->parentid !== null) {
-            return 'Svar: ' . $item->created;
-        } else {
-            return 'Fråga: ' . $item->created;
-        }
-    }
-
-
-
-    /**
-     * Returns when created or updated
-     *
-     * @param object $item
-     * @return string htmlcode
-     */
-    public function getWhen($item)
-    {
-        $when = $item->updated ? $this->isUpdated($item) : $this->isNotUpdated($item);
-        return $when;
-    }
 
 
     /**
@@ -149,48 +74,23 @@ class IndexPage
     public function getValHtml(Comm $item, $viewone, $arr)
     {
         $showid = "";
-        $curruser = $this->userController->getOne($item->userid);
+        $curruser = $this->userhelp->getOne($item->userid);
         $email = $curruser['email'];
-        $gravatar = $this->getGravatar($email);
+        $gravatar = $this->misc->getGravatar($email);
         if ($this->isadmin === true) {
             $showid = '(' . $item->id . '): ';
         }
         $title = '<a href="' . $viewone . '/' . $item->id . '">' . $showid . ' ' . $item->title . '</a>';
-        $when = '<span class="smaller em06">' . $this->getWhen($item) . '</span>';
+        $when = '<span class="smaller em06">' . $this->misc->getWhen($item) . '</span>';
 
         $html = '<tr><td class = "indgrav">' . $gravatar . '</td><td class = "indauthor">' . $curruser['acronym'] . '</td><td class = "latest">' . $title . '</td><td class = "when">' . $when . '</td><td class = "itis">' . $arr['gravatar'] . '</td><td class = "eager">' . $arr['acronym'] . '</td><td class = "number">' . $arr['count'] . '</td></tr>';
         return $html;
     }
 
 
-    /**
-     * Returns html for user item
-     *
-     * @param object $item
-     * @param string $viewone - path
-     *
-     * @return string htmlcode
-     */
-    public function getUsersHtml($item, $viewone)
-    {
-        $viewone = $this->setUrlCreator("user/view-one") . "/";
-        $gravatar = $this->getGravatar($item['email']);
-        $arr['acronym'] = '<a href="' . $viewone . $item['id'] . '">' . $item['acronym'] . '</a>';
-        $arr['gravatar'] = '<a href="' . $viewone . $item['id'] . '">' . $gravatar . '</a>';
-        return $arr;
-    }
 
-    /**
-     * Sort list of dates
-     *
-     * @param string $first, $second - dates
-     *
-     * @return sorted dates
-     */
-    public function dateSort($first, $second)
-    {
-        return strtotime($first->created) - strtotime($second->created);
-    }
+
+
 
 
     /**
@@ -280,7 +180,7 @@ class IndexPage
     */
     public function getLatestQuestions($viewone)
     {
-        usort($this->comments, array($this, "dateSort"));
+        usort($this->comments, array($this->misc, "dateSort"));
         $count = 0;
         $reversed = array_reverse($this->comments);
         $html = "";
@@ -300,7 +200,6 @@ class IndexPage
     public function getActivesInfo($viewone)
     {
         $actives = $this->getActives();
-        $userController = $this->di->get("userController");
         $arr = [];
 
         $count = 0;
@@ -309,8 +208,8 @@ class IndexPage
             if ($count >= 5) {
                 break;
             }
-            $one = $userController->getOne($val->userid);
-            $item = $this->getUsersHtml($one, $viewone);
+            $one = $this->userhelp->getOne($val->userid);
+            $item = $this->misc->getUsersHtml($one, $viewone);
             $test['gravatar'] = $item['gravatar'];
             $test['acronym'] = $item['acronym'];
             $test['count'] = $val->count;
@@ -331,8 +230,8 @@ class IndexPage
     {
         $html = "";
 
-        $viewone = $this->setUrlCreator("comm/view-one");
-        $base = $this->setUrlCreator("comm/tags/");
+        $viewone = $this->misc->setUrlCreator("comm/view-one");
+        $base = $this->misc->setUrlCreator("comm/tags/");
 
         $html .= '<div class="col-lg-12 col-sm-12 col-xs-12">';
         $html .= $this->getTaginfo($base);

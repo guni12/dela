@@ -28,6 +28,19 @@ class UserController implements
 
 
     /**
+    *
+    * @return sessionobject
+    */
+    public function getSess()
+    {
+        $session = $this->di->get("session");
+        $sess = $session->get("user");
+        return $sess;
+    }
+
+
+
+    /**
      * Sends data to view
      *
      * @param string $title
@@ -68,17 +81,6 @@ class UserController implements
             ];
         }
         $this->toRender($title, $crud, $data);
-    }
-
-    /**
-    *
-    * @return sessionobject
-    */
-    public function getSess()
-    {
-        $session = $this->di->get("session");
-        $sess = $session->get("user");
-        return $sess;
     }
 
 
@@ -334,37 +336,5 @@ class UserController implements
 
         $crud = "user/crud/admindelete";
         $this->toRender($title, $crud, $data);
-    }
-
-
-    public function getAllUsers()
-    {
-        $user = new User();
-        $user->setDb($this->di->get("db"));
-        $users = $user->findAll();
-        return $users;
-    }
-
-
-    public function getOne($id)
-    {
-        $user = new User();
-        $user->setDb($this->di->get("db"));
-        $one = $user->find("id", $id);
-
-        if ($one) {
-            $data = [
-                "email" => $one->email,
-                "id" => $one->id,
-                "acronym" => $one->acronym,
-                "profile" => $one->profile,
-                "created" => $one->created,
-                "isadmin" => $one->isadmin,
-            ];
-        } else {
-            $data = [];
-        }
-
-        return $data;
     }
 }

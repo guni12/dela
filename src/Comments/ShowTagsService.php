@@ -5,6 +5,7 @@ namespace Guni\Comments;
 use \Anax\DI\DIInterface;
 use \Guni\Comments\Comm;
 use \Guni\Comments\ShowOneService;
+use \Guni\Comments\Misc;
 
 /**
  * 
@@ -19,6 +20,7 @@ class ShowTagsService
     protected $isadmin;
     protected $sess;
     protected $di;
+    protected $misc;
 
 
     /**
@@ -37,6 +39,8 @@ class ShowTagsService
         $this->sess = $session->get("user");
 
         $this->isadmin = $this->sess['isadmin'] == 1 ? true : false;
+
+        $this->misc = new Misc($di);
     }
 
 
@@ -85,20 +89,6 @@ class ShowTagsService
     {
         $url = $this->di->get("url");
         return call_user_func([$url, "create"], $route);
-    }
-
-
-    /**
-     * Returns link for gravatar img
-     *
-     * @param object $item
-     * @return string htmlcode
-     */
-    public function getGravatar($item)
-    {
-        $comm = new Comm();
-        $gravatar = $comm->getGravatar($item);
-        return '<img src="' . $gravatar . '" alt=""/>';
     }
 
 
@@ -205,7 +195,7 @@ class ShowTagsService
             $childrentext = $this->getChildrenText($val, $viewcomm);
             $html .= "<tr>";
             $user = $userController->getOne($val->userid);
-            $grav = $this->getGravatar($user['email']);
+            $grav = $this->misc->getGravatar($user['email']);
             $acronym = $user['acronym'];
             $html .= '<td class = "itis"><span class="smaller em06">' . $acronym . '</span></td>';
             $html .= '<td class = "grav">' . $grav . '</td>';

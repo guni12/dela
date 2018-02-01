@@ -4,6 +4,9 @@ namespace Guni\Comments;
 
 use \Anax\DI\DIInterface;
 use \Guni\Comments\Comm;
+use \Guni\Comments\Misc;
+use \Guni\Comments\VoteService;
+use \Guni\User\UserHelp;
 
 /**
  * Form to update an item.
@@ -25,6 +28,8 @@ class ShowOneService
     protected $isquestion;
     protected $isanswer;
     protected $iscomment;
+    protected $misc;
+    protected $userhelp;
 
 
     /**
@@ -36,8 +41,10 @@ class ShowOneService
     public function __construct(DIInterface $di, $id, $sort = null)
     {
         $this->di = $di;
-        $this->comment = $this->getItemDetails($id);
-        $this->getAnswers($sort, $id);
+        $this->misc = new Misc($di);
+        $this->userhelp = new UserHelp($di);
+        $this->comment = $this->misc->getItemDetails($id);
+        $this->comments = $this->misc->getAnswers($sort, $id, $this->comments);
 
         $session = $this->di->get("session");
         $this->sess = $session->get("user");
@@ -52,93 +59,6 @@ class ShowOneService
         $this->iscomment = 0;
     }
 
-
-    /**
-    * sql command ORDER BY fixed by ActiveRecord
-    *
-    * @param integer $sort - if answers should be sorted by points
-    * @param integer $id - the question for the answers anwers
-    */
-    public function getAnswers($sort, $id)
-    {
-        $orderby = $sort == 1 ? "`points` DESC" : "`created` DESC";
-        $params = [$id];
-        $this->comments = $this->getParentOrderDetails($orderby, $params);
-    }
-
-
-    /**
-     * Get details on item to load form with.
-     *
-     * @param integer $id get details on item with id.
-     *
-     * @return object $comm - actual comment
-     */
-    public function getItemDetails($id)
-    {
-        $comm = new Comm();
-        $comm->setDb($this->di->get("db"));
-        $comm->find("id", $id);
-        return $comm;
-    }
-
-
-        /**
-     * Get details on item to load form with.
-     *
-     * @param array $params get details on item with id parentid.
-     *
-     * @return Comm
-     */
-    public function getParentDetails($params)
-    {
-        $comm = new Comm();
-        $comm->setDb($this->di->get("db"));
-        return $comm->findAllWhere("parentid = ?", $params);
-    }
-
-        /**
-     * Get details on item to load form with.
-     *
-     * @param string $orderby - sql command for column and DESC or ASC
-     * @param array $params get details on item with id parentid.
-     *
-     * @return Comm
-     */
-    public function getParentOrderDetails($orderby, $params)
-    {
-        $comm = new Comm();
-        $comm->setDb($this->di->get("db"));
-        return $comm->findOrderBy("parentid = ?", $orderby, $params);
-    }
-
-
-    /**
-     * Sets the callable to use for creating routes.
-     *
-     * @param callable $urlCreate to create framework urls.
-     *
-     * @return void
-     */
-    public function setUrlCreator($route)
-    {
-        $url = $this->di->get("url");
-        return call_user_func([$url, "create"], $route);
-    }
-
-
-    /**
-     * Returns link for gravatar img
-     *
-     * @param object $item
-     * @return string htmlcode
-     */
-    public function getGravatar($item)
-    {
-        $comm = new Comm();
-        $gravatar = $comm->getGravatar($item);
-        return '<img src="' . $gravatar . '" alt=""/>';
-    }
 
 
     /**
@@ -168,7 +88,7 @@ class ShowOneService
      */
     public function getAcceptIcon($toaccept, $isaccepted, $id)
     {
-        $acceptlink = $this->setUrlCreator("comm/accept");
+        $acceptlink = $this->misc->setUrlCreator("comm/accept");
         $faaccept = '<i class="fa fa-smile-o" aria-hidden="true"></i>';
 
         $open = ' | <a href="' . $acceptlink . '/' . $id . '">';
@@ -230,8 +150,8 @@ class ShowOneService
     */
     public function voteChoices($value)
     {
-        $voteup = $this->setUrlCreator("comm/voteup");
-        $votedown = $this->setUrlCreator("comm/votedown");
+        $voteup = $this->misc->setUrlCreator("comm/voteup");
+        $votedown = $this->misc->setUrlCreator("comm/votedown");
 
         $arrDecoded = json_decode($value->hasvoted);
         $faup = ' | <i class="fa fa-thumbs-up" aria-hidden="true"></i>';
@@ -267,49 +187,6 @@ class ShowOneService
     }
 
 
-
-
-    /**
-     * @param integer $commentid - question to answer
-     *
-     * @return string htmlcode for answering a question
-     */
-    public function getAnswerLink($commentid)
-    {
-        $create = $this->setUrlCreator("comm/create");
-        return '<a href="' . $create . '/' . $commentid . '">Svara</a>';
-    }
-
-
-
-    /**
-     * @param integer $commentid - question or answer to comment
-     *
-     * @return string htmlcode for commenting
-     */
-    public function getCommentLink($commentid)
-    {
-        $commentpath = $this->setUrlCreator("comm/comment");
-        return '<a href="' . $commentpath . '/' . $commentid . '">Kommentera</a>';
-    }
-
-
-
-    /**
-    * @param $edit, $answer, $comment, $delete - paths/links
-    *
-    */
-    public function makeLoginText($edit, $answer, $comment, $delete)
-    {
-        $line = $edit && $answer ? ' | ' : "";
-        $line2 = $answer && $comment || $edit && $comment ? ' | ' : "";
-        $line3 = $comment && $delete || $edit && $delete || $answer && $delete? ' | ' : "";
-        return $edit . $line . $answer . $line2 . $comment . $line3 . $delete;
-    }
-
-
-
-
     /**
      * If session contains correct id, returns string with edit-links
      *
@@ -317,15 +194,15 @@ class ShowOneService
      */
     public function getLoginurl($commentid)
     {
-        $loginurl = $this->setUrlCreator("user/login");
+        $loginurl = $this->misc->setUrlCreator("user/login");
         $notloggedin = $this->isquestion ? '<a href="' . $loginurl . '">Logga in om du vill svara</a></p>' : "";
 
-        $answer = $this->isquestion ? $this->getAnswerLink($commentid) : "";
-        $comment = $this->iscomment ? "" : $this->getCommentLink($commentid);
+        $answer = $this->isquestion ? $this->misc->getAnswerLink($commentid) : "";
+        $comment = $this->iscomment ? "" : $this->misc->getCommentLink($commentid);
         $edit = $this->getEditLink($commentid);
         $delete = $this->getDeleteLink($commentid);
 
-        $hasloggedin = $this->makeLoginText($edit, $answer, $comment, $delete);
+        $hasloggedin = $this->misc->makeLoginText($edit, $answer, $comment, $delete);
 
         
 
@@ -344,11 +221,9 @@ class ShowOneService
      */
     public function getEditLink($commentid)
     {
-        $editpath = $this->setUrlCreator("comm/update");
+        $editpath = $this->misc->setUrlCreator("comm/update");
         return '<a href="' . $editpath . '/' . $commentid . '">Redigera</a>';
     }
-
-
 
 
     /**
@@ -358,12 +233,10 @@ class ShowOneService
     public function getDeleteLink($commentid)
     {
         $del = $this->isadmin ? "comm/admindelete" : "comm/delete";
-        $deletepath = $this->setUrlCreator($del);
+        $deletepath = $this->misc->setUrlCreator($del);
         $end = $this->isadmin ? '">Ta bort inlägget</a>' : '/' . $commentid . '">Ta bort inlägget</a>';
         return '<a href="' . $deletepath . $end;
     }
-
-
 
 
     /**
@@ -417,11 +290,10 @@ class ShowOneService
      */
     public function getValHtml(Comm $item, $iscomment = null, $lead = null)
     {
-        $userController = $this->di->get("userController");
-        $curruser = $userController->getOne($item->userid);
+        $curruser = $this->userhelp->getOne($item->userid);
 
         $email = $curruser['email'];
-        $gravatar = $this->getGravatar($email);
+        $gravatar = $this->misc->getGravatar($email);
         $acronym = $curruser['acronym'];
         $updated = isset($item->updated) ? '| Ändrad: ' . $item->updated : "";
         
@@ -447,7 +319,7 @@ class ShowOneService
         $toaccept = $value->iscomment == 0 ? $this->getToAccept() : "";
         $text = $value->iscomment == 0 ? $this->getValHtml($value) . '<br />' . $this->getLoginurl($value->id) . $this->getVoteHtml($value) : "";
         $text .= $value->iscomment == 0 ? $this->getAcceptIcon($toaccept, $this->comment->accept, $value->id) : "";
-        $commcomments = $value->iscomment == 0 ? $this->getParentDetails($params) : null;
+        $commcomments = $value->iscomment == 0 ? $this->misc->findAllWhere("parentid = ?", $params) : null;
         $text .= ($commcomments) ? $this->getCommComments($commcomments)  : "";
         $this->commtext .= $value->iscomment == 1 ? $this->getValHtml($value, 1, null) . '<br />' . $this->getLoginurl($value->id) . $this->getVoteHtml($value) . '<hr />' : "";
         return $text;
@@ -475,9 +347,9 @@ class ShowOneService
      */
     public function getHTML()
     {
-        $commpage = $this->setUrlCreator("comm");
-        $pointsort = $this->setUrlCreator("comm/commentpoints");
-        $datesort = $this->setUrlCreator("comm/view-one");
+        $commpage = $this->misc->setUrlCreator("comm");
+        $pointsort = $this->misc->setUrlCreator("comm/commentpoints");
+        $datesort = $this->misc->setUrlCreator("comm/view-one");
 
         $this->isquestion = 1;
         $this->isanswer = 0;

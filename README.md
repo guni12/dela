@@ -11,14 +11,9 @@ Anax comment
 
 
 
-Install
+Clone the dELa Frontend Code
 ------------------
 
-Install using composer and then integrate the module with your Anax installation.
-
-
-
-### Clone the dELa Frontend Code
 
 ```
 git clone https://github.com/guni12/dela.git

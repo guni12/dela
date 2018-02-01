@@ -4,6 +4,8 @@ namespace Guni\User;
 
 use \Anax\DI\DIInterface;
 use \Guni\User\User;
+use \Guni\User\UserHelp;
+use \Guni\Comments\Misc;
 
 /**
  * Form to update an item.
@@ -16,6 +18,8 @@ class ShowAllService
     protected $sess;
     protected $users;
     protected $di;
+    protected $misc;
+    protected $help;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -25,38 +29,12 @@ class ShowAllService
     public function __construct(DIInterface $di)
     {
         $this->di = $di;
-        $this->users = $this->getAll();
+        $this->misc = new Misc($di);
+        $this->help = new UserHelp($di);
+        $this->users = $this->help->getAll();
         $session = $this->di->get("session");
-        $this->sess = $session->get("user");
-        $addsess = isset($this->sess) ? $this->sess : null;
-        $this->sess = $addsess;
-    }
-
-    /**
-     * Get details on comments.
-     *
-     *
-     * @return All comments
-     */
-    public function getAll()
-    {
-        $user = new User();
-        $user->setDb($this->di->get("db"));
-        return $user->findAll();
-    }
-
-
-    /**
-     * Sets the callable to use for creating routes.
-     *
-     * @param callable $urlCreate to create framework urls.
-     *
-     * @return void
-     */
-    public function setUrlCreator($route)
-    {
-        $url = $this->di->get("url");
-        return call_user_func([$url, "create"], $route);
+        $sess = $session->get("user");
+        $this->sess = isset($sess) ? $sess : null;
     }
 
 
@@ -64,13 +42,11 @@ class ShowAllService
     {
         $html = '<div class = "col-sm-12 col-xs-12 col-lg-12 col-md-12">';
         $html .= '<div class="flex">';
-        $comm = $this->di->get("commController");
-        $one = $this->setUrlCreator("user/view-one/");
+        $one = $this->misc->setUrlCreator("user/view-one/");
 
         foreach ($this->users as $value) {
-            $grav = $comm->getGravatar($value->email, 50);
+            $grav = $this->misc->getGravatar($value->email, 50);
             $thisone = $one . "/" . $value->id;
-            $grav = "<img src='" . $grav . "' /><br />";
             $html .= '<div class="inner">';
             $html .= '<div class="left">';
             $html .= $grav;
@@ -99,9 +75,9 @@ class ShowAllService
         <th class="acronym">Acronym</th>
         <th class="useremail">Email</th>
         <th class="profile">Profil</th>
-        <th class="isadmin">Adm</th>
-        <th class="created">Skapades</th>
-        <th class="updated">Uppdaterades</th>
+        <th class="adadm">Adm</th>
+        <th class="adcre">Skapades</th>
+        <th class="adupd">Uppdaterades</th>
         </tr>';
         return $html;
     }
@@ -111,21 +87,21 @@ class ShowAllService
     {
         $html = $this->getMembers();
 
-        $create = $this->setUrlCreator("user/admincreate");
-        $adminupdate = $this->setUrlCreator("user/adminupdate");
-        $del = $this->setUrlCreator("user/admindelete");
+        $create = $this->misc->setUrlCreator("user/admincreate");
+        $adminupdate = $this->misc->setUrlCreator("user/adminupdate");
+        $del = $this->misc->setUrlCreator("user/admindelete");
 
         $html .= $this->tableStart($create, $del);
 
         foreach ($this->users as $value) {
             $html .= '<tr><td>';
             $html .= '<a href="' . $adminupdate . '/' . $value->id . '">' . $value->id . '</a></td>';
-            $html .= '<td>' . $value->acronym . '</td>';
-            $html .= '<td>' . $value->email . '</td>';
-            $html .= '<td>' . $value->profile . '</td>';
-            $html .= '<td>' . $value->isadmin . '</td>';
-            $html .= '<td>' . $value->created . '</td>';
-            $html .= '<td>' . $value->updated . '</td></tr>';
+            $html .= '<td class = "adacr">' . $value->acronym . '</td>';
+            $html .= '<td class = "ademl">' . $value->email . '</td>';
+            $html .= '<td class = "adprof">' . $value->profile . '</td>';
+            $html .= '<td class = "adadm">' . $value->isadmin . '</td>';
+            $html .= '<td class = "em06 adcre">' . $value->created . '</td>';
+            $html .= '<td class = "em06 adupd">' . $value->updated . '</td></tr>';
         }
         $html .= '</table>';
 

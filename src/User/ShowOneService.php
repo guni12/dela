@@ -4,7 +4,9 @@ namespace Guni\User;
 
 use \Anax\DI\DIInterface;
 use \Guni\User\User;
+use \Guni\User\UserHelp;
 use \Guni\Comments\Comm;
+use \Guni\Comments\Misc;
 
 /**
  * Form to update an item.
@@ -14,13 +16,12 @@ class ShowOneService
     /**
     * @var array $comments, all comments.
     */
-    protected $sess;
     protected $person;
     protected $chosenid;
     protected $comments;
-    protected $grav;
-    protected $comm;
     protected $di;
+    protected $misc;
+    protected $help;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -30,147 +31,23 @@ class ShowOneService
     public function __construct(DIInterface $di, $id)
     {
         $this->di = $di;
-        $this->person = $this->getItems($id);
-        $session = $this->di->get("session");
-        $sess = $session->get("user");
-        $this->sess = isset($sess) ? $sess : null;
+        $this->misc = new Misc($di);
+        $this->help = new UserHelp($di);
+        $this->person = $this->help->getUserItems($id);
         $this->chosenid = $id;
-        $this->comments = $this->getUserComments();
-        $comm = $this->di->get("commController");
-        $this->grav = $comm->getGravatar($this->person->email, 50);
-    }
-
-    /**
-     * Get details on comments.
-     *
-     *
-     * @return All comments
-     */
-    public function getItems($id)
-    {
-        $user = new User();
-        $user->setDb($this->di->get("db"));
-        return $user->find("id", $id);
+        $this->comments = $this->misc->findAllWhere("userid = ?", $id);
     }
 
 
     /**
-     * Sets the callable to use for creating routes.
-     *
-     * @param callable $urlCreate to create framework urls.
-     *
-     * @return url to path
-     */
-    public function setUrlCreator($route)
-    {
-        $url = $this->di->get("url");
-        return call_user_func([$url, "create"], $route);
-    }
-
-
-    /**
-     * @param integer $id
-     *
-     * @return objects - where parent is id and not a comment
-     */
-    public function getAnswers($id)
-    {
-        $dbComm = new Comm();
-        $dbComm->setDb($this->di->get("db"));
-        $parentid = "parentid = ? AND iscomment < 1 OR parentid = ? AND iscomment IS NULL";
-        $params = [$id, $id];
-        return $dbComm->findAllWhere($parentid, $params);
-    }
-
-
-    /**
-     * @param integer $comm - boolean if item is comment or not
-     * @param string $parent - of parentnumber
-     *
-     * @return string - where parent is id and not a comment
-     */
-    public function getIsAnswer($parent, $comm)
-    {
-        if ($comm > 0) {
-            return null;
-        } else {
-            return $parent;
-        }
-    }
-
-
-    /**
-     * @param integer $id
-     *
-     * @return objects - where parent is id and is a comment
-     */
-    public function getComments($id)
-    {
-        $dbComm = new Comm();
-        $dbComm->setDb($this->di->get("db"));
-        $parentid = "parentid = ? AND iscomment > 0";
-        return $dbComm->findAllWhere($parentid, $id);
-    }
-
-
-    /**
-     * @param integer $comm - boolean if item is comment or not
-     * @param string $parent - of parentnumber
-     *
-     * @return string - where parent is id and is a comment
-     */
-    public function getIsComment($parent, $comm)
-    {
-        if ($comm > 0) {
-            return $parent;
-        } else {
-            return null;
-        }
-    }
-
-
-    /**
-     * @param integer $id
-     *
-     * @return objects - where answer is accepted by questioner
-     */
-    public function getIsAccepted($id)
-    {
-        $dbComm = new Comm();
-        $dbComm->setDb($this->di->get("db"));
-        $accepted = "accept = ?";
-        return $dbComm->findAllWhere($accepted, $id);
-    }
-
-
-    /**
-     * @param string $eng - the tag name in english
-     *
-     * @return string - tag name in swedish
-     */
-    public function getName($eng)
-    {
-        switch ($eng) {
-            case "elcar":
-                return "Elbil";
-                break;
-            case "safety":
-                return "Säkerhet";
-                break;
-            case "light":
-                return "Belysning";
-                break;
-            case "heat":
-                return "Värme";
-        }
-    }
-
-
+    *
+    * @return string htmltext with link
+    */
     public function getTagLink($val)
     {
-        $base = $this->setUrlCreator("comm/tags/");
+        $base = $this->misc->setUrlCreator("comm/tags/");
         if ($val) {
-            return '<a href="' . $base . "/" . $val . '">' . $this->getName($val) . "</a>, ";
+            return '<a href="' . $base . "/" . $val . '">' . $this->help->getName($val) . "</a>, ";
         }
     }
 
@@ -232,8 +109,7 @@ class ShowOneService
      */
     public function getCommentHTML($item, $viewone)
     {
-        $comm = $this->di->get("commController");
-        $parent = $comm->findOne($item['iscomment']);
+        $parent = $this->misc->getItemDetails($item['iscomment']);
         if ($parent->parentid == null) { //Comment to question
             $color = "delared";
         } else {
@@ -257,8 +133,7 @@ class ShowOneService
      */
     public function getAnswersHTML($item, $viewone)
     {
-        $comm = $this->di->get("commController");
-        $parent = $comm->findOne($item['isanswer']);
+        $parent = $this->misc->getItemDetails($item['isanswer']);
         if ($parent->parentid == null) {
             $color = "delared";
         } else {
@@ -275,55 +150,7 @@ class ShowOneService
     }
 
 
-    /**
-     * @param object $item
-     * @param string $viewone - linkbase to commentpage
-     *
-     * @return string - html-text for the points
-     */
-    public function getPointsHTML($reputation)
-    {
-        $dbComm = new Comm();
-        $dbComm->setDb($this->di->get("db"));
-
-        $votedsql = 'SELECT *,COUNT(*) as count FROM `comm` WHERE hasvoted LIKE "%' . $this->chosenid . '%"';
-
-        $votedcount = $dbComm->findSql($votedsql)[0]->count;
-
-        $questionssql = 'SELECT *,COUNT(*) as count FROM `comm` WHERE userid = ' . $this->chosenid . ' AND parentid IS NULL';
-
-        $questionscount = $dbComm->findSql($questionssql)[0]->count ? $dbComm->findSql($questionssql)[0]->count : 0;
-
-        $answersql = 'SELECT *,COUNT(*) as count FROM `comm` WHERE userid = ' . $this->chosenid . ' AND iscomment = 0 AND parentid IS NOT NULL OR userid = ' . $this->chosenid . ' AND iscomment IS NULL AND parentid IS NOT NULL';
-
-        $answercount = $dbComm->findSql($answersql)[0]->count ? $dbComm->findSql($answersql)[0]->count : 0;
-
-        $commentsql = 'SELECT *,COUNT(*) as count FROM `comm` WHERE userid = ' . $this->chosenid . ' AND iscomment = 1 AND parentid IS NOT NULL';
-
-        $commentcount = $dbComm->findSql($commentsql)[0]->count ? $dbComm->findSql($commentsql)[0]->count : 0;
-
-        $pointssql = 'SELECT SUM(`points`) AS count FROM `comm` WHERE userid = ' . $this->chosenid;
-
-        $pointcount = $dbComm->findSql($pointssql)[0]->count ? $dbComm->findSql($pointssql)[0]->count : 0;
-
-        return '<p>Rykte: ' . $reputation . ', Poäng: ' . $pointcount . ', ' . 'Röstat: ' . $votedcount . '<br />Frågor: ' . $questionscount . ', Svar: ' . $answercount . ', Kommentarer: ' . $commentcount . '</p>';
-    }
-
-
-
-    /**
-     *
-     * @return object - get all comments from chosen user
-     */ 
-    public function getUserComments()
-    {
-        $userid = "userid = ?";
-
-        $dbComm = new Comm();
-        $dbComm->setDb($this->di->get("db"));
-
-        return $dbComm->findAllWhere($userid, $this->chosenid);
-    }
+ 
 
 
     /**
@@ -337,11 +164,12 @@ class ShowOneService
         foreach ($comments as $key => $val) {
             $obj = [];
             $obj['comm'] = json_decode($val->comment);
-            $obj['isanswer'] = $this->getIsAnswer($val->parentid, $val->iscomment);
-            $obj['iscomment'] = $this->getIsComment($val->parentid, $val->iscomment);
+            $obj['isanswer'] = $this->help->getIsAnswer($val->parentid, $val->iscomment);
+            $obj['iscomment'] = $this->help->getIsComment($val->parentid, $val->iscomment);
             $obj['id'] = $val->id;
-            $obj['hasanswer'] = $this->getAnswers($obj['id']);
-            $obj['hascomments'] = $this->getComments($obj['id']);
+            $parentid = "parentid = ? AND iscomment < 1 OR parentid = ? AND iscomment IS NULL";
+            $obj['hasanswer'] = $this->misc->findAllWhere($parentid, [$obj['id'], $obj['id']]);
+            $obj['hascomments'] = $this->misc->findAllWhere("parentid = ? AND iscomment > 0", $obj['id']);
             $obj['points'] = $val->points;
 
             $array[$key] = $obj;
@@ -355,8 +183,11 @@ class ShowOneService
     */
     public function getTableHead()
     {
+        $ques = $this->help->getQuesPoints($this->chosenid) ? ' [' . $this->help->getQuesPoints($this->chosenid) . '] ': "";
+        $ans = $this->help->getAnsPoints($this->chosenid) ? ' [' . $this->help->getAnsPoints($this->chosenid) . '] ': "";
+        $com = $this->help->getComPoints($this->chosenid) ? ' [' . $this->help->getComPoints($this->chosenid) . '] ': "";
         $text = '<table class = "member tagpage"><tr>';
-        $text .= '<th class = "title"><span class = "delared">Fråga</span> | <span class = "delablue">Svar</span> | <span class = "delagreen">Kommentar</span></th><th class = "tag em06">Taggar</th><th class = "parent em08">Till <span class = "delared">Fråga</span> | <span class = "delablue">Svar</span></th><th class = "parenttag em06">Taggar</th><th class = "answercomments em08">Har <span class = "delablue">Svar</span> | <span class = "delagreen">Kommentarer</span></th></tr>';
+        $text .= '<th class = "title"><span class = "delared">Fråga' . $ques . '</span> | <span class = "delablue">Svar' . $ans . '</span> | <span class = "delagreen">Kommentar' . $com . '</span></th><th class = "tag em06">Taggar</th><th class = "parent em08">Till <span class = "delared">Fråga</span> | <span class = "delablue">Svar</span></th><th class = "parenttag em06">Taggar</th><th class = "answercomments em08">Har <span class = "delablue">Svar</span> | <span class = "delagreen">Kommentarer</span></th></tr>';
         return $text;
     }
 
@@ -370,17 +201,24 @@ class ShowOneService
     public function getHTML()
     {
         $html = "";
-        $viewone = $this->setUrlCreator("comm/view-one");
+        $viewone = $this->misc->setUrlCreator("comm/view-one");
         $virgin = true;
         $array = [];
-
+        $grav = $this->misc->getGravatar($this->person->email, 50);
         $reputation = 0;
-        $text = $this->getTableHead();
 
         if ($this->comments) {
             $array = $this->populateArray($this->comments);
             $virgin = false;
         }
+
+        if ($virgin == true) {
+            $startinfo = $this->person->acronym . " har inte gjort några inlägg ännu.";
+        } else {
+            $startinfo = $this->help->getPointsHTML($reputation, $this->chosenid);
+        }
+
+        $text = $this->getTableHead();
 
         foreach ($array as $value) {
             $text .= '<tr>';
@@ -401,7 +239,7 @@ class ShowOneService
                 $text .= $this->getAnswersHTML($value, $viewone);
 
                 $points = $value['points'] + 0.5;
-                $bonus = $this->getIsAccepted($value['id']);
+                $bonus = $this->misc->findAllWhere("accept = ?", $value['id']);
                 if ($bonus) {
                     $answerValue = $points * 8;
                 } else {
@@ -412,15 +250,7 @@ class ShowOneService
         }
         $text .= "</table><br />";
 
-
-        if ($virgin == true) {
-            $startinfo = $this->person->acronym . " har inte gjort några inlägg ännu.";
-        } else {
-            $startinfo = $this->getPointsHTML($reputation);
-        }
-
-
-        $html .= "<img src='" . $this->grav . "' />";
+        $html .= $grav;
         $html .= '<h1>' . $this->person->acronym . '</h1>';
         $html .= $startinfo;
         $html .= $text;

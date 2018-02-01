@@ -10,12 +10,16 @@ use \Guni\Page\PageRender;
  */
 class PageRenderTest extends \PHPUnit_Framework_TestCase
 {
+    public static $di;
+    public static $sess;    
+
     /**
      * Setup before each testcase
      */
     public function setUp()
     {
-        $this->di = new \Anax\DI\DIFactoryConfig("di.php");
+        self::$di = new \Anax\DI\DIFactoryConfig(__DIR__ . "/../di_dummy.php");
+        self::$sess = self::$di->get("session");
     }
 
 
@@ -25,10 +29,10 @@ class PageRenderTest extends \PHPUnit_Framework_TestCase
         $page = new PageRender();
         $this->assertInstanceOf("\Guni\Page\PageRender", $page);
 
-        $view = $this->di->get("view");
+        $view = self::$di->get("view");
         $text = "Lite text";
         $data["title"] = "Titel";
-        $arr = $this->di->get("view");
+        $arr = self::$di->get("view");
 
         $page->addViewContent($view, $text, "main", $data);
         $this->assertEquals($view, $arr);

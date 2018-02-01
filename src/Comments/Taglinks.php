@@ -10,6 +10,7 @@ use \Anax\DI\DIInterface;
 class Taglinks
 {
     protected $di;
+    protected $misc;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -19,20 +20,9 @@ class Taglinks
     public function __construct(DIInterface $di)
     {
         $this->di = $di;
+        $this->misc = new Misc($di);
     }
 
-    /**
-     * Sets the callable to use for creating routes.
-     *
-     * @param callable $urlCreate to create framework urls.
-     *
-     * @return void
-     */
-    public function setUrlCreator($route)
-    {
-        $url = $this->di->get("url");
-        return call_user_func([$url, "create"], $route);
-    }
 
     /**
      * Returns all text for the view
@@ -41,7 +31,7 @@ class Taglinks
      */
     public function getHTML()
     {
-        $base = $this->setUrlCreator("comm/tags/");
+        $base = $this->misc->setUrlCreator("comm/tags/");
         $elcar = $base . "/elcar";
         $safety = $base . "/safety";
         $light = $base . "/light";

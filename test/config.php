@@ -20,10 +20,8 @@ define("ANAX_APP_PATH", ANAX_INSTALL_PATH);
 require ANAX_INSTALL_PATH . "/vendor/autoload.php";
 
 
-
-
 /**
  * Include other files to test, for example mock files.
  */
-require "data/database_sqlite.php";
-require "data/datadi.php";
+
+//require(__DIR__ . "/PageRender.php");

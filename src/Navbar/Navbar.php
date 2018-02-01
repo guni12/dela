@@ -4,6 +4,7 @@ namespace Guni\Navbar;
 
 use \Anax\DI\InjectionAwareInterface;
 use \Anax\DI\InjectionAwareTrait;
+use \Guni\Comments\Comm;
 
 /**
  * Navbar to generate HTML for a navbar from a configuration array.
@@ -143,7 +144,7 @@ EOD;
             $update = call_user_func([$url, "create"], "user/adminupdate");
         }
 
-        $comm = $this->di->get("commController");
+        $comm = new Comm();
         $grav = "<img src='" . $comm->getGravatar($sess['email']) . "' />";
 
         $spans = '<span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>';

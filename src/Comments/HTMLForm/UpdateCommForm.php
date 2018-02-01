@@ -5,6 +5,8 @@ namespace Guni\Comments\HTMLForm;
 use \Guni\Comments\HTMLForm\FormModel;
 use \Anax\DI\DIInterface;
 use \Guni\Comments\Comm;
+use \Guni\Comments\HTMLForm\CreateCommForm;
+use \Guni\Comments\Misc;
 
 /**
  * Example of FormModel implementation.
@@ -12,6 +14,8 @@ use \Guni\Comments\Comm;
 class UpdateCommForm extends FormModel
 {
     protected $comm;
+    protected $misc;
+    protected $createform;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -19,14 +23,16 @@ class UpdateCommForm extends FormModel
      * @param Anax\DI\DIInterface $di a service container
      * @param integer             $id to update
      */
-    public function __construct(DIInterface $di, $id, $sessid)
+    public function __construct(DIInterface $di, $id=null, $sessid=null)
     {
         parent::__construct($di);
-        $this->comm = $this->getCommDetails($id);
+        $this->misc = new Misc($di);
+        $this->comm = $this->misc->getItemDetails($id);
 
         $comt = $this->decode($this->comm->comment);
         $tags = $this->decodeTags($this->comm->comment);
-        //var_dump($comt);
+
+        $this->createform = new CreateCommForm($di, $id);
 
         $this->aForm($id, $sessid, $comt, $tags);
     }
@@ -41,7 +47,6 @@ class UpdateCommForm extends FormModel
     public function decode($fromjson)
     {
         $textfilter = $this->di->get("textfilter");
-        //var_dump($fromjson);
         $toparse = json_decode($fromjson);
         $comt = $textfilter->parse($toparse->text, ["yamlfrontmatter", "shortcode", "markdown", "titlefromheader"]);
         $comt = strip_tags($comt->text);
@@ -114,18 +119,6 @@ class UpdateCommForm extends FormModel
 
 
     /**
-    * @return string $placeholder - placeholdertext
-    */
-    public function getPlaceholder()
-    {
-        $placeholder = 'Image: ![alt text](https://somewhere.com/img.jpg "Text") | ';
-        $placeholder .= '*italics* | **emphasis** | [Link](https://www.somewhere.com) | ';
-        $placeholder .= ' > Blockquotes';
-        return $placeholder;
-    }
-
-
-    /**
      * Create the form.
      *
      */
@@ -164,47 +157,12 @@ class UpdateCommForm extends FormModel
                     "value" => $comt,
                     "wrapper-element-class" => "form-group",
                     "class" => "form-control wmd-input",
-                    "description" => $this->getPlaceholder()
+                    "description" => $this->createform->getPlaceholder()
                 ],
                 "tags" => $dropdown,
                 "submit" => ["type" => "submit", "value" => "Spara", "callback" => [$this, "callbackSubmit"]],
             ]
         );
-    }
-
-
-
-    /**
-     * Get details on item to load form with.
-     *
-     * @param integer $id get details on item with id.
-     *
-     * @return Comm
-     */
-    public function getCommDetails($id)
-    {
-        $comm = new Comm();
-        $comm->setDb($this->di->get("db"));
-        $comm->find("id", $id);
-        return $comm;
-    }
-
-
-    /**
-    * adds array through frontmatter to $comment
-    *
-    */
-    public function handleTags($tags)
-    {
-        $elcar = in_array("elcar", $tags) ? "elcar" : null;
-        $safety = in_array("safety", $tags) ? "safety" : null;
-        $light = in_array("light", $tags) ? "light" : null;
-        $heat = in_array("heat", $tags) ? "heat" : null;
-
-        if ($elcar === null && $safety === null && $light === null && $heat === null) {
-            $elcar = "elcar";
-        }
-        return [$elcar, $safety, $light, $heat];
     }
 
 
@@ -227,7 +185,7 @@ class UpdateCommForm extends FormModel
 
         $tags = $this->form->value("tags");
         $tags = is_array($tags) ? $tags : [$tags];
-        $comment->frontmatter['tags'] = $this->handleTags($tags);
+        $comment->frontmatter['tags'] = $this->createform->tagsToArray($tags);
 
         $comment = json_encode($comment);
 

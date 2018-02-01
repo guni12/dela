@@ -4,7 +4,7 @@ namespace Guni\Comments;
 
 use \Anax\DI\DIInterface;
 use \Guni\User\User;
-use \Guni\User\UserController;
+use \Guni\User\UserHelp;
 use \Guni\User\HTMLForm\UserLoginForm;
 
 
@@ -13,7 +13,11 @@ use \Guni\User\HTMLForm\UserLoginForm;
  */
 class UserUsageTest extends \PHPUnit_Framework_TestCase
 {
-    public $di;
+    public static $di;
+    public static $db;
+    public static $sess;
+    public $userhelp;
+    public $person;
 
 
     /**
@@ -21,44 +25,107 @@ class UserUsageTest extends \PHPUnit_Framework_TestCase
      */
     public function setUp()
     {
-        $this->di = new \Anax\DI\DIFactoryConfig("di.php");
+        self::$di = new \Anax\DI\DIFactoryConfig(__DIR__ . "/../di_dummy.php");
+        self::$sess = self::$di->get("session");
+        $this->userhelp = new UserHelp(self::$di);
+        $this->person = null;
     }
 
 
     public function testUsage()
     {
-        $user = new User($this->di);
-        $user2 = new User($this->di);
+        $user = new User(self::$di);
+        $user2 = new User(self::$di);
         $this->assertInstanceOf("\Guni\User\User", $user);
         $this->assertInstanceOf("\Guni\User\User", $user2);
 
         $user->setPassword("mumintrollet");
         $user2->setPassword("mumintrollet");
-        //$test2 = [$user->email, $user->password];
 
         $this->assertObjectHasAttribute('email', $user);
         //$this->assertArrayHasKey('email', $user);
         //$this->assertEmpty($test2);
 
 
-        $control = new UserController();
-        $this->assertInstanceOf("\Guni\User\UserController", $control);
+        $control = new UserHelp(self::$di);
+        $this->assertInstanceOf("\Guni\User\UserHelp", $control);
 
         /*$stub = $this->createMock($user);
 
         $stub->method('getPostAdminCreateUser')
-             ->willReturn('foo');
+             ->willReturn('foo');*/
 
-        $this->assertEquals('foo', $stub->getPostAdminCreateUser());*/
-
-        //$loginDetails = array('user' => "Gunvor",'password' => 'password',);
-
-        //$login = new UserLoginForm($this->di);
         $form = ["test"];
 
-        $formmodel = $this->createMock('\Anax\HTMLForm\FormModel', array(), array($this->di, $form));
+        $formmodel = $this->createMock('\Anax\HTMLForm\FormModel', array(), array(self::$di, $form));
 
         $this->assertInstanceOf("\Anax\HTMLForm\FormModel", $formmodel);
-
     }
+
+
+    /**
+    *
+    * Create a User
+    */
+    public function makeUser()
+    {
+        self::$db = self::$di->get("db");
+        self::$db->connect();
+
+        self::$db->createTable(
+            "user",
+            [
+                "id" => ["INTEGER"],
+                "acronym" => ["VARCHAR"],
+                "password" => ["VARCHAR"],
+                "email" => ["VARCHAR"],
+                "profile" => ["VARCHAR"],
+                "isadmin" => ["INTEGER"],
+                "created" => ["DATETIME"],
+                "updated" => ["DATETIME"],
+                "deleted" => ["DATETIME"],
+            ]
+        )->execute();
+
+        $create = new CreateUserForm(self::$di, null);
+        $now = date("Y-m-d H:i:s");
+
+        $user = new User();
+        $user->setDb(self::$db);
+        $user->acronym = 'adam';
+        $user->email = 'adam@annan.se';
+        $user->profile = 'Aderö';
+        $user->setPassword('doe');
+        $user->created = $now;
+        $user->save();
+
+        $findPerson = new User(self::$di);
+        $findPerson->setDb(self::$db);
+        $compare = $findPerson->find("acronym", 'adam');
+        $this->person = $findPerson->find("profile", 'Aderö');
+
+        $this->assertEquals($user->acronym, $compare->acronym);
+        $this->assertEquals($user->profile, $compare->profile);
+    }
+
+
+    /**
+    *
+    *
+    */
+    public function testUserHelper()
+    {
+        $res = $this->userhelp->getIsAnswer(10, 1);
+        $exp = null;
+        $this->assertEquals($res, $exp);
+
+        $res2 = $this->userhelp->getIsComment(10, 1);
+        $exp2 = 10;
+        $this->assertEquals($res2, $exp2);
+
+        $res3 = $this->userhelp->getName('safety');
+        $exp3 = "Säkerhet";
+        $this->assertEquals($res3, $exp3);
+    }
+
 }

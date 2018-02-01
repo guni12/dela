@@ -4,6 +4,8 @@ namespace Guni\Comments;
 
 use \Anax\DI\DIInterface;
 use \Guni\Comments\Comm;
+use \Guni\Comments\Misc;
+use \Guni\User\UserHelp;
 
 /**
  * Form to update an item.
@@ -17,11 +19,12 @@ class ShowAllService
     protected $sess;
     protected $users;
     protected $user;
-    protected $userController;
+    protected $userhelp;
     protected $isadmin;
     protected $di;
     protected $answersct;
     protected $commentsct;
+    protected $misc;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -31,58 +34,17 @@ class ShowAllService
     public function __construct(DIInterface $di)
     {
         $this->di = $di;
-        $this->comments = $this->getAll();
+        $this->misc = new Misc($di);
+        $this->userhelp = new UserHelp($di);
+        $this->comments = $this->misc->getAll();
         $session = $this->di->get("session");
         $this->sess = $session->get("user");
-        $addsess = isset($this->sess) ? $this->sess : null;
-        $this->sess = $addsess;
-        $this->userController = $this->di->get("userController");
-        $this->users = $this->userController->getAllUsers();
-        $this->user = $this->userController->getOne($this->sess['id']);
+        $this->sess = isset($this->sess) ? $this->sess : null;
+        $this->users = $this->userhelp->getAllUsers();
+        $this->user = $this->userhelp->getOne($this->sess['id']);
         $this->isadmin = $this->sess['isadmin'] === 1 ? true : false;
         $this->answersct = 0;
         $this->commentsct = 0;
-    }
-
-    /**
-     * Get details on all comments.
-     *
-     * @return Comm
-     */
-    public function getAll()
-    {
-        $comm = new Comm();
-        $comm->setDb($this->di->get("db"));
-        return $comm->findAll();
-    }
-
-
-    /**
-     * Sets the callable to use for creating routes.
-     *
-     * @param callable $urlCreate to create framework urls.
-     *
-     * @return void
-     */
-    public function setUrlCreator($route)
-    {
-        $url = $this->di->get("url");
-        return call_user_func([$url, "create"], $route);
-    }
-
-
-    /**
-     * Returns link for gravatar img
-     *
-     * @param object $item
-     *
-     * @return string htmlcode
-     */
-    public function getGravatar($item)
-    {
-        $comm = new Comm();
-        $gravatar = $comm->getGravatar($item);
-        return '<img src="' . $gravatar . '" alt=""/>';
     }
 
 
@@ -104,75 +66,7 @@ class ShowAllService
     }
 
 
-    /**
-     * Returns correct loginlink
-     *
-     * @param string $create
-     * @param string $del
-     *
-     * @return string htmlcode
-     */
-    public function getLoginLink($create, $del)
-    {
-        $loggedin = '<a href="user/login">Logga in om du vill kommentera</a>';
-        if ($this->sess['id']) {
-            $loggedin = ' <a href="' . $create .'">Skriv ett inlägg</a>';
-            if ($this->isadmin === true) {
-                $loggedin .= ' | <a href="' . $del . '">Ta bort ett inlägg</a>';
-            }
-        }
-        return $loggedin;
-    }
 
-
-        /**
-     * Get details on item to load form with.
-     *
-     * @param string $where
-     * @param array $params get details on item with id parentid.
-     *
-     * @return Comm
-     */
-    public function getParentDetails($where, $params)
-    {
-        $comm = new Comm();
-        $comm->setDb($this->di->get("db"));
-        return $comm->findAllWhere($where, $params);
-    }
-
-
-
-    /**
-    * @param obj $item - current comment
-    * @param string $viewone - path
-    * @param array $numbers - counted points, answers and comments
-    * @param string $when - when comment was created
-    * @param string $email
-    *
-    * @return string $html
-    */
-    public function getTheText($item, $numbers, $when, $user)
-    {
-        $gravatar = $this->getGravatar($user[0]);
-        $showid = $this->isadmin === true ? '(' . $item->id . '): ' : "";
-        $viewone = $this->setUrlCreator("comm/view-one");
-        $answers = $numbers[0];
-        $comments = $numbers[1];
-        $points = $numbers[2];
-
-        $title = '<a href="' . $viewone . '/' . $item->id . '">';
-        $title .= $showid . ' ' . $item->title . '</a>';
-
-        $html = '<tr><td class = "allmember">' . $gravatar . ' ' . $user[1] . '</td>';
-        $html .= '<td class = "alltitle">' . $title . '</td>';
-        $html .= '<td class = "asked">' . $when . '</td>';
-        $html .= '<td = "respons"><span class = "smaller">' . $answers . $comments . $points . '</span></td>';
-        $html .= '</tr>';
-        return $html;
-    }
-
-
-    
     /**
     * @param object $commcomments - comments to at parentcomment
     */
@@ -199,7 +93,7 @@ class ShowAllService
         $comments = "";
 
         $when = $this->getWhen($item);
-        $commcomments = $this->getParentDetails("parentid = ?", $item->id);
+        $commcomments = $this->misc->findAllWhere("parentid = ?", $item->id);
 
         $this->countResponses($commcomments);
 
@@ -215,7 +109,7 @@ class ShowAllService
         $numbers = [$answers, $comments, $points];
         $user = [$email, $acronym];
 
-        return $this->getTheText($item, $numbers, $when, $user);
+        return $this->misc->getTheText($item, $numbers, $when, $user, $this->isadmin);
     }
 
 
@@ -226,10 +120,10 @@ class ShowAllService
      */
     public function getHTML()
     {
-        $create = $this->setUrlCreator("comm/create");
-        $del = $this->setUrlCreator("comm/admindelete");
+        $create = $this->misc->setUrlCreator("comm/create");
+        $del = $this->misc->setUrlCreator("comm/admindelete");
 
-        $loggedin = $this->getLoginLink($create, $del);
+        $loggedin = $this->misc->getLoginLink($create, $del, $this->sess['id'], $this->isadmin);
 
         $html = '<div class="col-lg-12 col-sm-12 col-xs-12"><div class="">
 
@@ -242,7 +136,7 @@ class ShowAllService
             if ((int)$value->parentid > 0) {
                 continue;
             }
-            $curruser = $this->userController->getOne($value->userid);
+            $curruser = $this->userhelp->getOne($value->userid);
             $html .= $this->getValHtml($value, $curruser['email'], $curruser['acronym']);
         }
         $html .= '</table>';

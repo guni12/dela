@@ -14,7 +14,7 @@ body {
 
 .page {
     min-height: 100%;
-    margin-bottom: -110px;
+    margin-bottom: -120px;
 }
 
 .dela {
@@ -107,6 +107,10 @@ a {
 .navbar-brand {
     background-color: #30B4CB;
     background-size:100%;
+}
+
+.navbar-nav {
+    margin-left: 25px;
 }
 
 .navbar-collapse a {
@@ -490,18 +494,22 @@ th {
     width: 2%;
 }
 
+
 /*/////////////Mediaqueries///////////////*/
 
 @media (min-width: 1000px) {
     .indexmember {
         width: 97%;
     }
+    .member {
+        font-size: 16px;
+    }
 }
 
 
 @media (max-width: 999px) {
     .font20 {
-        font-size: 18px;
+        font-size: 16px;
     }
 }
 
@@ -516,6 +524,9 @@ th {
     .main-wrap {
         min-height: 500px;
     }
+    .adcre, .adupd, .adacr, .ademl, .adprof, .adadm {
+        font-size: 0.8em;
+    }
 }
 
 
@@ -528,7 +539,6 @@ th {
         width: 28%;
     }
     .member {
-        width: 100%;
         font-size: 0.8em;
     }
     .grav {
@@ -548,13 +558,15 @@ th {
     }
     .main-wrap {
         min-height: 500px;
+        margin-left: 2%;
+        margin-right: 2%;
     }
 }
 
 
 
 @media (max-width: 550px) {
-    .parent, .parenttag, .itis, .indauthor {
+    .parent, .parenttag, .itis, .indauthor, .adcre, .adupd, .adadm {
         display: none;
         width: 0;
     }
