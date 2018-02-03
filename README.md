@@ -8,8 +8,7 @@
 
 
 
-Clone the dELa Frontend Code
-------------------
+### Clone the dELa Frontend Code
 
 
 ```

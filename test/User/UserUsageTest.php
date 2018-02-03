@@ -53,11 +53,12 @@ class UserUsageTest extends \PHPUnit_Framework_TestCase
         $stub->method('getPostAdminCreateUser')
              ->willReturn('foo');*/
 
+        /*
         $form = ["test"];
 
         $formmodel = $this->createMock('\Anax\HTMLForm\FormModel', array(), array(self::$di, $form));
 
-        $this->assertInstanceOf("\Anax\HTMLForm\FormModel", $formmodel);
+        $this->assertInstanceOf("\Anax\HTMLForm\FormModel", $formmodel);*/
     }
 
 
