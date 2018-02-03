@@ -169,9 +169,9 @@ class UserHelp
 
         $pointssql = 'SELECT SUM(`points`) AS count FROM `comm` WHERE userid = ' . $id;
 
-        $pointcount = $this->comm->findSql($pointssql)[0]->count ? $dbComm->findSql($pointssql)[0]->count : 0;
+        $pointcount = $this->comm->findSql($pointssql)[0]->count ? $this->comm->findSql($pointssql)[0]->count : 0;
 
-        return '<p>Rykte: ' . $reputation . ', Poäng: ' . $pointcount . ', ' . 'Röstat: ' . $votedcount . '</p>';
+        return '<p>Rykte: ' . $reputation . ', Fått röster: ' . $pointcount . ', ' . 'Har röstat: ' . $votedcount . '</p>';
     }
 
 

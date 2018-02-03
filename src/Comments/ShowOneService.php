@@ -5,6 +5,8 @@ namespace Guni\Comments;
 use \Anax\DI\DIInterface;
 use \Guni\Comments\Comm;
 use \Guni\Comments\Misc;
+use \Guni\Comments\FromDb;
+
 use \Guni\Comments\VoteService;
 use \Guni\User\UserHelp;
 
@@ -30,6 +32,7 @@ class ShowOneService
     protected $iscomment;
     protected $misc;
     protected $userhelp;
+    protected $fromdb;
 
 
     /**
@@ -41,10 +44,11 @@ class ShowOneService
     public function __construct(DIInterface $di, $id, $sort = null)
     {
         $this->di = $di;
+        $this->fromdb = new FromDb($di);
         $this->misc = new Misc($di);
         $this->userhelp = new UserHelp($di);
-        $this->comment = $this->misc->getItemDetails($id);
-        $this->comments = $this->misc->getAnswers($sort, $id, $this->comments);
+        $this->comment = $this->fromdb->getItemDetails($id);
+        $this->comments = $this->fromdb->getAnswers($sort, $id, $this->comments);
 
         $session = $this->di->get("session");
         $this->sess = $session->get("user");
@@ -345,7 +349,7 @@ class ShowOneService
         $text = $this->getStarted($value);
         $text .= $this->getNextBit($value);
 
-        $commcomments = $value->iscomment == 0 ? $this->misc->findAllWhere("parentid = ?", $params) : null;
+        $commcomments = $value->iscomment == 0 ? $this->fromdb->findAllWhere("parentid = ?", $params) : null;
         $text .= ($commcomments) ? $this->getCommComments($commcomments)  : "";
 
         $this->makeCommentText($value);

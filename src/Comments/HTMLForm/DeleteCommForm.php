@@ -5,7 +5,7 @@ namespace Guni\Comments\HTMLForm;
 use \Guni\Comments\HTMLForm\FormModel;
 use \Anax\DI\DIInterface;
 use \Guni\Comments\Comm;
-use \Guni\Comments\Misc;
+use \Guni\Comments\FromDb;
 
 /**
  * Form to delete an item.
@@ -13,7 +13,7 @@ use \Guni\Comments\Misc;
 class DeleteCommForm extends FormModel
 {
     protected $userid;
-    protected $misc;
+    protected $fromdb;
     protected $comm;
     protected $session;
     protected $isadmin;
@@ -30,8 +30,8 @@ class DeleteCommForm extends FormModel
         $this->session = $this->di->get("session");
         $sess = $this->session->get("user");
 
-        $this->misc = new Misc($di);
-        $this->comm = $this->misc->getItemDetails($id);
+        $this->fromdb = new FromDb($di);
+        $this->comm = $this->fromdb->getItemDetails($id);
 
         $this->isadmin = $sess['isadmin'];
 
@@ -128,7 +128,7 @@ class DeleteCommForm extends FormModel
      */
     public function callbackSubmit()
     {
-        $all = $this->misc->getAll();
+        $all = $this->fromdb->getAll();
         $objects = "";
         $one = $this->isadmin ? $this->form->value("select") : $this->form->value("id");
 

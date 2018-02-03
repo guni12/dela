@@ -6,6 +6,7 @@ use \Anax\DI\DIInterface;
 use \Guni\Comments\Comm;
 use \Guni\Comments\ShowOneService;
 use \Guni\Comments\Misc;
+use \Guni\Comments\FromDb;
 use \Guni\User\UserHelp;
 
 /**
@@ -22,6 +23,7 @@ class ShowTagsService
     protected $sess;
     protected $di;
     protected $misc;
+    protected $fromdb;
 
 
     /**
@@ -35,8 +37,9 @@ class ShowTagsService
         $this->name = $id;
 
         $this->misc = new Misc($di);
+        $this->fromdb = new FromDb($di);
         $search = "%" . $id . "%";
-        $this->tagset = $this->misc->findAllWhere('comment LIKE ?', $search);
+        $this->tagset = $this->fromdb->findAllWhere('comment LIKE ?', $search);
 
         $session = $this->di->get("session");
         $this->sess = $session->get("user");
@@ -94,7 +97,7 @@ class ShowTagsService
     {
         $answers = "";
         $comments = "";
-        $children = $this->misc->findAllWhere("parentid = ?", $val->id);
+        $children = $this->fromdb->findAllWhere("parentid = ?", $val->id);
         foreach ($children as $item) {
             if ($item->iscomment == 1) {
                 $comments .= '<a href = "' . $this->misc->setUrlCreator("comm/view-one") . '/' . $item->id . '"><span class = "delagreen">' . $item->title . '</span></a>, ';

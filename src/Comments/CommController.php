@@ -14,7 +14,7 @@ use \Guni\Comments\ShowOneService;
 use \Guni\Comments\ShowAllService;
 use \Guni\Comments\Taglinks;
 use \Guni\Comments\VoteService;
-use \Guni\Comments\Misc;
+use \Guni\Comments\FromDb;
 use \Guni\User\UserHelp;
 
 /**
@@ -127,8 +127,8 @@ class CommController implements
     public function getPostDeleteItem($id)
     {
         $sess = $this->getSess();
-        $misc = new Misc($this->di);
-        $comm = $misc->getItemDetails($id);
+        $fromdb = new FromDb($this->di);
+        $comm = $fromdb->getItemDetails($id);
 
         if ($sess && $sess['id'] == $comm->userid || $sess['isadmin'] == 1) {
             $form = new DeleteCommForm($this->di, $id);
@@ -157,8 +157,8 @@ class CommController implements
     public function getPostUpdateItem($id)
     {
         $sess = $this->getSess();
-        $misc = new Misc($this->di);
-        $comm = $misc->getItemDetails($id);
+        $fromdb = new FromDb($this->di);
+        $comm = $fromdb->getItemDetails($id);
 
         if ($sess && $sess['id'] == $comm->userid || $sess['isadmin'] == 1) {
             $form       = new UpdateCommForm($this->di, $id, $sess['id']);

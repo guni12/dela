@@ -5,6 +5,7 @@ namespace Guni\Comments;
 use \Anax\DI\DIInterface;
 use \Guni\Comments\Comm;
 use \Guni\Comments\Misc;
+use \Guni\Comments\FromDb;
 use \Guni\User\UserHelp;
 
 /**
@@ -25,6 +26,7 @@ class ShowAllService
     protected $answersct;
     protected $commentsct;
     protected $misc;
+    protected $fromdb;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -34,9 +36,10 @@ class ShowAllService
     public function __construct(DIInterface $di)
     {
         $this->di = $di;
+        $this->fromdb = new FromDb($di);
         $this->misc = new Misc($di);
         $this->userhelp = new UserHelp($di);
-        $this->comments = $this->misc->getAll();
+        $this->comments = $this->fromdb->getAll();
         $session = $this->di->get("session");
         $this->sess = $session->get("user");
         $this->sess = isset($this->sess) ? $this->sess : null;
@@ -93,7 +96,7 @@ class ShowAllService
         $comments = "";
 
         $when = $this->getWhen($item);
-        $commcomments = $this->misc->findAllWhere("parentid = ?", $item->id);
+        $commcomments = $this->fromdb->findAllWhere("parentid = ?", $item->id);
 
         $this->countResponses($commcomments);
 
@@ -107,9 +110,9 @@ class ShowAllService
         $comma = $this->commentsct > 0 ? ", " : "";
         $points = $item->points !== null && $item->points > 0 ? $comma . 'rank: ' . $item->points : "";
         $numbers = [$answers, $comments, $points];
-        $user = [$email, $acronym];
+        $user = [$email, $acronym, $this->isadmin];
 
-        return $this->misc->getTheText($item, $numbers, $when, $user, $this->isadmin);
+        return $this->misc->getTheText($item, $numbers, $when, $user);
     }
 
 

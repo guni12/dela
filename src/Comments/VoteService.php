@@ -4,6 +4,7 @@ namespace Guni\Comments;
 
 use \Anax\DI\DIInterface;
 use \Guni\Comments\Comm;
+use \Guni\Comments\FromDb;
 
 /**
  * Helper to handle rating and points
@@ -17,7 +18,7 @@ class VoteService
     protected $sess;
     protected $comm;
     protected $di;
-    protected $misc;
+    protected $fromdb;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -28,8 +29,8 @@ class VoteService
     public function __construct(DIInterface $di, $id, $vote)
     {
         $this->di = $di;
-        $this->misc = new Misc($di);
-        $this->comment = $this->misc->getItemDetails($id);
+        $this->fromdb = new FromDb($di);
+        $this->comment = $this->fromdb->getItemDetails($id);
 
         $session = $this->di->get("session");
         $this->sess = $session->get("user");
@@ -50,11 +51,11 @@ class VoteService
     {
         $answerid = $this->comment->id;
         $pagerender = $this->di->get("pageRender");
-        $commentid = $this->getItemDetails($this->comment->parentid);
+        $commentid = $this->fromdb->getItemDetails($this->comment->parentid);
         if ($commentid->accept == null || $commentid->hasvoted == "null") {
-            $comm->find("id", $this->comment->parentid);
-            $comm->accept = $answerid;
-            $comm->save();
+            $this->comm->find("id", $this->comment->parentid);
+            $this->comm->accept = $answerid;
+            $this->comm->save();
             $pagerender->redirect("comm/view-one/" . $commentid);
         }
     }

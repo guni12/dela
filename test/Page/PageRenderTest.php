@@ -32,9 +32,12 @@ class PageRenderTest extends \PHPUnit_Framework_TestCase
         $view = self::$di->get("view");
         $text = "Lite text";
         $data["title"] = "Titel";
+        $navbar = self::$di->get("navbar");
+        $renderarr = [$view, $text, "main", $data, $navbar];
+
         $arr = self::$di->get("view");
 
-        $page->addViewContent($view, $text, "main", $data);
+        $page->addViewContent($renderarr);
         $this->assertEquals($view, $arr);
     }
 }

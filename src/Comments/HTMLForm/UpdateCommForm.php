@@ -6,7 +6,7 @@ use \Guni\Comments\HTMLForm\FormModel;
 use \Anax\DI\DIInterface;
 use \Guni\Comments\Comm;
 use \Guni\Comments\HTMLForm\CreateCommForm;
-use \Guni\Comments\Misc;
+use \Guni\Comments\FromDb;
 
 /**
  * Example of FormModel implementation.
@@ -14,7 +14,7 @@ use \Guni\Comments\Misc;
 class UpdateCommForm extends FormModel
 {
     protected $comm;
-    protected $misc;
+    protected $fromdb;
     protected $createform;
 
     /**
@@ -26,8 +26,8 @@ class UpdateCommForm extends FormModel
     public function __construct(DIInterface $di, $id=null, $sessid=null)
     {
         parent::__construct($di);
-        $this->misc = new Misc($di);
-        $this->comm = $this->misc->getItemDetails($id);
+        $this->fromdb = new FromDb($di);
+        $this->comm = $this->fromdb->getItemDetails($id);
 
         $comt = $this->decode($this->comm->comment);
         $tags = $this->decodeTags($this->comm->comment);
@@ -100,19 +100,7 @@ class UpdateCommForm extends FormModel
                 "value"       => $tags,
             ];
         } else {
-            $dropdown = [
-                "type"        => "select-multiple",
-                "label"       => "Taggar, minst en:",
-                "description" => "Håll ner Ctrl (windows) / Command (Mac) knapp för att välja flera taggar.<br />Default tagg är Elbil.",
-                "size"        => 5,
-                "options"     => [
-                    "elcar" => "elbil",
-                    "safety" => "säkerhet",
-                    "light"  => "belysning",
-                    "heat"   => "värme",
-                ],
-                "checked"   => $tags,
-            ];
+            $dropdown = ["type"  => "select-multiple","label" => "Taggar, minst en:","description" => "Håll ner Ctrl (windows) / Command (Mac) knapp för att välja flera taggar.<br />Default tagg är Elbil.","size"        => 5,"options" => ["elcar" => "elbil","safety" => "säkerhet","light"  => "belysning","heat"   => "värme",],"checked"   => $tags,];
         }
         return $dropdown;
     }
@@ -130,38 +118,13 @@ class UpdateCommForm extends FormModel
         $dropdown = $this->getDropdown($tags);
 
         $this->form->create(
-            [
-                "id" => "wmd-button-bar",
-                "legend" => "Uppdatera ditt konto",
-                "wmd" => "wmd-button-bar",
-                "preview" => "wmd-preview",
-            ],
-            [   
-                "sessid" => ["type"  => "hidden", "value" => $sessid],
+            ["id" => "wmd-button-bar","legend" => "Uppdatera ditt konto","wmd" => "wmd-button-bar","preview" => "wmd-preview",],
+            [   "sessid" => ["type"  => "hidden", "value" => $sessid],
                 "id" => ["type"  => "hidden", "value" => $id],
                 "userid" => ["type"  => "hidden", "value" => $this->comm->userid],
-                "parentid" => [
-                    "type"  => "hidden",
-                    "value" => $this->comm->parentid
-                ],
-                "title" => [
-                    "type" => "text",
-                    "label" => "Titel",
-                    "validation" => ["not_empty"],
-                    "value" => $this->comm->title,
-                    "wrapper-element-class" => "form-group",
-                    "class" => "form-control"
-                ],
-                "comment" => [
-                    "type" => "textarea",
-                    "label" => "Text",
-                    "id" => "wmd-input",
-                    "validation" => ["not_empty"],
-                    "value" => $comt,
-                    "wrapper-element-class" => "form-group",
-                    "class" => "form-control wmd-input",
-                    "description" => $this->createform->getPlaceholder()
-                ],
+                "parentid" => ["type"  => "hidden","value" => $this->comm->parentid],
+                "title" => ["type" => "text","label" => "Titel","validation" => ["not_empty"],"value" => $this->comm->title,"wrapper-element-class" => "form-group","class" => "form-control"],
+                "comment" => ["type" => "textarea","label" => "Text","id" => "wmd-input","validation" => ["not_empty"],"value" => $comt,"wrapper-element-class" => "form-group","class" => "form-control wmd-input","description" => $this->createform->getPlaceholder()],
                 "tags" => $dropdown,
                 "submit" => ["type" => "submit", "value" => "Spara", "callback" => [$this, "callbackSubmit"]],
             ]

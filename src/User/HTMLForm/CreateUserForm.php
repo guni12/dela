@@ -39,61 +39,14 @@ class CreateUserForm extends FormModel
         $admin = $this->isadmin ? ["type" => "checkbox","label" => "Är admin"] : ["type" => "hidden","value" => null];
 
         $this->form->create(
-            [
-                "id" => __CLASS__,
-                "legend" => "Ställ en fråga",
-            ],
-            [
-                "acronym" => [
-                    "type" => "text",
-                    "label" => "Användarnamn",
-                    "wrapper-element-class" => "form-group",
-                    "class" => "form-control",
-                ],
-
-                "email" => [
-                    "type"        => "email",
-                    "label"       => "Epost",
-                    "validation" => [
-                            "email",
-                            "not_empty"
-                        ],
-                    "wrapper-element-class" => "form-group",
-                    "class" => "form-control",
-                ],
-
-                "profile" => [
-                    "type"        => "text",
-                    "label"       => "Hemort",
-                    "validation" => ["not_empty"],
-                    "wrapper-element-class" => "form-group",
-                    "class" => "form-control",
-                ],
-
-                "password" => [
-                    "type"        => "password",
-                    "label"      => "Lösenord",
-                    "wrapper-element-class" => "form-group",
-                    "class" => "form-control",
-                ],
-
-                "password-again" => [
-                    "type"        => "password",
-                    "validation" => [
-                        "match" => "password"
-                    ],
-                    "label"      => "Lösenord igen",
-                    "wrapper-element-class" => "form-group",
-                    "class" => "form-control",
-                ],
-
-                "isadmin" => $admin,
-
-                "submit" => [
-                    "type" => "submit",
-                    "value" => "Lägg till",
-                    "callback" => [$this, "callbackSubmit"]
-                ],
+            ["id" => __CLASS__,"legend" => "Ställ en fråga",],
+            ["acronym" => ["type" => "text","label" => "Användarnamn","wrapper-element-class" => "form-group","class" => "form-control",],
+            "email" => ["type" => "email","label" => "Epost","validation" => ["email","not_empty"],"wrapper-element-class" => "form-group","class" => "form-control",],
+            "profile" => ["type" => "text","label" => "Hemort","validation" => ["not_empty"],"wrapper-element-class" => "form-group","class" => "form-control",],
+            "password" => ["type" => "password","label" => "Lösenord","wrapper-element-class" => "form-group","class" => "form-control",],
+            "password-again" => ["type" => "password","validation" => ["match" => "password"],"label" => "Lösenord igen","wrapper-element-class" => "form-group","class" => "form-control",],
+            "isadmin" => $admin,
+            "submit" => ["type" => "submit","value" => "Lägg till","callback" => [$this, "callbackSubmit"]],
             ]
         );
     }

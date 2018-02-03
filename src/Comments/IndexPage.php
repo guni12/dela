@@ -4,6 +4,8 @@ namespace Guni\Comments;
 
 use \Anax\DI\DIInterface;
 use \Guni\Comments\Comm;
+use \Guni\Comments\FromDb;
+use \Guni\Comments\Misc;
 use \Guni\User\UserHelp;
 
 /**
@@ -25,6 +27,7 @@ class IndexPage
     protected $heat;
     protected $di;
     protected $misc;
+    protected $fromdb;
     protected $userhelp;
 
     /**
@@ -44,10 +47,11 @@ class IndexPage
     */
     public function initiate($di)
     {
+        $this->fromdb = new FromDb($di);
         $this->misc = new Misc($di);
         $this->userhelp = new UserHelp($di);
 
-        $this->comments = $this->misc->getAll();
+        $this->comments = $this->fromdb->getAll();
         $session = $this->di->get("session");
         $this->sess = $session->get("user");
         $this->sess = isset($this->sess) ? $this->sess : null;

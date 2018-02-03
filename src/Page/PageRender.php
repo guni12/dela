@@ -21,18 +21,21 @@ class PageRender implements PageRenderInterface, InjectionAwareInterface
     }
 
 
-    public function addViewContent($view, $text, $region, $data)
+    public function addViewContent($arr)
     {
-        // Add common header, navbar and footer
-        $view->add("view/header", [], "header");
+        $arr[0]->add("view/header", [], "header");
         
-        $view->add("view/footer", [
+        $arr[0]->add("view/navbar", [
+            "navbar" => $arr[4]->getHTML()
+        ], "navbar", 0);
+
+        $arr[0]->add("view/footer", [
             "footeradd" => ""
         ], "footer", 1);
-        $view->add("default1/article", [
-                "content" => $text
-            ], $region, 0);
-        $view->add("view/layout", $data, "layout");
+        $arr[0]->add("default1/article", [
+                "content" => $arr[1]
+            ], $arr[2], 0);
+        $arr[0]->add("view/layout", $arr[3], "layout");
     }
 
 
@@ -47,9 +50,7 @@ class PageRender implements PageRenderInterface, InjectionAwareInterface
      */
     public function renderPage($text, $meta = null, $status = 200)
     {
-        if (is_array($text)) {
-            $text = isset($text['content']) ? $text['content'] : (isset($text['form']) ? $text['form'] : "");
-        }
+        $text = is_array($text) && isset($text['content']) ? $text['content'] : (isset($text['form']) ? $text['form'] : '<div class="col-lg-12 col-sm-12 col-xs-12">' . $text . '</div>');
 
         $data["stylesheets"] = isset($meta["stylesheets"]) ? $meta["stylesheets"] : ["css/style.css"];
         $data["title"] = isset($meta["title"]) ? $meta["title"] : "dELa";
@@ -72,11 +73,9 @@ class PageRender implements PageRenderInterface, InjectionAwareInterface
         }
 
         $navbar = $this->di->get("navbar");
-        $view->add("view/navbar", [
-            "navbar" => $navbar->getHTML()
-        ], "navbar", 0);
+        $arr = [$view, $text, $region, $data, $navbar];
 
-        $this->addViewContent($view, $text, $region, $data);
+        $this->addViewContent($arr);
         $body = $view->renderBuffered("layout");
         $this->di->get("response")->setBody($body)
                                   ->send($status);

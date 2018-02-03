@@ -6,6 +6,7 @@ use \Anax\DI\DIInterface;
 use \Guni\User\User;
 use \Guni\User\UserHelp;
 use \Guni\Comments\Comm;
+use \Guni\Comments\FromDb;
 use \Guni\Comments\Misc;
 
 /**
@@ -20,8 +21,10 @@ class ShowOneService
     protected $chosenid;
     protected $comments;
     protected $di;
-    protected $misc;
+    protected $fromdb;
     protected $help;
+    protected $misc;
+    protected $reputation;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -31,11 +34,13 @@ class ShowOneService
     public function __construct(DIInterface $di, $id)
     {
         $this->di = $di;
-        $this->misc = new Misc($di);
+        $this->fromdb = new FromDb($di);
         $this->help = new UserHelp($di);
+        $this->misc = new Misc($di);
         $this->person = $this->help->getUserItems($id);
         $this->chosenid = $id;
-        $this->comments = $this->misc->findAllWhere("userid = ?", $id);
+        $this->comments = $this->fromdb->findAllWhere("userid = ?", $id);
+        $this->reputation = 0;
     }
 
 
@@ -72,21 +77,17 @@ class ShowOneService
 
     /**
      * @param object $item
-     * @param string $viewone - linkbase to commentpage
      *
      * @return string - html-text for the qustions
      */
-    public function getQuestionHTML($item, $viewone)
+    public function getQuestionHTML($item)
     {
         $tag = $this->getTags($item['comm']->frontmatter->tags);
         $hasanswers = "";
         $hascomments = "";
 
-        $text = "<td class = 'title'><a href='" . $viewone . "/" . $item['id'] . "'><span class='delared'>" . $item['comm']->frontmatter->title . "</span></a></td>";
-        $text .= "<td class = 'tag em06'>" . $tag . "</td>";
-        $text .= "<td class = 'parent em08'></td>";
-        $text .= "<td class = 'parenttag em06'></td>";
-        $text .= "<td class = 'answercomments em08'>";
+        $text = "<td class = 'title'><a href='" . $this->misc->setUrlCreator("comm/view-one") . "/" . $item['id'] . "'><span class='delared'>" . $item['comm']->frontmatter->title . "</span></a></td>";
+        $text .= "<td class = 'tag em06'>" . $tag . "</td><td class = 'parent em08'></td><td class = 'parenttag em06'></td><td class = 'answercomments em08'>";
         if ($item['hasanswer']) {
             $hasanswers = "<span class='delablue'> [" . count($item['hasanswer']) . "] </span>";
         }
@@ -95,7 +96,7 @@ class ShowOneService
         }
         $text .= $hasanswers;
         $text .= $hascomments;
-        $text .= "</td></tr>";
+        $text .= "</td>";
 
         return $text;
     }
@@ -103,13 +104,12 @@ class ShowOneService
 
     /**
      * @param object $item
-     * @param string $viewone - linkbase to commentpage
      *
      * @return string - html-text for the comments
      */
-    public function getCommentHTML($item, $viewone)
+    public function getCommentHTML($item)
     {
-        $parent = $this->misc->getItemDetails($item['iscomment']);
+        $parent = $this->fromdb->getItemDetails($item['iscomment']);
         if ($parent->parentid == null) { //Comment to question
             $color = "delared";
         } else {
@@ -117,34 +117,28 @@ class ShowOneService
         }
         $decodeMarkdown = json_decode($parent->comment);
         $tag = $this->getTags($decodeMarkdown->frontmatter->tags);
-        $text = "<td class = 'title'><a href='" . $viewone . "/" . $item['id'] . "'><span class='delagreen'>" . $item['comm']->frontmatter->title . "</span></a></td>";
-        $text .= "<td class = 'tag em06'></td>";
-        $text .= "<td class = 'parent em08'><a href='" . $viewone . "/" . $parent->id . "'><span class='" . $color . "'>"  . $parent->title . "</span></a></td>";
-        $text .= "<td class = 'parenttag em06'>" . $tag . "</td><td class = 'answercomments em08'></td></tr>";
+        $text = "<td class = 'title'><a href='" . $this->misc->setUrlCreator("comm/view-one") . "/" . $item['id'] . "'><span class='delagreen'>" . $item['comm']->frontmatter->title . "</span></a></td><td class = 'tag em06'></td>";
+        $text .= "<td class = 'parent em08'><a href='" . $this->misc->setUrlCreator("comm/view-one") . "/" . $parent->id . "'><span class='" . $color . "'>"  . $parent->title . "</span></a></td>";
+        $text .= "<td class = 'parenttag em06'>" . $tag . "</td><td class = 'answercomments em08'></td>";
         return $text;
     }
 
 
     /**
      * @param object $item
-     * @param string $viewone - linkbase to commentpage
      *
      * @return string - html-text for the answers
      */
-    public function getAnswersHTML($item, $viewone)
+    public function getAnswersHTML($item)
     {
-        $parent = $this->misc->getItemDetails($item['isanswer']);
-        if ($parent->parentid == null) {
-            $color = "delared";
-        } else {
-            $color = "delablue";
-        }
+        $parent = $this->fromdb->getItemDetails($item['isanswer']);
+        $color = $parent->parentid == null ? "delared" : "delablue";
         $decodeMarkdown = json_decode($parent->comment);
         $tag = $this->getTags($decodeMarkdown->frontmatter->tags);
 
-        $text = "<td class = 'title'><a href='" . $viewone . "/" . $item['id'] . "'><span class='delablue'>" . $item['comm']->frontmatter->title . "</span></a></td class = 'tag em06'><td></td>";
-        $text .= "<td class = 'parent em08'><a href='" . $viewone . "/" . $parent->id . "'><span class='" . $color . "'>"  . $parent->title . "</span></a></td>";
-        $text .= "<td class = 'parenttag em06'>" . $tag . "</td><td class = 'answercomments em08'></td></tr>";
+        $text = "<td class = 'title'><a href='" . $this->misc->setUrlCreator("comm/view-one") . "/" . $item['id'] . "'><span class='delablue'>" . $item['comm']->frontmatter->title . "</span></a></td ><td class = 'tag em06'></td>";
+        $text .= "<td class = 'parent em08'><a href='" . $this->misc->setUrlCreator("comm/view-one") . "/" . $parent->id . "'><span class='" . $color . "'>"  . $parent->title . "</span></a></td>";
+        $text .= "<td class = 'parenttag em06'>" . $tag . "</td><td class = 'answercomments em08'></td>";
 
         return $text;
     }
@@ -168,8 +162,8 @@ class ShowOneService
             $obj['iscomment'] = $this->help->getIsComment($val->parentid, $val->iscomment);
             $obj['id'] = $val->id;
             $parentid = "parentid = ? AND iscomment < 1 OR parentid = ? AND iscomment IS NULL";
-            $obj['hasanswer'] = $this->misc->findAllWhere($parentid, [$obj['id'], $obj['id']]);
-            $obj['hascomments'] = $this->misc->findAllWhere("parentid = ? AND iscomment > 0", $obj['id']);
+            $obj['hasanswer'] = $this->fromdb->findAllWhere($parentid, [$obj['id'], $obj['id']]);
+            $obj['hascomments'] = $this->fromdb->findAllWhere("parentid = ? AND iscomment > 0", $obj['id']);
             $obj['points'] = $val->points;
 
             $array[$key] = $obj;
@@ -194,68 +188,59 @@ class ShowOneService
 
 
     /**
+    *
+    * add points to this->reputation
+    */
+    public function addReputation($points, $nr)
+    {
+        $sum = ($points + 0.5) * $nr;
+        $this->reputation += $sum;
+    }
+
+
+
+    /**
+    *
+    * @return string $text - html for tablecontent
+    */
+    public function deliverRows($value)
+    {
+        $text = "";
+        if ($value['isanswer'] == null && $value['iscomment'] == null) {
+            $text .= $this->getQuestionHTML($value);
+            $this->addReputation($value['points'], 3);
+        } elseif ($value['iscomment']) {
+            $text .= $this->getCommentHTML($value);
+            $this->addReputation($value['points'], 2);
+        } elseif ($value['isanswer']) {
+            $text .= $this->getAnswersHTML($value);
+            $bonus = $this->fromdb->findAllWhere("accept = ?", $value['id']);
+            $bonus ? $this->addReputation($value['points'], 8) : $this->addReputation($value['points'], 4);
+        }
+        return $text;
+    }
+
+
+
+    /**
      * Returns all text for the view
      *
      * @return string htmlcode
      */
     public function getHTML()
     {
-        $html = "";
-        $viewone = $this->misc->setUrlCreator("comm/view-one");
-        $virgin = true;
-        $array = [];
-        $grav = $this->misc->getGravatar($this->person->email, 50);
-        $reputation = 0;
-
-        if ($this->comments) {
-            $array = $this->populateArray($this->comments);
-            $virgin = false;
-        }
-
-        if ($virgin == true) {
-            $startinfo = $this->person->acronym . " har inte gjort några inlägg ännu.";
-        } else {
-            $startinfo = $this->help->getPointsHTML($reputation, $this->chosenid);
-        }
+        $virgin = $this->comments ? false : true;
+        $array = $this->comments ? $this->populateArray($this->comments) : [];
 
         $text = $this->getTableHead();
-
         foreach ($array as $value) {
-            $text .= '<tr>';
-
-            if ($value['isanswer'] == null && $value['iscomment'] == null) {
-                $text .= $this->getQuestionHTML($value, $viewone);
-
-                $points = $value['points'] + 0.5;
-                $questionValue = $points * 3;
-                $reputation += $questionValue;
-            } elseif ($value['iscomment']) {
-                $text .= $this->getCommentHTML($value, $viewone);
-
-                $points = $value['points'] + 0.5;
-                $commentValue = $points * 2;
-                $reputation += $commentValue;
-            } elseif ($value['isanswer']) {
-                $text .= $this->getAnswersHTML($value, $viewone);
-
-                $points = $value['points'] + 0.5;
-                $bonus = $this->misc->findAllWhere("accept = ?", $value['id']);
-                if ($bonus) {
-                    $answerValue = $points * 8;
-                } else {
-                    $answerValue = $points * 4;
-                }
-                $reputation += $answerValue;
-            }
+            $text .= '<tr>' . $this->deliverRows($value) . '</tr>';
         }
         $text .= "</table><br />";
 
-        $html .= $grav;
-        $html .= '<h1>' . $this->person->acronym . '</h1>';
-        $html .= $startinfo;
-        $html .= $text;
-        $html .= '</div>';
+        $startinfo = $virgin == true ? $this->person->acronym . " har inte gjort några inlägg ännu." : $this->help->getPointsHTML($this->reputation, $this->chosenid);
 
+        $html = $this->misc->getGravatar($this->person->email, 50) . '<h1>' . $this->person->acronym . '</h1>' . $startinfo . $text . '</div>';
         return $html;
     }
 }

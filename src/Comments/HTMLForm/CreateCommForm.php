@@ -109,51 +109,16 @@ class CreateCommForm extends FormModel
     {
         $dropdown = $this->getDropdown($parentid);
         $this->form->create(
-            [   "id" => __CLASS__,
-                "legend" => $this->headline,
-                "wmd" => "wmd-button-bar",
-                "preview" => "wmd-preview",
-            ],
+            ["id" => __CLASS__,"legend" => $this->headline,"wmd" => "wmd-button-bar","preview" => "wmd-preview",],
             [
-                "title" => [
-                    "type"  => "text",
-                    "label" => "Titel",
-                    "validation" => ["not_empty"],
-                    "wrapper-element-class" => "form-group",
-                    "class" => "form-control"
-                ],
-                "id" => [
-                    "type"  => "hidden",
-                    "value" => $id
-                ],
-                "userid" => [
-                    "type"  => "hidden",
-                    "value" => $id,
-                ],
-                "parentid" => [
-                    "type"  => "hidden",
-                    "value" => $parentid,
-                ],
-                "comment" => [
-                    "type"  => "textarea",
-                    "label" => "Text",
-                    "id" => "wmd-input",
-                    "placeholder" => $this->getPlaceholder(),
-                    "validation" => ["not_empty"],
-                    "wrapper-element-class" => "form-group",
-                    "class" => "form-control wmd-input",
-                ],
+                "title" => ["type" => "text","label" => "Titel","validation" => ["not_empty"],"wrapper-element-class" => "form-group","class" => "form-control"],
+                "id" => ["type"  => "hidden","value" => $id],
+                "userid" => ["type"  => "hidden","value" => $id,],
+                "parentid" => ["type"  => "hidden","value" => $parentid,],
+                "comment" => ["type"  => "textarea","label" => "Text","id" => "wmd-input","placeholder" => $this->getPlaceholder(),"validation" => ["not_empty"],"wrapper-element-class" => "form-group","class" => "form-control wmd-input",],
                 "tags" => $dropdown,
-                "iscomm" => [
-                    "type"  => "hidden",
-                    "value" => $this->iscomment,
-                ],
-                "submit" => [
-                    "type" => "submit",
-                    "value" => "Spara",
-                    "class" => "btn btn-default",
-                    "callback" => [$this, "callbackSubmit"]
-                ],
+                "iscomm" => ["type"  => "hidden","value" => $this->iscomment,],
+                "submit" => ["type" => "submit","value" => "Spara","class" => "btn btn-default","callback" => [$this, "callbackSubmit"]],
             ]
         );
     }

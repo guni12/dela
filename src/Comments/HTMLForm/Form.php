@@ -3,6 +3,7 @@
 namespace Guni\Comments\HTMLForm;
 
 use \Guni\Comments\HTMLForm\FormModel;
+use \Guni\Comments\HTMLForm\FormHelper;
 use \Anax\DI\DIInterface;
 use \Anax\HTMLForm\FormElementFactory;
 
@@ -12,7 +13,7 @@ use \Anax\HTMLForm\FormElementFactory;
 class Form implements \ArrayAccess
 {
     /**
-     * @var array $form       settings for the form
+     * @var array $form       settings for the form            class
      * @var array $elements   all form elements
      * @var array $output     messages to display together with the form
      * @var array $sessionKey key values for the session
@@ -26,6 +27,11 @@ class Form implements \ArrayAccess
      * @var boolean $rememberValues remember values in the session.
      */
     protected $rememberValues;
+
+    /**
+     * extra class to make this file some smaller.
+     */
+    protected $formhelper;
 
     /**
      * @var Anax\DI\DIInterface $di the DI service container.
@@ -42,6 +48,7 @@ class Form implements \ArrayAccess
     public function __construct(DIInterface $di)
     {
         $this->di = $di;
+        $this->formhelper = new FormHelper($di);
     }
 
 
@@ -87,53 +94,10 @@ class Form implements \ArrayAccess
      */
     public function create($form = [], $elements = [])
     {
-        $defaults = [
-            // Always have an id
-            "id" => "anax/htmlform",
-
-            // Use a default class on <form> to ease styling
-            "class" => "htmlform",
-
-            // Wrap fields within <fieldset>
-            "use_fieldset"  => true,
-
-            // Use legend for fieldset, set it to string value
-            "legend"        => null,
-
-            // Default wrapper element around form elements
-            "wrapper-element" => "div",
-
-            // Use a <br> after the label, where suitable
-            "br-after-label" => true,
-
-            "wmd"           => "div",
-
-            "preview"       => "div",
-        ];
-        $this->form = array_merge($defaults, $form);
-
-        $this->elements = [];
-        if (!empty($elements)) {
-            foreach ($elements as $key => $element) {
-                $this->elements[$key] = FormElementFactory::create($key, $element);
-                $this->elements[$key]->setDefault([
-                    "wrapper-element" => $this->form["wrapper-element"],
-                    "br-after-label"  => $this->form["br-after-label"],
-                ]);
-            }
-        }
-
-        // Default values for <output>
+        $this->form = $this->formhelper->createform($form);
+        $this->elements = $this->formhelper->createelements($elements, $this->form);
         $this->output = [];
-
-        // Setting keys used in the session
-        $generalKey = "anax/htmlform-" . $this->form["id"] . "#";
-        $this->sessionKey = [
-            "save"      => $generalKey . "save",
-            "output"    => $generalKey . "output",
-            "failed"    => $generalKey . "failed",
-            "remember"  => $generalKey . "remember",
-        ];
+        $this->sessionKey = $this->formhelper->createoutput($this->form);
         return $this;
     }
 
@@ -313,18 +277,7 @@ class Form implements \ArrayAccess
      */
     public function getHTML($options = [])
     {
-        $defaults = [
-            // Only return the start of the form element
-            'start'         => false,
-            
-            // Layout all elements in one column
-            'columns'       => 1,
-            
-            // Layout consequtive buttons as one element wrapped in <p>
-            'use_buttonbar' => true,
-        ];
-        $options = array_merge($defaults, $options);
-
+        $options = $this->formhelper->getoptions($options);
         $form = array_merge($this->form, $options);
         $wmd     = isset($form['wmd'])     ? "<div id='wmd-button-bar'></div>" : null;
         $preview = isset($form['preview']) ? '<div id="wmd-preview" class="wmd-panel wmd-preview"></div>' : null;
@@ -431,12 +384,7 @@ EOD;
      */
     public function getHTMLLayoutForElements($elements, $options = [])
     {
-        $defaults = [
-            'columns' => 1,
-            'wrap_at_element' => false,  // Wraps column in equal size or at the set number of elements
-        ];
-        $options = array_merge($defaults, $options);
-
+        $options = $this->formhelper->layoutoptions($options);
         $html = null;
         if ($options['columns'] === 1) {
             foreach ($elements as $element) {
@@ -453,26 +401,7 @@ EOD;
                 $buttonbar = "<div class='cform-buttonbar'>\n{$end['html']}</div>\n";
             }
 
-            $size = count($elements);
-            $wrapAt = $options['wrap_at_element'] ? $options['wrap_at_element'] : round($size/2);
-            for ($i=0; $i<$size; $i++) {
-                if ($i < $wrapAt) {
-                    $col1 .= $elements[$i]['html'];
-                } else {
-                    $col2 .= $elements[$i]['html'];
-                }
-            }
-
-            $html = <<<EOD
-<div class='cform-columns-2'>
-<div class='cform-column-1'>
-{$col1}
-</div>
-<div class='cform-column-2'>
-{$col2}
-</div>
-{$buttonbar}</div>
-EOD;
+            $html = $this->formhelper->getlayout($elements, $options);
         }
 
         return $html;
@@ -609,26 +538,20 @@ EOD;
         // Check if this was a post request
         $requestMethod = $this->di->get("request")->getServer("REQUEST_METHOD");
         if ($requestMethod !== "POST") {
+            
             // Its not posted, but check if values should be used from session
             $failed   = $this->sessionKey["failed"];
             $remember = $this->sessionKey["remember"];
             $save     = $this->sessionKey["save"];
+
+            $session->has($failed) || $session->has($save) ? $this->InitElements($this->formhelper->notPosted($failed, $save)) : "";
             
-            if ($session->has($failed)) {
-                // Read form data from session if the previous post failed
-                // during validation.
-                $this->InitElements($session->getOnce($failed));
-            } elseif ($session->has($remember)) {
+            if ($session->has($remember)) {
                 // Read form data from session if some form elements should
                 // be remembered
                 foreach ($session->getOnce($remember) as $key => $val) {
                     $this[$key]['value'] = $val['value'];
                 }
-            } elseif ($session->has($save)) {
-                // Read form data from session,
-                // useful during test where the original form is displayed
-                // with its posted values
-                $this->InitElements($session->getOnce($save));
             }
 
             return null;
@@ -637,12 +560,7 @@ EOD;
         $request = $this->di->get("request");
         $formid = $request->getPost("anax/htmlform-id");
         // Check if its a form we are dealing with
-        if (!$formid) {
-            return null;
-        }
-
-        // Check if its this form that was posted
-        if ($this->form["id"] !== $formid) {
+        if (!$formid || $this->form["id"] !== $formid) {
             return null;
         }
 
@@ -677,19 +595,7 @@ EOD;
                 if ($elementType === 'radio') {
                     $element['checked'] = $element['value'];
                 }
-
-                // Do validation of form element
-                if (isset($element['validation'])) {
-                    $element['validation-pass'] = $element->Validate($element['validation'], $this);
-
-                    if ($element['validation-pass'] === false) {
-                        $values[$elementName] = [
-                            'value' => $element['value'],
-                            'validation-messages' => $element['validation-messages']
-                        ];
-                        $validates = false;
-                    }
-                }
+                $validates = $this->formhelper->doValidation($element);
 
                 // Hmmm.... Why did I need this remember thing?
                 if (isset($element['remember'])
@@ -731,16 +637,7 @@ EOD;
                 // Do validation even when the form element is not set?
                 // Duplicate code, revise this section and move outside
                 // this if-statement?
-                if (isset($element['validation'])) {
-                    $element['validation-pass'] = $element->Validate($element['validation'], $this);
-
-                    if ($element['validation-pass'] === false) {
-                        $values[$elementName] = [
-                            'value' => $element['value'], 'validation-messages' => $element['validation-messages']
-                        ];
-                        $validates = false;
-                    }
-                }
+                $validates = $this->formhelper->doValidation($element);
             }
         }
 
