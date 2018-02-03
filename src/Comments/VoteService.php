@@ -17,6 +17,7 @@ class VoteService
     protected $sess;
     protected $comm;
     protected $di;
+    protected $misc;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -27,7 +28,8 @@ class VoteService
     public function __construct(DIInterface $di, $id, $vote)
     {
         $this->di = $di;
-        $this->comment = $this->getItemDetails($id);
+        $this->misc = new Misc($di);
+        $this->comment = $this->misc->getItemDetails($id);
 
         $session = $this->di->get("session");
         $this->sess = $session->get("user");
@@ -35,27 +37,7 @@ class VoteService
         $this->comm = new Comm();
         $this->comm->setDb($this->di->get("db"));
 
-        if ($vote == "accept") {
-            $this->acceptVote($this->comm);
-        } else {
-            $this->handleVotes($vote);
-        }
-    }
-
-
-    /**
-     * Get details on item to load form with.
-     *
-     * @param integer $id get details on item with id.
-     *
-     * @return object $comm - actual comment
-     */
-    public function getItemDetails($id)
-    {
-        $comm = new Comm();
-        $comm->setDb($this->di->get("db"));
-        $comm->find("id", $id);
-        return $comm;
+        $vote == "accept" ? $this->acceptVote($this->comm) : $this->handleVotes($vote);
     }
 
 

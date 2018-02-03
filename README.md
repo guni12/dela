@@ -1,4 +1,4 @@
-(__"dELa"__) guni12 /endproject for the BTH-course "Ramverk1"
+(__"dELa"__) guni12 /Schoolproject at BTH; "Ramverk1"
 ==================================
 
 [![Build Status](https://travis-ci.org/guni12/dela.svg?branch=master)](https://travis-ci.org/guni12/dela)

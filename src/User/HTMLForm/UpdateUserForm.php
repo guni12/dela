@@ -5,6 +5,7 @@ namespace Guni\User\HTMLForm;
 use \Anax\HTMLForm\FormModel;
 use \Anax\DI\DIInterface;
 use \Guni\User\User;
+use \Guni\User\UserHelp;
 
 /**
  * Example of FormModel implementation.
@@ -12,6 +13,8 @@ use \Guni\User\User;
 class UpdateUserForm extends FormModel
 {
     protected $user;
+    protected $userhelp;
+    protected $isadmin;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -22,7 +25,11 @@ class UpdateUserForm extends FormModel
     public function __construct(DIInterface $di, $id)
     {
         parent::__construct($di);
-        $this->user = $this->getUserDetails($id);
+        $this->userhelp = new UserHelp($di);
+        $this->user = $this->userhelp->getUserItems($id);
+
+        $sess = $this->di->get("session")->get("user");
+        $this->isadmin = $sess['isadmin'];
 
         $this->aForm();
     }
@@ -33,10 +40,12 @@ class UpdateUserForm extends FormModel
      */
     public function aForm()
     {
+        $checked = $this->user->isadmin == 1 ? true : false;
+        $admin = $this->isadmin ? ["type" => "checkbox","checked"   => $checked,"label" => "Är admin"] : ["type" => "hidden", "value" => null];
         $this->form->create(
             [
                 "id" => __CLASS__,
-                "legend" => "Uppdatera ditt konto",
+                "legend" => "Uppdatera kontot",
             ],
             [
                 "id" => [
@@ -46,6 +55,19 @@ class UpdateUserForm extends FormModel
                     "value" => $this->user->id,
                 ],
 
+                "created" => [
+                    "type" => "datetime",
+                    "readonly" => true,
+                    "value" => $this->user->created,
+                    "label"      => "Skapad",
+                ],
+
+                "updated" => [
+                    "type" => "datetime",
+                    "readonly" => true,
+                    "value" => $this->user->updated,
+                    "label"      => "Uppdaterad",
+                ],
 
                 "acronym" => [
                     "type" => "text",
@@ -70,6 +92,8 @@ class UpdateUserForm extends FormModel
                     "wrapper-element-class" => "form-group",
                     "class" => "form-control",
                 ],
+
+                "isadmin" => $admin,
 
                 "newpassword" => [
                     "type" => "text",
@@ -102,24 +126,6 @@ class UpdateUserForm extends FormModel
 
 
 
-
-    /**
-     * Get details on item to load form with.
-     *
-     * @param integer $id get details on item with id.
-     *
-     * @return User
-     */
-    public function getUserDetails($id)
-    {
-        $user = new User();
-        $user->setDb($this->di->get("db"));
-        $user->find("id", $id);
-        return $user;
-    }
-
-
-
     /**
      * Callback for submit-button which should return true if it could
      * carry out its work and false if something failed.
@@ -146,6 +152,7 @@ class UpdateUserForm extends FormModel
         $user->updated = $now;
         $user->acronym = $this->form->value("acronym");
         $user->email = $this->form->value("email");
+        $user->isadmin = $this->form->value("isadmin");
         $user->profile = $this->form->value("profile");
         $user->setPassword($passwordAgain);
         $user->save();

@@ -36,12 +36,6 @@ return [
             "callable" => ["commController", "getPostDeleteItem"],
         ],
         [
-            "info" => "Delete an item.",
-            "requestMethod" => "get|post",
-            "path" => "admindelete",
-            "callable" => ["commController", "getPostAdminDeleteItem"],
-        ],
-        [
             "info" => "Update an item.",
             "requestMethod" => "get|post",
             "path" => "update/{id:digit}",

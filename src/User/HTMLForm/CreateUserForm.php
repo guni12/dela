@@ -11,6 +11,9 @@ use \Guni\User\User;
  */
 class CreateUserForm extends FormModel
 {
+    protected $sess;
+    protected $isadmin;
+
     /**
      * Constructor injects with DI container.
      *
@@ -19,6 +22,8 @@ class CreateUserForm extends FormModel
     public function __construct(DIInterface $di)
     {
         parent::__construct($di);
+        $this->sess = $this->di->get("session")->get("user");
+        $this->isadmin = $this->sess['isadmin'];
 
         $this->aForm();
     }
@@ -31,6 +36,8 @@ class CreateUserForm extends FormModel
      */
     public function aForm()
     {
+        $admin = $this->isadmin ? ["type" => "checkbox","label" => "Är admin"] : ["type" => "hidden","value" => null];
+
         $this->form->create(
             [
                 "id" => __CLASS__,
@@ -80,6 +87,8 @@ class CreateUserForm extends FormModel
                     "class" => "form-control",
                 ],
 
+                "isadmin" => $admin,
+
                 "submit" => [
                     "type" => "submit",
                     "value" => "Lägg till",
@@ -118,10 +127,10 @@ class CreateUserForm extends FormModel
         $user->email = $this->form->value("email");
         $user->profile = $this->form->value("profile");
         $user->setPassword($password);
+        $user->isadmin = $this->form->value("isadmin");
         $user->created = $now;
         $user->save();
 
-        //$this->form->addOutput("Användare $acronym skapad.");
         $this->di->get("response")->redirect("user/login");
         return true;
     }

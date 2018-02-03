@@ -3,7 +3,7 @@ imports:
     - php
 
 filter:
-    excluded_paths: [vendor/*, test/*]
+    excluded_paths: [vendor/*]
 
 build:
 
@@ -12,13 +12,10 @@ build:
             -
                 command: "mkdir build"
 
-        after:
-            - "composer require --dev phpunit/phpunit"
-
     tests:
         override:
             -
-                command: "vendor/bin/phpunit --configuration .phpunit.xml"
+                command: "phpunit --configuration .phpunit.xml"
                 coverage:
                     file: "build/coverage.clover"
                     format: "php-clover"

@@ -7,5 +7,5 @@ $urlToView = url("comm");
 <?= $form ?>
 
 <p>
-    <a href="<?= $urlToView ?>">Till medlemssidan</a>
+    <a href="<?= $urlToView ?>">Till frågorna</a>
 </p>

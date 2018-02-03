@@ -2,9 +2,6 @@
 
 namespace Anax\View;
 
-
 ?>
-
+<br />
 <?= $data['content'] ?>
-
-<p></p>

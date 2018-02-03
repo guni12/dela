@@ -9,13 +9,13 @@ use \Anax\DI\InjectionAwareTrait;
 use \Guni\Comments\HTMLForm\CreateCommForm;
 use \Guni\Comments\HTMLForm\UpdateCommForm;
 use \Guni\Comments\HTMLForm\DeleteCommForm;
-use \Guni\Comments\HTMLForm\AdminDeleteCommForm;
 use \Guni\Comments\IndexPage;
 use \Guni\Comments\ShowOneService;
 use \Guni\Comments\ShowAllService;
 use \Guni\Comments\Taglinks;
 use \Guni\Comments\VoteService;
 use \Guni\Comments\Misc;
+use \Guni\User\UserHelp;
 
 /**
  * A controller class.
@@ -28,33 +28,14 @@ class CommController implements
         InjectionAwareTrait;
 
 
+
     /**
     *
     * @return sessionobject
     */
     public function getSess()
     {
-        $session = $this->di->get("session");
-        $sess = $session->get("user");
-        return $sess;
-    }
-
-
-
-    /**
-     * Sends data to view
-     *
-     * @param string $title
-     * @param string $crud, path to view
-     * @param array $data, htmlcontent to view
-     */
-    public function toRender($title, $crud, $data)
-    {
-        $view       = $this->di->get("view");
-        $pageRender = $this->di->get("pageRender");
-        $view->add($crud, $data);
-        $tempfix = "";
-        $pageRender->renderPage($tempfix, ["title" => $title]);
+        return $this->di->get("session")->get("user");
     }
 
 
@@ -65,28 +46,22 @@ class CommController implements
      */
     public function getIndex()
     {
-        $title      = "Frågor";
-
         $text = new ShowAllService($this->di);
-
         $data = [
             "items" => $text->getHTML(),
         ];
-
-        $crud = "comm/crud/front";
-        $this->toRender($title, $crud, $data);
+        $userhelp = new UserHelp($this->di);
+        $userhelp->toRender("Frågor", "comm/crud/front", $data);
     }
 
 
     public function getIndexPage()
     {
-        $title = "BitOfAll";
-
         $text = new IndexPage($this->di);
         $arr = $text->getHTML();
         $data = ['items' => $arr];
-        $crud = "comm/crud/index";
-        $this->toRender($title, $crud, $data);
+        $userhelp = new UserHelp($this->di);
+        $userhelp->toRender("BitOfAll", "comm/crud/index", $data);
     }
 
     /**
@@ -96,16 +71,11 @@ class CommController implements
      */
     public function getPostCreateItem($id = null)
     {
-        $title      = "Skriv en fråga";
-        $iscomment = null;
-        $parentid = null;
-
         $sess = $this->getSess();
 
         if ($sess) {
-            $form       = new CreateCommForm($this->di, $iscomment, $sess['id'], $id, $parentid);
+            $form       = new CreateCommForm($this->di, null, $sess['id'], $id, null);
             $form->check();
-
             $text = '<div class="col-lg-12 col-sm-12 col-xs-12">';
             $text .= $form->getHTML() . '</div>';
 
@@ -117,9 +87,8 @@ class CommController implements
                 "form" => "Enbart för inloggade. Sorry!",
             ];
         }
-
-        $crud = "comm/crud/create";
-        $this->toRender($title, $crud, $data);
+        $userhelp = new UserHelp($this->di);
+        $userhelp->toRender("Skriv en fråga", "comm/crud/create", $data);
     }
 
     /**
@@ -129,15 +98,11 @@ class CommController implements
      */
     public function getPostCommentItem($id = null)
     {
-        $title      = "Skriv din kommentar";
-        $iscomment = 1;
-
         $sess = $this->getSess();
 
         if ($sess) {
-            $form       = new CreateCommForm($this->di, $iscomment, $sess['id'], $id);
+            $form       = new CreateCommForm($this->di, 1, $sess['id'], $id);
             $form->check();
-
             $text = '<div class="col-lg-12 col-sm-12 col-xs-12">';
             $text .= $form->getHTML() . '</div>';
 
@@ -149,9 +114,8 @@ class CommController implements
                 "form" => "Enbart för inloggade. Sorry!",
             ];
         }
-
-        $crud = "comm/crud/create";
-        $this->toRender($title, $crud, $data);
+        $userhelp = new UserHelp($this->di);
+        $userhelp->toRender("Skriv din kommentar", "comm/crud/create", $data);
     }
 
 
@@ -162,19 +126,15 @@ class CommController implements
      */
     public function getPostDeleteItem($id)
     {
-        $title      = "Ta bort ett inlägg";
         $sess = $this->getSess();
-
         $misc = new Misc($this->di);
-        $comm = $this->getItemDetails($id);
+        $comm = $misc->getItemDetails($id);
 
-        if ($sess && $sess['id'] == $comm->userid) {
-            $form       = new DeleteCommForm($this->di, $id);
+        if ($sess && $sess['id'] == $comm->userid || $sess['isadmin'] == 1) {
+            $form = new DeleteCommForm($this->di, $id);
             $form->check();
-
             $text = '<div class="col-lg-12 col-sm-12 col-xs-12">';
             $text .= $form->getHTML() . '</div>';
-
             $data = [
                 "form" => $text,
             ];
@@ -183,41 +143,8 @@ class CommController implements
                 "form" => "Inte ditt id. Sorry!",
             ];
         }
-
-        $crud = "comm/crud/delete";
-        $this->toRender($title, $crud, $data);
-    }
-
-
-
-    /**
-     * Handler with form to update an item.
-     *
-     * @return void
-     */
-    public function getPostAdminDeleteItem()
-    {
-        $title      = "Ta bort text";
-        $sess = $this->getSess();
-
-        if ($sess['isadmin'] == 1) {
-            $form       = new AdminDeleteCommForm($this->di);
-
-            $form->check();
-            $text = '<div class="col-lg-12 col-sm-12 col-xs-12">';
-            $text .= $form->getHTML() . '</div>';
-
-            $data = [
-                "form" => $text,
-            ];
-        } else {
-            $data = [
-                "form" => "Enbart för admin. Sorry!",
-            ];
-        }
-
-        $crud = "comm/crud/admindelete";
-        $this->toRender($title, $crud, $data);
+        $userhelp = new UserHelp($this->di);
+        $userhelp->toRender("Ta bort ett inlägg", "comm/crud/delete", $data);
     }
 
 
@@ -229,9 +156,7 @@ class CommController implements
      */
     public function getPostUpdateItem($id)
     {
-        $title      = "Uppdatera ditt inlägg";
         $sess = $this->getSess();
-
         $misc = new Misc($this->di);
         $comm = $misc->getItemDetails($id);
 
@@ -241,7 +166,6 @@ class CommController implements
 
             $text = '<div class="col-lg-12 col-sm-12 col-xs-12">';
             $text .= $form->getHTML() . '</div>';
-
             $data = [
                 "form" => $text,
             ];
@@ -250,9 +174,8 @@ class CommController implements
                 "form" => "Inte ditt id. Sorry!",
             ];
         }
-
-        $crud = "comm/crud/update";
-        $this->toRender($title, $crud, $data);
+        $userhelp = new UserHelp($this->di);
+        $userhelp->toRender("Uppdatera ditt inlägg", "comm/crud/update", $data);
     }
 
 
@@ -263,15 +186,12 @@ class CommController implements
      */
     public function getPostShow($id)
     {
-        $title      = "Inlägg";
         $text       = new ShowOneService($this->di, $id);
-
         $data = [
             "items" => $text->getHTML(),
         ];
-
-        $crud = "comm/crud/view-one";
-        $this->toRender($title, $crud, $data);
+        $userhelp = new UserHelp($this->di);
+        $userhelp->toRender("Inlägg", "comm/crud/view-one", $data);
     }
 
 
@@ -282,59 +202,47 @@ class CommController implements
      */
     public function getPostShowPoints($id)
     {
-        $title      = "Inlägg-poängsort";
-        $sort = 1;
-
-        $text       = new ShowOneService($this->di, $id, $sort);
-
+        $text       = new ShowOneService($this->di, $id, 1);
         $data = [
             "items" => $text->getHTML(),
         ];
-
-        $crud = "comm/crud/view-one";
-        $this->toRender($title, $crud, $data);
+        $userhelp = new UserHelp($this->di);
+        $userhelp->toRender("Inlägg-poängsort", "comm/crud/view-one", $data);
     }
 
 
     public function getTagList()
     {
-        $title = "Taggar";
-
         $text = new Taglinks($this->di);
         $arr = $text->getHTML();
         $data = ['items' => $arr];
-        $crud = "comm/crud/view-one";
-        $this->toRender($title, $crud, $data);
+        $userhelp = new UserHelp($this->di);
+        $userhelp->toRender("Taggar", "comm/crud/view-one", $data);
     }
 
     public function getTagsShow($id)
     {
-        $title = "Taggar";
-
         $text = new ShowTagsService($this->di, $id);
         $arr = $text->getHTML();
         $data = ['items' => $arr];
-        $crud = "comm/crud/view-one";
-        $this->toRender($title, $crud, $data);
+        $userhelp = new UserHelp($this->di);
+        $userhelp->toRender("Taggar", "comm/crud/view-one", $data);
     }
 
 
     public function makeVoteUp($id)
     {
-        $voteup = "voteup";
-        new VoteService($this->di, $id, $voteup);
+        new VoteService($this->di, $id, "voteup");
     }
 
 
     public function makeVoteDown($id)
     {
-        $down = "votedown";
-        new VoteService($this->di, $id, $down);
+        new VoteService($this->di, $id, "votedown");
     }
 
     public function makeAccept($id)
     {
-        $accept = "accept";
-        new VoteService($this->di, $id, $accept);
+        new VoteService($this->di, $id, "accept");
     }
 }

@@ -191,7 +191,7 @@ class UserHelp
 
     /**
     *
-    *
+    * @return array userinfo of $id if exist
     */
     public function getOne($id)
     {
@@ -213,5 +213,38 @@ class UserHelp
         }
 
         return $data;
+    }
+
+
+    /**
+     * Get all items as array suitable for display in select option dropdown.
+     *
+     * @return array with key value of all items.
+     */
+    public function getSelectUsers()
+    {
+        $users = ["-1" => "Välj en användare..."];
+        foreach ($this->getAll() as $obj) {
+            $users[$obj->id] = "{$obj->acronym} ({$obj->id})";
+        }
+
+        return $users;
+    }
+
+
+    /**
+     * Sends data to view
+     *
+     * @param string $title
+     * @param string $crud, path to view
+     * @param array $data, htmlcontent to view
+     */
+    public function toRender($title, $crud, $data)
+    {
+        $view       = $this->di->get("view");
+        $pageRender = $this->di->get("pageRender");
+        $view->add($crud, $data);
+        $tempfix = "";
+        $pageRender->renderPage($tempfix, ["title" => $title]);
     }
 }

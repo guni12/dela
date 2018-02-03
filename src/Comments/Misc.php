@@ -55,7 +55,7 @@ class Misc
      *
      * @param integer $id get details on item with id.
      *
-     * @return object $comm - actual comment
+     * @return Comm $comm - actual comment
      */
     public function getItemDetails($id)
     {
@@ -70,7 +70,7 @@ class Misc
      * Get details on item to load form with.
      *
      * @param string $where - sql part for xxx=?
-     * @param array $params get details on item with id parentid.
+     * @param array|integer|string $params get details on item with id parentid.
      *
      * @return Comm
      */
@@ -118,7 +118,7 @@ class Misc
     * @param integer $sort - if answers should be sorted by points
     * @param integer $id - the question for the answers anwers
     */
-    public function getAnswers($sort, $id, $comments)
+    public function getAnswers($sort, $id)
     {
         $orderby = $sort == 1 ? "`points` DESC" : "`created` DESC";
         $params = [$id];
@@ -134,8 +134,7 @@ class Misc
      */
     public function getAnswerLink($commentid)
     {
-        $create = $this->setUrlCreator("comm/create");
-        return '<a href="' . $create . '/' . $commentid . '">Svara</a>';
+        return '<a href="' . $this->setUrlCreator("comm/create") . '/' . $commentid . '">Svara</a>';
     }
 
 
@@ -147,8 +146,7 @@ class Misc
      */
     public function getCommentLink($commentid)
     {
-        $commentpath = $this->setUrlCreator("comm/comment");
-        return '<a href="' . $commentpath . '/' . $commentid . '">Kommentera</a>';
+        return '<a href="' . $this->setUrlCreator("comm/comment") . '/' . $commentid . '">Kommentera</a>';
     }
 
     /**
@@ -194,17 +192,16 @@ class Misc
     /**
      * Returns html for user item
      *
-     * @param object $item
+     * @param array $item - userinfo
      * @param string $viewone - path
      *
      * @return string htmlcode
      */
-    public function getUsersHtml($item, $viewone)
+    public function getUsersHtml($item)
     {
-        $viewone = $this->setUrlCreator("user/view-one") . "/";
         $gravatar = $this->getGravatar($item['email']);
-        $arr['acronym'] = '<a href="' . $viewone . $item['id'] . '">' . $item['acronym'] . '</a>';
-        $arr['gravatar'] = '<a href="' . $viewone . $item['id'] . '">' . $gravatar . '</a>';
+        $arr['acronym'] = '<a href="' . $this->setUrlCreator("user/view-one") . "/" . $item['id'] . '">' . $item['acronym'] . '</a>';
+        $arr['gravatar'] = '<a href="' . $this->setUrlCreator("user/view-one") . "/" . $item['id'] . '">' . $gravatar . '</a>';
         return $arr;
     }
 
@@ -223,11 +220,11 @@ class Misc
 
 
     /**
-    * @param obj $item - current comment
-    * @param string $viewone - path
+    * @param Comm $item - current comment
     * @param array $numbers - counted points, answers and comments
     * @param string $when - when comment was created
-    * @param string $email
+    * @param $user
+    * @param integer $isadmin
     *
     * @return string $html
     */
@@ -235,18 +232,14 @@ class Misc
     {
         $gravatar = $this->getGravatar($user[0]);
         $showid = $isadmin === true ? '(' . $item->id . '): ' : "";
-        $viewone = $this->setUrlCreator("comm/view-one");
-        $answers = $numbers[0];
-        $comments = $numbers[1];
-        $points = $numbers[2];
 
-        $title = '<a href="' . $viewone . '/' . $item->id . '">';
+        $title = '<a href="' . $this->setUrlCreator("comm/view-one") . '/' . $item->id . '">';
         $title .= $showid . ' ' . $item->title . '</a>';
 
         $html = '<tr><td class = "allmember">' . $gravatar . ' ' . $user[1] . '</td>';
         $html .= '<td class = "alltitle">' . $title . '</td>';
         $html .= '<td class = "asked">' . $when . '</td>';
-        $html .= '<td = "respons"><span class = "smaller">' . $answers . $comments . $points . '</span></td>';
+        $html .= '<td = "respons"><span class = "smaller">' . $numbers[0] . $numbers[1] . $numbers[2] . '</span></td>';
         $html .= '</tr>';
         return $html;
     }
@@ -255,10 +248,8 @@ class Misc
     /**
      * Returns correct loginlink
      *
-     * @param string $create
-     * @param string $del
      * @param integer $isloggedin
-     * @param integer $isadmin
+     * @param boolean $isadmin
      *
      * @return string htmlcode
      */

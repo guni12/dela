@@ -35,7 +35,10 @@ class CommPagesUsageTest extends \PHPUnit_Framework_TestCase
 
         $url = $comm->setUrlCreator("comm");
         $exp = "://.bin/comm";
-        //$this->assertEquals($url, $exp);
+
+
+
+        $this->assertEquals($url, $exp);
 
         $answerlink = $comm->getAnswerLink(2);
         $exp = '<a href="://.bin/comm/create/2">Svara</a>';

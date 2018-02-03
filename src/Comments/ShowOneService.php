@@ -88,10 +88,9 @@ class ShowOneService
      */
     public function getAcceptIcon($toaccept, $isaccepted, $id)
     {
-        $acceptlink = $this->misc->setUrlCreator("comm/accept");
         $faaccept = '<i class="fa fa-smile-o" aria-hidden="true"></i>';
 
-        $open = ' | <a href="' . $acceptlink . '/' . $id . '">';
+        $open = ' | <a href="' . $this->misc->setUrlCreator("comm/accept") . '/' . $id . '">';
         $open .= '<span class="canaccept em08"><span class="canaccepttext">Klicka för att acceptera</span>' . $faaccept . '</span></a><hr />';
         $closed = ' | <span class="canaccept em08"><span class="canaccepttext">Accepterat svar</span>' . $faaccept . '</span><hr />';
 
@@ -134,10 +133,10 @@ class ShowOneService
     /**
     * sets variables for when member can vote
     */
-    public function canVote($voteup, $votedown, $id)
+    public function canVote($id)
     {
-        $this->linkup = '<a href="' . $voteup . '/' . $id . '"><span class="canvote em08"><span class="canvotetext">+1</span>';
-        $this->linkdown = '<a href="' . $votedown . '/' . $id . '"><span class="canvote em08"><span class="canvotetext">-1</span>';
+        $this->linkup = '<a href="' . $this->misc->setUrlCreator("comm/voteup") . '/' . $id . '"><span class="canvote em08"><span class="canvotetext">+1</span>';
+        $this->linkdown = '<a href="' . $this->misc->setUrlCreator("comm/votedown") . '/' . $id . '"><span class="canvote em08"><span class="canvotetext">-1</span>';
         $this->linkend = '</span></a>';
     }
 
@@ -150,23 +149,18 @@ class ShowOneService
     */
     public function voteChoices($value)
     {
-        $voteup = $this->misc->setUrlCreator("comm/voteup");
-        $votedown = $this->misc->setUrlCreator("comm/votedown");
-
         $arrDecoded = json_decode($value->hasvoted);
-        $faup = ' | <i class="fa fa-thumbs-up" aria-hidden="true"></i>';
-        $fadown = ' | <i class="fa fa-thumbs-down" aria-hidden="true"></i>';
+        $faup = $this->sess == null ? "" : ' | <i class="fa fa-thumbs-up" aria-hidden="true"></i>';
+        $fadown = $this->sess == null ? "" : ' | <i class="fa fa-thumbs-down" aria-hidden="true"></i>';
 
         if ($this->sess == null) {
             $this->noMember();
-            $faup = "";
-            $fadown = "";
         } elseif ($arrDecoded && in_array($this->sess['id'], $arrDecoded)) {
             $this->votedMember();
         } elseif ($this->sess['id'] == $value->userid) {
             $this->commentOwner();
         } else {
-            $this->canVote($voteup, $votedown, $value->id);
+            $this->canVote($value->id);
         }
         $points = $value->points ? ' | <span class = "pcomm smaller em06"><span class="pcommtext">Poäng</span>[' . $value->points . ']</span>' : "";
 
@@ -194,8 +188,7 @@ class ShowOneService
      */
     public function getLoginurl($commentid)
     {
-        $loginurl = $this->misc->setUrlCreator("user/login");
-        $notloggedin = $this->isquestion ? '<a href="' . $loginurl . '">Logga in om du vill svara</a></p>' : "";
+        $notloggedin = $this->isquestion ? '<a href="' . $this->misc->setUrlCreator("user/login") . '">Logga in om du vill svara</a></p>' : "";
 
         $answer = $this->isquestion ? ' | ' . $this->misc->getAnswerLink($commentid) : "";
         $comment = $this->iscomment ? "" : ' | ' . $this->misc->getCommentLink($commentid);
@@ -230,9 +223,8 @@ class ShowOneService
      */
     public function getDeleteLink($commentid)
     {
-        $del = $this->isadmin ? "comm/admindelete" : "comm/delete";
-        $end = $this->isadmin ? '">Ta bort inlägget</a>' : '/' . $commentid . '">Ta bort inlägget</a>';
-        return '<a href="' . $this->misc->setUrlCreator($del) . $end;
+        $end = '/' . $commentid . '">Ta bort inlägget</a>';
+        return '<a href="' . $this->misc->setUrlCreator("comm/delete") . $end;
     }
 
 

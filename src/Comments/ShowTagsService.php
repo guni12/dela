@@ -90,16 +90,16 @@ class ShowTagsService
     /**
     * @return string $childrentext - htmltext for comments to comment-item
     */
-    public function getChildrenText($val, $viewcomm)
+    public function getChildrenText($val)
     {
         $answers = "";
         $comments = "";
         $children = $this->misc->findAllWhere("parentid = ?", $val->id);
         foreach ($children as $item) {
             if ($item->iscomment == 1) {
-                $comments .= '<a href = "' . $viewcomm . '/' . $item->id . '"><span class = "delagreen">' . $item->title . '</span></a>, ';
+                $comments .= '<a href = "' . $this->misc->setUrlCreator("comm/view-one") . '/' . $item->id . '"><span class = "delagreen">' . $item->title . '</span></a>, ';
             } else {
-                $answers .= '<a href = "' . $viewcomm . '/' . $item->id . '"><span class = "delablue">' . $item->title . '</span></a>, ';
+                $answers .= '<a href = "' . $this->misc->setUrlCreator("comm/view-one") . '/' . $item->id . '"><span class = "delablue">' . $item->title . '</span></a>, ';
             }
         }
         $answers = rtrim($answers, ', ');
@@ -116,21 +116,19 @@ class ShowTagsService
      */
     public function getHTML()
     {
-        $viewcomm = $this->misc->setUrlCreator("comm/view-one");
-
         $html = $this->getTableStart();
 
         $userhelp = new UserHelp($this->di);
 
         foreach ($this->tagset as $val) {
-            $childrentext = $this->getChildrenText($val, $viewcomm);
+            $childrentext = $this->getChildrenText($val);
             $html .= "<tr>";
             $user = $userhelp->getOne($val->userid);
             $grav = $this->misc->getGravatar($user['email']);
             $acronym = $user['acronym'];
             $html .= '<td class = "itis"><span class="smaller em06">' . $acronym . '</span></td>';
             $html .= '<td class = "grav">' . $grav . '</td>';
-            $html .= "<td class = 'text'><a href = '" . $viewcomm . "/" . $val->id . "'><span class = 'delared'>" . $val->title . "</span></td>";
+            $html .= "<td class = 'text'><a href = '" . $this->misc->setUrlCreator("comm/view-one") . "/" . $val->id . "'><span class = 'delared'>" . $val->title . "</span></td>";
             $html .= $childrentext;
             $html .= '</tr>';
         }

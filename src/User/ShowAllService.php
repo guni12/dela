@@ -87,9 +87,9 @@ class ShowAllService
     {
         $html = $this->getMembers();
 
-        $create = $this->misc->setUrlCreator("user/admincreate");
+        $create = $this->misc->setUrlCreator("user/create");
         $adminupdate = $this->misc->setUrlCreator("user/adminupdate");
-        $del = $this->misc->setUrlCreator("user/admindelete");
+        $del = $this->misc->setUrlCreator("user/delete/0");
 
         $html .= $this->tableStart($create, $del);
 

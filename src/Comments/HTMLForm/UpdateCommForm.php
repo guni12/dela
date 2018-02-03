@@ -119,7 +119,10 @@ class UpdateCommForm extends FormModel
 
 
     /**
-     * Create the form.
+     * @param integer $id - comment
+     * @param integer $sessid - userid
+     * @param string $comt - the text
+     * @param array|string $tags
      *
      */
     public function aForm($id, $sessid, $comt, $tags)

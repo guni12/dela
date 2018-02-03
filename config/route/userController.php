@@ -35,30 +35,14 @@ return [
             "path" => "update/{id:digit}",
             "callable" => ["userController", "getPostUpdateUser"],
         ],
-        [
-            "info" => "Create a user.",
-            "requestMethod" => "get|post",
-            "path" => "admincreate",
-            "callable" => ["userController", "getPostAdminCreateUser"],
-        ],
-        [
-            "info" => "Update a user.",
-            "requestMethod" => "get|post",
-            "path" => "adminupdate/{id:digit}",
-            "callable" => ["userController", "getPostAdminUpdateUser"],
-        ],
+
         [
             "info" => "Delete a user.",
             "requestMethod" => "get|post",
             "path" => "delete/{id:digit}",
             "callable" => ["userController", "getPostDeleteUser"],
         ],
-        [
-            "info" => "Delete a user.",
-            "requestMethod" => "get|post",
-            "path" => "admindelete",
-            "callable" => ["userController", "getPostAdminDeleteUser"],
-        ],
+
         [
             "info" => "Delete a user.",
             "requestMethod" => "get|post",

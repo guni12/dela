@@ -67,11 +67,10 @@ class IndexPage
      * Returns html for each item
      *
      * @param object $item
-     * @param string $viewone - path
      *
      * @return string htmlcode
      */
-    public function getValHtml(Comm $item, $viewone, $arr)
+    public function getValHtml(Comm $item, $arr)
     {
         $showid = "";
         $curruser = $this->userhelp->getOne($item->userid);
@@ -80,7 +79,7 @@ class IndexPage
         if ($this->isadmin === true) {
             $showid = '(' . $item->id . '): ';
         }
-        $title = '<a href="' . $viewone . '/' . $item->id . '">' . $showid . ' ' . $item->title . '</a>';
+        $title = '<a href="' . $this->misc->setUrlCreator("comm/view-one") . '/' . $item->id . '">' . $showid . ' ' . $item->title . '</a>';
         $when = '<span class="smaller em06">' . $this->misc->getWhen($item) . '</span>';
 
         $html = '<tr><td class = "indgrav">' . $gravatar . '</td><td class = "indauthor">' . $curruser['acronym'] . '</td><td class = "latest">' . $title . '</td><td class = "when">' . $when . '</td><td class = "itis">' . $arr['gravatar'] . '</td><td class = "eager">' . $arr['acronym'] . '</td><td class = "number">' . $arr['count'] . '</td></tr>';
@@ -162,12 +161,12 @@ class IndexPage
     /**
     * @return string $html - htmltext for the tags
     */
-    public function getTaginfo($base)
+    public function getTaginfo()
     {
         $arr = $this->getTagarr();
         $html = '';
         foreach ($arr as $key => $value) {
-            $html .= '<span class="tagsquare"><a href = "' . $base . '/' . $key . '">' . $value[1] . ' <span class="tagsize em06">[ ' . $value[0] . ' ]</span></a></span>';
+            $html .= '<span class="tagsquare"><a href = "' . $this->misc->setUrlCreator("comm/tags/") . '/' . $key . '">' . $value[1] . ' <span class="tagsize em06">[ ' . $value[0] . ' ]</span></a></span>';
         }
         return $html;
     }
@@ -175,19 +174,18 @@ class IndexPage
 
 
     /**
-    * @param string $viewone - path
     * @return string $html - htmltext for the questions
     */
-    public function getLatestQuestions($viewone)
+    public function getLatestQuestions()
     {
         usort($this->comments, array($this->misc, "dateSort"));
         $count = 0;
         $reversed = array_reverse($this->comments);
         $html = "";
-        $test = $this->getActivesInfo($viewone);
+        $test = $this->getActivesInfo();
 
         foreach ($reversed as $key => $value) {
-            $html .= ((int)$value->parentid <= 0) && $count < 5 ? $this->getValHtml($value, $viewone, $test[$count]) : "";
+            $html .= ((int)$value->parentid <= 0) && $count < 5 ? $this->getValHtml($value,  $test[$count]) : "";
             $count = ((int)$value->parentid <= 0) ? $count + 1 : $count;
         }
         return $html;
@@ -197,7 +195,7 @@ class IndexPage
     /**
     * @return string $html - htmltext for the actives
     */
-    public function getActivesInfo($viewone)
+    public function getActivesInfo()
     {
         $actives = $this->getActives();
         $arr = [];
@@ -209,7 +207,7 @@ class IndexPage
                 break;
             }
             $one = $this->userhelp->getOne($val->userid);
-            $item = $this->misc->getUsersHtml($one, $viewone);
+            $item = $this->misc->getUsersHtml($one);
             $test['gravatar'] = $item['gravatar'];
             $test['acronym'] = $item['acronym'];
             $test['count'] = $val->count;
@@ -230,11 +228,8 @@ class IndexPage
     {
         $html = "";
 
-        $viewone = $this->misc->setUrlCreator("comm/view-one");
-        $base = $this->misc->setUrlCreator("comm/tags/");
-
         $html .= '<div class="col-lg-12 col-sm-12 col-xs-12">';
-        $html .= $this->getTaginfo($base);
+        $html .= $this->getTaginfo();
 
         $html .= '<table class = "indexmember tagpage font20"><tbody><tr>';
         $html .= '<th class = "indgrav"></th>';
@@ -245,7 +240,7 @@ class IndexPage
         $html .= '<th class = "eager">Flitigast</th>';
         $html .= '<th class = "number">Inlägg</th>';
         $html .= '</tr>';
-        $html .= $this->getLatestQuestions($viewone);
+        $html .= $this->getLatestQuestions();
         $html .= '</table>';
         $html .= '</div>';
 

@@ -11,10 +11,8 @@ use \Guni\User\HTMLForm\UserLogout;
 use \Guni\User\HTMLForm\CreateUserForm;
 use \Guni\User\HTMLForm\UpdateUserForm;
 use \Guni\User\HTMLForm\DeleteUserForm;
-use \Guni\User\HTMLForm\AdminCreateUserForm;
-use \Guni\User\HTMLForm\AdminUpdateUserForm;
-use \Guni\User\HTMLForm\AdminDeleteUserForm;
 use \Guni\User\ShowAllService;
+use \Guni\User\UserHelp;
 
 /**
  * A controller class.
@@ -39,24 +37,6 @@ class UserController implements
     }
 
 
-
-    /**
-     * Sends data to view
-     *
-     * @param string $title
-     * @param string $crud, path to view
-     * @param array $data, htmlcontent to view
-     */
-    public function toRender($title, $crud, $data)
-    {
-        $view       = $this->di->get("view");
-        $pageRender = $this->di->get("pageRender");
-        $view->add($crud, $data);
-        $tempfix = "";
-        $pageRender->renderPage($tempfix, ["title" => $title]);
-    }
-
-
     /**
      * Questionspage
      *
@@ -64,23 +44,13 @@ class UserController implements
      */
     public function getIndex()
     {
-        $title      = "Alla medlemmar";
+        $text = new ShowAllService($this->di);
         $sess = $this->getSess();
-        $crud = "user/crud/default";
 
-        if ($sess['isadmin'] == 1) {
-            $text = new ShowAllService($this->di);
-            $data = [
-                "users" => $text->getHTML(),
-            ];
-            $crud = "user/crud/admin";
-        } else {
-            $text = new ShowAllService($this->di);
-            $data = [
-                "content" => $text->getMembers(),
-            ];
-        }
-        $this->toRender($title, $crud, $data);
+        $data = $sess['isadmin'] ? ["content" => $text->getHTML(),] : ["content" => $text->getMembers()];
+
+        $userhelp = new UserHelp($this->di);
+        $userhelp->toRender("Alla medlemmar", "user/crud/default", $data);
     }
 
 
@@ -93,14 +63,12 @@ class UserController implements
      */
     public function getPostOneUser($id)
     {
-        $title = "Användare " . $id;
-
         $text = new ShowOneService($this->di, $id);
         $text = $text->getHTML();
         $data = ["content" => $text];
 
-        $crud = "user/crud/view-one";
-        $this->toRender($title, $crud, $data);
+        $userhelp = new UserHelp($this->di);
+        $userhelp->toRender("Användare " . $id, "user/crud/view-one", $data);
     }
 
 
@@ -112,10 +80,7 @@ class UserController implements
      */
     public function getPostLogin()
     {
-        $title      = "Logga in";
-
         $form       = new UserLoginForm($this->di);
-
         $form->check();
 
         $extra = new ShowAllService($this->di);
@@ -126,8 +91,8 @@ class UserController implements
             "text" => $extratext,
         ];
 
-        $crud = "user/crud/login";
-        $this->toRender($title, $crud, $data);
+        $userhelp = new UserHelp($this->di);
+        $userhelp->toRender("Logga in", "user/crud/login", $data);
     }
 
 
@@ -139,15 +104,14 @@ class UserController implements
      */
     public function getPostLogout()
     {
-        $title      = "Logga ut";
         $text       = new UserLogout($this->di);
 
         $data = [
             "content" => $text->getHTML(),
         ];
 
-        $crud = "user/crud/logout";
-        $this->toRender($title, $crud, $data);
+        $userhelp = new UserHelp($this->di);
+        $userhelp->toRender("Logga ut", "user/crud/logout", $data);
     }
 
 
@@ -159,17 +123,15 @@ class UserController implements
      */
     public function getPostCreateUser()
     {
-        $title      = "Skapa användare";
         $form       = new CreateUserForm($this->di);
-
         $form->check();
 
         $data = [
-            "content" => $form->getHTML(),
+            "content" => '<div class="col-lg-12 col-sm-12 col-xs-12">' . $form->getHTML() . '</div>',
         ];
 
-        $crud = "user/crud/create";
-        $this->toRender($title, $crud, $data);
+        $userhelp = new UserHelp($this->di);
+        $userhelp->toRender("Skapa användare", "user/crud/create", $data);
     }
 
 
@@ -182,8 +144,6 @@ class UserController implements
      */
     public function getPostUpdateUser($id)
     {
-        $title      = "Uppdatera användaren";
-
         $sess = $this->getSess();
         $userid = isset($sess['id']) ? $sess['id'] : "";
 
@@ -193,25 +153,25 @@ class UserController implements
         $text = "";
         if ($id > 0) {
             $text = '<p><span class="button"><a href="';
-            $text .= $delete . '/' . $userid . '">Ta bort ditt konto</a></span></p>';
+            $text .= $delete . '/' . $id . '">Ta bort kontot</a></span></p>';
         }
 
-        if ($userid == $id) {
-            $form       = new UpdateUserForm($this->di, $id);
+        if ($sess['isadmin'] == 1 || $userid == $id) {
+            $form = new UpdateUserForm($this->di, $id);
             $form->check();
 
             $data = [
-                "form" => $form->getHTML(),
+                "form" => '<div class="col-lg-12 col-sm-12 col-xs-12">' . $form->getHTML() . '</div>' ,
                 "text" => $text,
             ];
         } else {
             $data = [
-                "form" => "Inte ditt id. Sorry!",
+                "form" => '<div class="col-lg-12 col-sm-12 col-xs-12">' . "Inte ditt id. Sorry!" . '</div>',
             ];
         }
 
-        $crud = "user/crud/update";
-        $this->toRender($title, $crud, $data);
+        $userhelp = new UserHelp($this->di);
+        $userhelp->toRender("Uppdatera användaren", "user/crud/update", $data);
     }
 
 
@@ -224,117 +184,22 @@ class UserController implements
      */
     public function getPostDeleteUser($id)
     {
-        $title      = "Avanmäl användare";
-
         $sess = $this->getSess();
         $userid = isset($sess['id']) ? $sess['id'] : "";
 
-        if ($userid == $id) {
+        if ($sess['isadmin'] == 1 || $userid == $id) {
             $form       = new DeleteUserForm($this->di, $id);
             $form->check();
 
             $data = [
-                "form" => $form->getHTML(),
+                "form" => '<div class="col-lg-12 col-sm-12 col-xs-12">' . $form->getHTML() . '</div>',
             ];
         } else {
             $data = [
-                "form" => "Inte ditt id. Sorry!",
+                "form" => $text = '<div class="col-lg-12 col-sm-12 col-xs-12">' . "Inte ditt id. Sorry!" . '</div>',
             ];
         }
-
-        $crud = "user/crud/delete";
-        $this->toRender($title, $crud, $data);    
-    }
-
-
-
-
-    /**
-     * Create User for Admin
-     *
-     * @return void
-     */
-    public function getPostAdminCreateUser()
-    {
-        $title      = "Skapa användare_admin";
-        $sess = $this->getSess();
-
-        if ($sess['isadmin'] == 1) {
-            $form       = new AdminCreateUserForm($this->di);
-
-            $form->check();
-
-            $data = [
-                "content" => $form->getHTML(),
-            ];
-        } else {
-            $data = [
-                "content" => "Enbart för admin. Sorry!",
-            ];
-        }
-
-        $crud = "user/crud/admincreate";
-        $this->toRender($title, $crud, $data);
-    }
-
-
-    /**
-     * Update Member For Admin
-     * @param integer $id - Member to update
-     *
-     * @return void
-     */
-    public function getPostAdminUpdateUser($id)
-    {
-        $title      = "Uppdatera användaren";
-        $sess = $this->getSess();
-
-        if ($sess['isadmin'] == 1) {
-            $form       = new AdminUpdateUserForm($this->di, $id);
-
-            $form->check();
-
-            $data = [
-                "form" => $form->getHTML(),
-            ];
-        } else {
-            $data = [
-                "form" => "Enbart för admin. Sorry!",
-            ];
-        }
-
-        $crud = "user/crud/adminupdate";
-        $this->toRender($title, $crud, $data);       
-    }
-
-
-
-    /**
-     * Delete Member For Admin
-     * @param integer $id - Member to delete
-     *
-     * @return void
-     */
-    public function getPostAdminDeleteUser()
-    {
-        $title      = "Avanmäl användare";
-        $sess = $this->getSess();
-
-        if ($sess['isadmin'] == 1) {
-            $form       = new AdminDeleteUserForm($this->di);
-
-            $form->check();
-
-            $data = [
-                "form" => $form->getHTML(),
-            ];
-        } else {
-            $data = [
-                "form" => "Enbart för admin. Sorry!",
-            ];
-        }
-
-        $crud = "user/crud/admindelete";
-        $this->toRender($title, $crud, $data);
+        $userhelp = new UserHelp($this->di);
+        $userhelp->toRender("Avanmäl användare", "user/crud/delete", $data);
     }
 }

@@ -43,8 +43,6 @@ class UserUsageTest extends \PHPUnit_Framework_TestCase
         $user2->setPassword("mumintrollet");
 
         $this->assertObjectHasAttribute('email', $user);
-        //$this->assertArrayHasKey('email', $user);
-        //$this->assertEmpty($test2);
 
 
         $control = new UserHelp(self::$di);
@@ -106,6 +104,8 @@ class UserUsageTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals($user->acronym, $compare->acronym);
         $this->assertEquals($user->profile, $compare->profile);
+        $this->assertArrayHasKey('email', $user);
+        $this->assertEmpty($user->updated);
     }
 
 

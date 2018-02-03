@@ -22,7 +22,7 @@ class CreateCommForm extends FormModel
      * Constructor injects with DI container.
      *
      * @param Anax\DI\DIInterface $di a service container
-     * @param boolean             $iscomment - if comment
+     * @param integer             $iscomment - if comment
      * @param integer             $id - current userid from session
      * @param integer             $parentid - if answer or comment
      */
