@@ -13,7 +13,7 @@ use \Guni\Comments\Misc;
 class UserHelp
 {
     /**
-    * @var array $comments, all comments.
+    * @var object $comm
     */
     protected $di;
     protected $comm;

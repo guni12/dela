@@ -74,7 +74,7 @@ class CommController implements
         $sess = $this->getSess();
 
         if ($sess) {
-            $form       = new CreateCommForm($this->di, null, $sess['id'], $id, null);
+            $form = new CreateCommForm($this->di, null, $sess['userid'], null);
             $form->check();
             $text = '<div class="col-lg-12 col-sm-12 col-xs-12">';
             $text .= $form->getHTML() . '</div>';

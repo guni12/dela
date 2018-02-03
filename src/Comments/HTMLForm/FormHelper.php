@@ -18,7 +18,7 @@ class FormHelper extends Form
      *
      * @param Anax\DI\DIInterface $di a service container
      */
-    public function __construct($di)
+    public function __construct(DIInterface $di)
     {
         $this->di = $di;
     }
@@ -90,7 +90,7 @@ class FormHelper extends Form
      *
      * @param array $form     details for the form
      *
-     * @return $sessionKey
+     * @return array $sessionKey
      */
     public function createoutput($form = [])
     {
@@ -155,35 +155,6 @@ class FormHelper extends Form
         } elseif ($save) {
             return $session->getOnce($save);
         } 
-    }
-
-
-    /**
-    *
-    *
-    */
-    public function getlayout($elements, $options)
-    {
-        $size = count($elements);
-        $wrapAt = $options['wrap_at_element'] ? $options['wrap_at_element'] : round($size/2);
-        for ($i=0; $i<$size; $i++) {
-            if ($i < $wrapAt) {
-                $col1 .= $elements[$i]['html'];
-            } else {
-                $col2 .= $elements[$i]['html'];
-            }
-        }
-        $html = <<<EOD
-<div class='cform-columns-2'>
-<div class='cform-column-1'>
-{$col1}
-</div>
-<div class='cform-column-2'>
-{$col2}
-</div>
-{$buttonbar}</div>
-EOD;
-        return $html;
     }
 
 

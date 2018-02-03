@@ -71,7 +71,7 @@ class ShowAllService
 
 
     /**
-    * @param object $commcomments - comments to at parentcomment
+    * @param array $commcomments - comments to at parentcomment
     */
     public function countResponses($commcomments)
     {

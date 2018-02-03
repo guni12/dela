@@ -133,7 +133,8 @@ class Misc
     /**
      * Sort list of dates
      *
-     * @param string $first, $second - dates
+     * @param string $first
+     * @param string $second - dates
      *
      * @return sorted dates
      */

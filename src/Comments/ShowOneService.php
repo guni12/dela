@@ -16,7 +16,7 @@ use \Guni\User\UserHelp;
 class ShowOneService
 {
     /**
-    * @var array $comment, the chosen comment.
+    * @var object $comment, the chosen comment.
     */
     protected $comment;
     protected $comments;
@@ -48,7 +48,7 @@ class ShowOneService
         $this->misc = new Misc($di);
         $this->userhelp = new UserHelp($di);
         $this->comment = $this->fromdb->getItemDetails($id);
-        $this->comments = $this->fromdb->getAnswers($sort, $id, $this->comments);
+        $this->comments = $this->fromdb->getAnswers($sort, $id);
 
         $session = $this->di->get("session");
         $this->sess = $session->get("user");

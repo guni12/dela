@@ -53,16 +53,12 @@ class ShowTagsService
         switch ($name) {
             case "elcar":
                 return "Elbil";
-                break;
             case "safety":
                 return "Säkerhet";
-                break;
             case "light":
                 return "Belysning";
-                break;
             case "heat":
                 return "Värme";
-                break;
             default:
                 return "Elbil";
         }

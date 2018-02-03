@@ -12,7 +12,7 @@ use \Guni\Comments\FromDb;
 class VoteService
 {
     /**
-    * @var array $comment, the chosen comment.
+    * @var object $comment, the chosen comment.
     */
     protected $comment;
     protected $sess;
@@ -38,16 +38,15 @@ class VoteService
         $this->comm = new Comm();
         $this->comm->setDb($this->di->get("db"));
 
-        $vote == "accept" ? $this->acceptVote($this->comm) : $this->handleVotes($vote);
+        $vote == "accept" ? $this->acceptVote() : $this->handleVotes($vote);
     }
 
 
     /**
     *
-    * @param obj $comm - commentobject
     * saves which comment is accepted to db
     */
-    public function acceptVote($comm)
+    public function acceptVote()
     {
         $answerid = $this->comment->id;
         $pagerender = $this->di->get("pageRender");
@@ -78,7 +77,7 @@ class VoteService
 
     /**
     * Saves updated vote to db
-    * @param string $arrDecoded - decoded votecontent
+    * @param array $arrDecoded - decoded votecontent
     * @param obj $pagerender -connection to class
     */
     public function saveVote($arrDecoded, $pagerender, $back)

@@ -390,18 +390,6 @@ EOD;
             foreach ($elements as $element) {
                 $html .= $element['html'];
             }
-        } elseif ($options['columns'] === 2) {
-            $buttonbar = null;
-            $col1 = null;
-            $col2 = null;
-
-            $end = end($elements);
-            if ($end['name'] == 'buttonbar') {
-                $end = array_pop($elements);
-                $buttonbar = "<div class='cform-buttonbar'>\n{$end['html']}</div>\n";
-            }
-
-            $html = $this->formhelper->getlayout($elements, $options);
         }
 
         return $html;
@@ -463,28 +451,21 @@ EOD;
      */
     protected function initElements($values)
     {
-        // First clear all
         foreach ($this->elements as $key => $val) {
-            // Do not reset value for buttons
             if (in_array($this[$key]['type'], array('submit', 'reset', 'button'))) {
                 continue;
             }
 
-            // Reset the value
             $this[$key]['value'] = null;
 
-            // Checkboxes must be cleared
             if (isset($this[$key]['checked'])) {
                 $this[$key]['checked'] = false;
             }
         }
 
-        // Now build up all values from $values (session)
         foreach ($values as $key => $val) {
-            // Take care of arrays as values (multiple-checkbox)
             if (isset($val['values'])) {
                 $this[$key]['checked'] = $val['values'];
-                //$this[$key]['values']  = $val['values'];
             } elseif (isset($val['value'])) {
                 $this[$key]['value'] = $val['value'];
             }
@@ -495,7 +476,6 @@ EOD;
                 $this[$key]['checked'] = $val['value'];
             }
 
-            // Keep track on validation messages if set
             if (isset($val['validation-messages'])) {
                 $this[$key]['validation-messages'] = $val['validation-messages'];
                 $this[$key]['validation-pass'] = false;
@@ -530,16 +510,13 @@ EOD;
         $callbackStatus = null;
         $values = [];
 
-        // Remember flash output messages in session
         $output = $this->sessionKey["output"];
         $session = $this->di->get("session");
         $this->output = $session->getOnce($output, []);
 
-        // Check if this was a post request
         $requestMethod = $this->di->get("request")->getServer("REQUEST_METHOD");
         if ($requestMethod !== "POST") {
-            
-            // Its not posted, but check if values should be used from session
+
             $failed   = $this->sessionKey["failed"];
             $remember = $this->sessionKey["remember"];
             $save     = $this->sessionKey["save"];
@@ -547,8 +524,6 @@ EOD;
             $session->has($failed) || $session->has($save) ? $this->InitElements($this->formhelper->notPosted($failed, $save)) : "";
             
             if ($session->has($remember)) {
-                // Read form data from session if some form elements should
-                // be remembered
                 foreach ($session->getOnce($remember) as $key => $val) {
                     $this[$key]['value'] = $val['value'];
                 }
@@ -559,12 +534,10 @@ EOD;
 
         $request = $this->di->get("request");
         $formid = $request->getPost("anax/htmlform-id");
-        // Check if its a form we are dealing with
         if (!$formid || $this->form["id"] !== $formid) {
             return null;
         }
 
-        // This form was posted, process it
         $session->delete($this->sessionKey["failed"]);
         $validates = true;
         foreach ($this->elements as $element) {
@@ -573,31 +546,25 @@ EOD;
 
             $postElement = $request->getPost($elementName);
             if ($postElement) {
-                // The form element has a value set
-                // Multiple choices comes in the form of an array
                 if (is_array($postElement)) {
                     $values[$elementName]['values'] = $element['checked'] = $postElement;
                 } else {
                     $values[$elementName]['value'] = $element['value'] = $postElement;
                 }
 
-                // If the element is a password, do not remember.
                 if ($elementType === 'password') {
                     $values[$elementName]['value'] = null;
                 }
 
-                // If the element is a checkbox, set its value of checked.
                 if ($elementType === 'checkbox') {
                     $element['checked'] = true;
                 }
 
-                // If the element is a radio, set the value to checked.
                 if ($elementType === 'radio') {
                     $element['checked'] = $element['value'];
                 }
                 $validates = $this->formhelper->doValidation($element);
 
-                // Hmmm.... Why did I need this remember thing?
                 if (isset($element['remember'])
                     && $element['remember']
                 ) {
@@ -605,8 +572,6 @@ EOD;
                     $remember = true;
                 }
 
-                // Carry out the callback if the form element validates
-                // Hmmm, what if the element with the callback is not the last element?
                 if (isset($element['callback'])
                     && $validates
                 ) {
@@ -621,34 +586,20 @@ EOD;
                     }
                 }
             } else {
-                // The form element has no value set
-
-                // Set element to null, then we know it was not set.
-                //$element['value'] = null;
-                //echo $element['type'] . ':' . $elementName . ':' . $element['value'] . '<br>';
-
-                // If the element is a checkbox, clear its value of checked.
                 if ($element['type'] === 'checkbox'
                     || $element['type'] === 'checkbox-multiple'
                 ) {
                     $element['checked'] = false;
                 }
-
-                // Do validation even when the form element is not set?
-                // Duplicate code, revise this section and move outside
-                // this if-statement?
                 $validates = $this->formhelper->doValidation($element);
             }
         }
 
-        // Prepare if data should be stored in the session during redirects
-        // Did form validation or the callback fail?
         if ($validates === false
             || $callbackStatus === false
         ) {
             $session->set($this->sessionKey["failed"], $values);
         } elseif ($remember) {
-            // Hmmm, why do I want to use this
             $session->set($this->sessionKey["remember"], $values);
         }
 
@@ -657,20 +608,17 @@ EOD;
             $session->set($this->sessionKey["save"], $values);
         }
 
-        // Lets se what the return value should be
         $ret = $validates
             ? $callbackStatus
             : $validates;
 
 
         if ($ret === true && isset($callIfSuccess)) {
-            // Use callback for success, if defined
             if (!is_callable($callIfSuccess)) {
                 throw new Exception("Form, success-method is not callable.");
             }
             call_user_func_array($callIfSuccess, [$this]);
         } elseif ($ret === false && isset($callIfFail)) {
-            // Use callback for fail, if defined
             if (!is_callable($callIfFail)) {
                 throw new Exception("Form, success-method is not callable.");
             }

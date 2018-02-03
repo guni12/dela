@@ -110,11 +110,7 @@ class ShowOneService
     public function getCommentHTML($item)
     {
         $parent = $this->fromdb->getItemDetails($item['iscomment']);
-        if ($parent->parentid == null) { //Comment to question
-            $color = "delared";
-        } else {
-            $color = "delablue"; // Comment to answer
-        }
+        $color = $parent->parentid == null ? "delared" : "delablue";
         $decodeMarkdown = json_decode($parent->comment);
         $tag = $this->getTags($decodeMarkdown->frontmatter->tags);
         $text = "<td class = 'title'><a href='" . $this->misc->setUrlCreator("comm/view-one") . "/" . $item['id'] . "'><span class='delagreen'>" . $item['comm']->frontmatter->title . "</span></a></td><td class = 'tag em06'></td>";

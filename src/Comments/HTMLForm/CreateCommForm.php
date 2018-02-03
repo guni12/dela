@@ -142,9 +142,9 @@ class CreateCommForm extends FormModel
 
     /**
     * adds array through frontmatter to $comment
-    * @param $tags - input from form
+    * @param array|string $tags - input from form
     *
-    * @return $tags - if key "tags" it must have tags
+    * @return array|string $tags - if key "tags" it must have tags
     */
     public function handleTags($tags)
     {

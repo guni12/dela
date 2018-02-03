@@ -26,7 +26,7 @@ class FlatFileContentController implements InjectionAwareInterface
         if ($path == "") {
             $this->di->get("response")->redirect("comm/front");
         }
-        // Get the current route and see if it matches a content/file
+
         $file1 = ANAX_INSTALL_PATH . "/content/${path}.md";
         $file2 = ANAX_INSTALL_PATH . "/content/${path}/index.md";
 
@@ -37,26 +37,18 @@ class FlatFileContentController implements InjectionAwareInterface
             return;
         }
 
-        // Check that file is really in the right place
         $real = realpath($file);
         $base = realpath(ANAX_INSTALL_PATH . "/content/");
         if (strncmp($base, $real, strlen($base))) {
             return;
         }
 
-        // Get content from markdown file
         $content = file_get_contents($file);
         $content = $this->di->get("textfilter")->parse(
             $content,
             ["yamlfrontmatter", "shortcode", "markdown", "titlefromheader"]
         );
 
-        // Render a standard page using layout
-        /*
-        $this->di->get("view")->add("default1/article", [
-            "content" => $content->text,
-            "frontmatter" => $content->frontmatter,
-        ]);*/
         $this->di->get("pageRender")->renderPage($content->text, $content->frontmatter);
     }
 }
