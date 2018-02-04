@@ -184,7 +184,7 @@ class Misc
         if ($isloggedin) {
             $loggedin = ' <a href="' . $this->setUrlCreator("comm/create") .'">Skriv ett inlägg</a>';
             if ($isadmin === true) {
-                $loggedin .= ' | <a href="' . $this->setUrlCreator("comm/admindelete") . '">Ta bort ett inlägg</a>';
+                $loggedin .= ' | <a href="' . $this->setUrlCreator("comm/delete/0") . '">Ta bort ett inlägg</a>';
             }
         }
         return $loggedin;

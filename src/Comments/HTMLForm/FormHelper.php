@@ -223,8 +223,8 @@ class FormHelper extends Form
 
     /**
     *
-    * @param array $form - 
-    * @param array $options -
+    * @param array $form - what we have in the form this far
+    * @param array $options - extra info for the form, if columns etc.
     * 
     * @return string - the htmlcode
     */
@@ -244,6 +244,22 @@ class FormHelper extends Form
             return "<form{$wmd}{$preview}{$id}{$class}{$name}{$action}{$method}>\n";
         }
 
+        $allvar = [$wmd, $preview, $id, $class, $name, $action, $method, $enctype, $cformId];
+
+        return $this->formhtml($allvar, $form, $elements, $output);
+    }
+
+
+
+    /**
+    *
+    * @param array $llvar - all variables for the form
+    * @param array $form - whats already saved in the form
+    * 
+    * @return string - the htmlcode
+    */
+    public function formhtml($all, $form, $elements, $output)
+    {
         $fieldsetStart  = '<fieldset>';
         $legend         = null;
         $fieldsetEnd    = '</fieldset>';
@@ -256,15 +272,15 @@ class FormHelper extends Form
         }
 
         $html = <<< EOD
-\n{$wmd}<form{$id}{$class}{$name}{$action}{$method}{$enctype}>
-<input type="hidden" name="anax/htmlform-id" value="$cformId" />
+\n{$all[0]}<form{$all[2]}{$all[3]}{$all[4]}{$all[5]}{$all[6]}{$all[7]}>
+<input type="hidden" name="anax/htmlform-id" value="$all[8]" />
 {$fieldsetStart}
 {$legend}
 {$elements}
 {$output}
 {$fieldsetEnd}
 </form>\n
-{$preview}
+{$all[1]}
 EOD;
 
         return $html;

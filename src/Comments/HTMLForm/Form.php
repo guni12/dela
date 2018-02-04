@@ -281,7 +281,7 @@ class Form implements \ArrayAccess
                 break;
             }
         }
-        $html .= "\n</p>";
+        return $html . "\n</p>";
     }
 
 
@@ -408,6 +408,97 @@ class Form implements \ArrayAccess
 
 
 
+
+    /**
+     * @param diconnection $request
+     * @return boolean $validates
+     */
+    public function elementworker($request)
+    {
+        $validates = true;
+        foreach ($this->elements as $element) {
+            $elementName = $element['name'];
+            $elementType = $element['type'];
+
+            $postElement = $request->getPost($elementName);
+            if ($postElement) {
+                if (is_array($postElement)) {
+                    $values[$elementName]['values'] = $element['checked'] = $postElement;
+                } else {
+                    $values[$elementName]['value'] = $element['value'] = $postElement;
+                }
+                if ($elementType === 'password') {
+                    $values[$elementName]['value'] = null;
+                }
+
+                if ($elementType === 'checkbox') {
+                    $element['checked'] = true;
+                }
+
+                if ($elementType === 'radio') {
+                    $element['checked'] = $element['value'];
+                }
+                $validates = $this->formhelper->doValidation($element);
+
+                if (isset($element['remember'])
+                    && $element['remember']
+                ) {
+                    $values[$elementName] = ['value' => $element['value']];
+                    $remember = true;
+                }
+                if (isset($element['callback'])
+                    && $validates
+                ) {
+                    if (isset($element['callback-args'])) {
+                        $callbackStatus = call_user_func_array(
+                            $element['callback'],
+                            array_merge([$this]),
+                            $element['callback-args']
+                        );
+                    } else {
+                        $callbackStatus = call_user_func($element['callback'], $this);
+                    }
+                }
+            } else {
+                if ($element['type'] === 'checkbox'
+                    || $element['type'] === 'checkbox-multiple'
+                ) {
+                    $element['checked'] = false;
+                }
+                $validates = $this->formhelper->doValidation($element);
+            }
+        }
+        return $validates;
+    }
+
+
+
+
+     /**
+     * @param boolean|null $ret - true if submitted&validates, false if
+     *                                      not validates
+     * @param callable $callIfSuccess handler to call if function returns true.
+     * @param callable $callIfFail    handler to call if function returns true.
+     *
+     * @throws \Anax\HTMLForm\Exception
+     */
+    public function retresult($ret, $callIfSuccess, $callIfFail)
+    {
+        if ($ret === true && isset($callIfSuccess)) {
+            if (!is_callable($callIfSuccess)) {
+                throw new Exception("Form, success-method is not callable.");
+            }
+            call_user_func_array($callIfSuccess, [$this]);
+        } elseif ($ret === false && isset($callIfFail)) {
+            if (!is_callable($callIfFail)) {
+                throw new Exception("Form, success-method is not callable.");
+            }
+            call_user_func_array($callIfFail, [$this]);
+        }
+    }
+
+
+
     /**
      * Check if a form was submitted and perform validation and call callbacks.
      * The form is stored in the session if validation or callback fails. The
@@ -417,8 +508,6 @@ class Form implements \ArrayAccess
      *
      * @param callable $callIfSuccess handler to call if function returns true.
      * @param callable $callIfFail    handler to call if function returns true.
-     *
-     * @throws \Anax\HTMLForm\Exception
      *
      * @return boolean|null $callbackStatus if submitted&validates, false if
      *                                      not validate, null if not submitted.
@@ -461,64 +550,9 @@ class Form implements \ArrayAccess
         }
 
         $session->delete($this->sessionKey["failed"]);
-        $validates = true;
-        foreach ($this->elements as $element) {
-            $elementName = $element['name'];
-            $elementType = $element['type'];
+        $validates = $this->elementworker($request);
 
-            $postElement = $request->getPost($elementName);
-            if ($postElement) {
-                if (is_array($postElement)) {
-                    $values[$elementName]['values'] = $element['checked'] = $postElement;
-                } else {
-                    $values[$elementName]['value'] = $element['value'] = $postElement;
-                }
-
-                if ($elementType === 'password') {
-                    $values[$elementName]['value'] = null;
-                }
-
-                if ($elementType === 'checkbox') {
-                    $element['checked'] = true;
-                }
-
-                if ($elementType === 'radio') {
-                    $element['checked'] = $element['value'];
-                }
-                $validates = $this->formhelper->doValidation($element);
-
-                if (isset($element['remember'])
-                    && $element['remember']
-                ) {
-                    $values[$elementName] = ['value' => $element['value']];
-                    $remember = true;
-                }
-
-                if (isset($element['callback'])
-                    && $validates
-                ) {
-                    if (isset($element['callback-args'])) {
-                        $callbackStatus = call_user_func_array(
-                            $element['callback'],
-                            array_merge([$this]),
-                            $element['callback-args']
-                        );
-                    } else {
-                        $callbackStatus = call_user_func($element['callback'], $this);
-                    }
-                }
-            } else {
-                if ($element['type'] === 'checkbox'
-                    || $element['type'] === 'checkbox-multiple'
-                ) {
-                    $element['checked'] = false;
-                }
-                $validates = $this->formhelper->doValidation($element);
-            }
-        }
-
-        if ($validates === false
-            || $callbackStatus === false
+        if ($validates === false || $callbackStatus === false
         ) {
             $session->set($this->sessionKey["failed"], $values);
         } elseif ($remember) {
@@ -530,19 +564,7 @@ class Form implements \ArrayAccess
         }
 
         $ret = $validates ? $callbackStatus : $validates;
-
-
-        if ($ret === true && isset($callIfSuccess)) {
-            if (!is_callable($callIfSuccess)) {
-                throw new Exception("Form, success-method is not callable.");
-            }
-            call_user_func_array($callIfSuccess, [$this]);
-        } elseif ($ret === false && isset($callIfFail)) {
-            if (!is_callable($callIfFail)) {
-                throw new Exception("Form, success-method is not callable.");
-            }
-            call_user_func_array($callIfFail, [$this]);
-        }
+        $this->retresult($ret, $callIfSuccess, $callIfFail);
 
         return $ret;
     }

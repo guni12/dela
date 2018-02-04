@@ -140,7 +140,7 @@ class DeleteCommForm extends FormModel
             }
         }
 
-        $this->comm->find("id", $this->form->value("id"));
+        $this->comm->find("id", $one);
         $objects .= $this->comm->title;
         $this->comm->delete();
         $pagerender = $this->di->get("pageRender");
