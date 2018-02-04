@@ -17,16 +17,24 @@ class Form implements \ArrayAccess
      * @var array $elements   all form elements
      * @var array $output     messages to display together with the form
      * @var array $sessionKey key values for the session
+     * @var array $values     holds values in check-functions
      */
     protected $form;
     protected $elements;
     protected $output;
     protected $sessionKey;
+    protected $values;
 
     /**
      * @var boolean $rememberValues remember values in the session.
      */
     protected $rememberValues;
+
+
+    /**
+     * @var array $callbackStatus.
+     */
+    protected $callbackStatus;
 
     /**
      * extra class to make this file some smaller.
@@ -266,8 +274,10 @@ class Form implements \ArrayAccess
 
 
     /**
+    * @param string $key - key and value pair in list
+    * @param object $element - value in pair
     *
-    *
+    * @return string $html for the form
     */
     public function elementhtml($key, $element)
     {
@@ -303,9 +313,7 @@ class Form implements \ArrayAccess
         $elements = array();
         reset($this->elements);
         while (list($key, $element) = each($this->elements)) {
-            if (in_array($element['type'], array('submit', 'reset', 'button'))
-                && $options['use_buttonbar']
-            ) {
+            if (in_array($element['type'], array('submit', 'reset', 'button')) && $options['use_buttonbar']) {
                 $name = 'buttonbar';
                 $html = $this->elementhtml($key, $element);
             } else {
@@ -410,90 +418,65 @@ class Form implements \ArrayAccess
 
 
     /**
-     * @param diconnection $request
+     * @param di-connection $request
      * @return boolean $validates
      */
-    public function elementworker($request)
+    public function postElementFill($postElement, $element)
     {
         $validates = true;
-        foreach ($this->elements as $element) {
-            $elementName = $element['name'];
-            $elementType = $element['type'];
+        $this->values = $this->formhelper->fillValArr($postElement, $element);
+        $element = $this->formhelper->updateElement($element);
 
-            $postElement = $request->getPost($elementName);
-            if ($postElement) {
-                if (is_array($postElement)) {
-                    $values[$elementName]['values'] = $element['checked'] = $postElement;
-                } else {
-                    $values[$elementName]['value'] = $element['value'] = $postElement;
-                }
-                if ($elementType === 'password') {
-                    $values[$elementName]['value'] = null;
-                }
+        $this->values = $this->formhelper->doValidation($element, $this->values);
+        $this->validates = $this->formhelper->getValidate();
 
-                if ($elementType === 'checkbox') {
-                    $element['checked'] = true;
-                }
-
-                if ($elementType === 'radio') {
-                    $element['checked'] = $element['value'];
-                }
-                $validates = $this->formhelper->doValidation($element);
-
-                if (isset($element['remember'])
-                    && $element['remember']
-                ) {
-                    $values[$elementName] = ['value' => $element['value']];
-                    $remember = true;
-                }
-                if (isset($element['callback'])
-                    && $validates
-                ) {
-                    if (isset($element['callback-args'])) {
-                        $callbackStatus = call_user_func_array(
-                            $element['callback'],
-                            array_merge([$this]),
-                            $element['callback-args']
-                        );
-                    } else {
-                        $callbackStatus = call_user_func($element['callback'], $this);
-                    }
-                }
+        if (isset($element['remember']) && $element['remember']) {
+            $this->values[$element['name']] = ['value' => $element['value']];
+            $remember = true;
+        }
+        if (isset($element['callback']) && $this->validates) {
+            if (isset($element['callback-args'])) {
+                $this->callbackStatus = call_user_func_array(
+                    $element['callback'],
+                    array_merge([$this]),
+                    $element['callback-args']
+                );
             } else {
-                if ($element['type'] === 'checkbox'
-                    || $element['type'] === 'checkbox-multiple'
-                ) {
-                    $element['checked'] = false;
-                }
-                $validates = $this->formhelper->doValidation($element);
+                $this->callbackStatus = call_user_func($element['callback'], $this);
             }
         }
-        return $validates;
     }
 
 
 
 
-     /**
-     * @param boolean|null $ret - true if submitted&validates, false if
-     *                                      not validates
-     * @param callable $callIfSuccess handler to call if function returns true.
-     * @param callable $callIfFail    handler to call if function returns true.
-     *
-     * @throws \Anax\HTMLForm\Exception
+    /**
+     * @param di-connection $request
+     * @return boolean $validates
      */
-    public function retresult($ret, $callIfSuccess, $callIfFail)
+    public function noPostElement($element)
     {
-        if ($ret === true && isset($callIfSuccess)) {
-            if (!is_callable($callIfSuccess)) {
-                throw new Exception("Form, success-method is not callable.");
-            }
-            call_user_func_array($callIfSuccess, [$this]);
-        } elseif ($ret === false && isset($callIfFail)) {
-            if (!is_callable($callIfFail)) {
-                throw new Exception("Form, success-method is not callable.");
-            }
-            call_user_func_array($callIfFail, [$this]);
+        if ($element['type'] === 'checkbox'
+            || $element['type'] === 'checkbox-multiple'
+        ) {
+            $element['checked'] = false;
+        }
+        $this->values = $this->formhelper->doValidation($element, $this->values);
+        $this->validates = $this->formhelper->getValidate();
+    }
+
+
+
+
+    /**
+     * @param di-connection $request
+     * @return boolean $validates
+     */
+    public function elementworker($request)
+    {
+        foreach ($this->elements as $element) {
+            $postElement = $request->getPost($element['name']);
+            $postElement ? $this->postElementFill($postElement, $element) : $this->noPostElement($element);
         }
     }
 
@@ -518,8 +501,8 @@ class Form implements \ArrayAccess
     public function check($callIfSuccess = null, $callIfFail = null)
     {
         $remember = null;
-        $callbackStatus = null;
-        $values = [];
+        $this->callbackStatus = null;
+        $this->values = [];
 
         $output = $this->sessionKey["output"];
         $session = $this->di->get("session");
@@ -532,7 +515,7 @@ class Form implements \ArrayAccess
             $remember = $this->sessionKey["remember"];
             $save     = $this->sessionKey["save"];
 
-            $session->has($failed) || $session->has($save) ? $this->InitElements($this->formhelper->notPosted($failed, $save)) : "";
+            $session->has($failed) || $session->has($save) ? $this->InitElements($this->formhelper->notPosted($failed, $save, $session)) : "";
             
             if ($session->has($remember)) {
                 foreach ($session->getOnce($remember) as $key => $val) {
@@ -548,24 +531,10 @@ class Form implements \ArrayAccess
         if (!$formid || $this->form["id"] !== $formid) {
             return null;
         }
-
-        $session->delete($this->sessionKey["failed"]);
         $validates = $this->elementworker($request);
 
-        if ($validates === false || $callbackStatus === false
-        ) {
-            $session->set($this->sessionKey["failed"], $values);
-        } elseif ($remember) {
-            $session->set($this->sessionKey["remember"], $values);
-        }
-
-        if ($this->rememberValues) {
-            $session->set($this->sessionKey["save"], $values);
-        }
-
-        $ret = $validates ? $callbackStatus : $validates;
-        $this->retresult($ret, $callIfSuccess, $callIfFail);
-
+        $ret = $this->formhelper->retresult([$callIfSuccess, $callIfFail, $this->callbackStatus], $validates, [$this->sessionKey["failed"], $this->sessionKey["remember"], $this->sessionKey["save"], $this->rememberValues], $this->values);
+        $this->values = $this->formhelper->getValues();
         return $ret;
     }
 }

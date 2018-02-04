@@ -9,6 +9,8 @@ class FormHelper extends Form
 {
     protected $di;
     protected $session;
+    protected $validates;
+    protected $values;
 
 
     /**
@@ -20,6 +22,8 @@ class FormHelper extends Form
     {
         $this->di = $di;
         $this->session = $this->di->get("session");
+        $this->validates = false;
+        $this->values = [];
     }
 
 
@@ -147,36 +151,47 @@ class FormHelper extends Form
     *
     *
     */
-    public function notPosted($failed, $save)
+    public function notPosted($failed, $save, $sess)
     {
         if ($failed) {
-            return $this->session->getOnce($failed);
+            return $sess->getOnce($failed);
         } elseif ($save) {
-            return $this->session->getOnce($save);
+            return $sess->getOnce($save);
         } 
     }
 
 
 
     /**
-    *
-    *
+    * @param array $element - the form that we check
+    * @param array $values - the formvalues we check
+    * @return array $values - updated
     */
-    public function doValidation($element)
+    public function doValidation($element, $values)
     {
-        $validates = true;
+        $this->validates = true;
         if (isset($element['validation'])) {
             $element['validation-pass'] = $element->Validate($element['validation'], $this);
 
             if ($element['validation-pass'] === false) {
-                $values[$elementName] = [
+                $values[$element['name']] = [
                     'value' => $element['value'],
                     'validation-messages' => $element['validation-messages']
                 ];
-                $validates = false;
+                $this->validates = false;
             }
         }
-        return $validates;
+        return $values;
+    }
+
+
+
+    /**
+    * @return boolean $validates - if form validates
+    */
+    public function getValidate()
+    {
+        return $this->validates;
     }
 
 
@@ -325,5 +340,111 @@ EOD;
             $key['validation-pass'] = false;
         }
         return $key;
+    }
+
+
+
+     /**
+     * @param $keys
+     * @param $validates
+     * @param $callbackStatus
+     * @param array $values - 
+     */
+    public function updateSession($keys, $validates, $callbackStatus, $values)
+    {
+        $session = $this->di->get("session");
+        $session->delete($keys[0]);
+        $this->values = $values;
+
+        if ($validates === false || $callbackStatus === false) {
+            $session->set($keys[0], $this->values);
+        } elseif ($keys[1]) {
+            $session->set($keys[1], $this->values);
+        }
+
+        if ($keys[3]) {
+            $session->set($keys[2], $this->values);
+        }
+    }
+
+
+
+     /**
+     * @param boolean|null $ret - true if submitted&validates, false if
+     *                                      not validates
+     * @param array $arr containing callable $callIfSuccess and callable $callIfFail - handlers to call if function returns true. And containing boolean $callbackStatus - if form is submitted and validates..
+     *
+     * @param array $keys - the sessionskeys failed, remember, save
+     * @param array $values - 
+     *
+     * @throws \Anax\HTMLForm\Exception
+     */
+    public function retresult($arr, $validates, $keys, $values)
+    {
+        $this->updateSession($keys, $validates, $arr[2], $values);
+
+        $ret = $validates ? $arr[2] : $validates;
+        if ($ret === true && isset($arr[0])) {
+            if (!is_callable($arr[0])) {
+                throw new Exception("Form, success-method is not callable.");
+            }
+            call_user_func_array($arr[0], [$this]);
+        } elseif ($ret === false && isset($arr[1])) {
+            if (!is_callable($arr[1])) {
+                throw new Exception("Form, success-method is not callable.");
+            }
+            call_user_func_array($arr[1], [$this]);
+        }
+        return $ret;
+    }
+
+
+
+    /**
+    * @param array|null $postElement - the posted element
+    * @param object $element - the formelement
+    * @return array $arr - add to $this-values
+    */
+    public function fillValArr($postElement, $element)
+    {
+        $arr = [];
+        if (is_array($postElement)) {
+            $arr[$element['name']]['values'] = $element['checked'] = $postElement;
+        } else {
+            $arr[$element['name']]['value'] = $element['value'] = $postElement;
+        }
+        if ($element['type'] === 'password') {
+            $arr[$element['name']]['value'] = null;
+        }
+        return $arr;
+    }
+
+
+
+    /**
+    * @param object $element
+    * @return object $element - updated
+    */
+    public function updateElement($element)
+    {
+        if ($element['type'] === 'checkbox') {
+            $element['checked'] = true;
+        }
+
+        if ($element['type'] === 'radio') {
+            $element['checked'] = $element['value'];
+        }
+        return $element;
+    }
+
+
+
+    /**
+    *
+    * @return array $this->values - updated
+    */
+    public function getValues()
+    {
+        return $this->values;
     }
 }

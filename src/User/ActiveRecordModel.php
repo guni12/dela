@@ -93,26 +93,6 @@ class ActiveRecordModel
     }
 
 
-    /**
-     * Find and return all objects found by search criteria and use
-     * its data to populate this instance.
-     *
-     * @param string  $value  sql statement.
-     *
-     * @return this
-     */
-    public function findJoin($columns, $table, $jointable, $joincondition, $where)
-    {
-        return $this->db->connect()
-                        ->select($columns)
-                        ->from($table)
-                        ->join($jointable, $joincondition)
-                        ->where($where)
-                        ->execute()
-                        ->fetchAllClass(get_class($this));
-    }
-
-
 
     /**
      * Find and return first object by its tableIdColumn and use
