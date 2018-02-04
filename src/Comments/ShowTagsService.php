@@ -50,18 +50,20 @@ class ShowTagsService
 
     public function getHeadline($name)
     {
+        $ret = "";
         switch ($name) {
             case "elcar":
-                return "Elbil";
+                $ret = "Elbil";
             case "safety":
-                return "Säkerhet";
+                $ret = "Säkerhet";
             case "light":
-                return "Belysning";
+                $ret = "Belysning";
             case "heat":
-                return "Värme";
+                $ret = "Värme";
             default:
-                return "Elbil";
+                $ret = "Elbil";
         }
+        return $ret;
     }
 
 

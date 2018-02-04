@@ -77,9 +77,7 @@ class Form implements \ArrayAccess
     
     public function offsetGet($offset)
     {
-        return isset($this->elements[$offset])
-            ? $this->elements[$offset]
-            : null;
+        return isset($this->elements[$offset]) ? $this->elements[$offset] : null;
     }
 
 
@@ -184,20 +182,7 @@ class Form implements \ArrayAccess
      */
     public function addOutput($str, $class = null)
     {
-        $key     = $this->sessionKey["output"];
-        $session = $this->di->get("session");
-        $output  = $session->get($key);
-
-        $output["message"] = isset($output["message"])
-            ? $output["message"] . " $str"
-            : $str;
-
-        if ($class) {
-            $output["class"] = $class;
-        }
-        $session->set($key, $output);
-
-        return $this;
+        return $this->formhelper->helpOutput($str, $class, $this->sessionKey["output"]);
     }
 
 
@@ -211,12 +196,7 @@ class Form implements \ArrayAccess
      */
     public function setOutputClass($class)
     {
-        $key     = $this->sessionKey["output"];
-        $session = $this->di->get("session");
-        $output  = $session->get($key);
-        $output["class"] = $class;
-        $session->set($key, $output);
-        return $this;
+        return $this->formhelper->setOutputHelper($class, $this->sessionKey["output"]);
     }
 
 
@@ -245,9 +225,7 @@ class Form implements \ArrayAccess
      */
     public function value($name)
     {
-        return isset($this->elements[$name])
-            ? $this->elements[$name]->value()
-            : null;
+        return isset($this->elements[$name]) ? $this->elements[$name]->value() : null;
     }
 
 
@@ -261,9 +239,7 @@ class Form implements \ArrayAccess
      */
     public function checked($name)
     {
-        return isset($this->elements[$name])
-            ? $this->elements[$name]->checked()
-            : null;
+        return isset($this->elements[$name]) ? $this->elements[$name]->checked() : null;
     }
 
 
@@ -279,48 +255,33 @@ class Form implements \ArrayAccess
     {
         $options = $this->formhelper->getoptions($options);
         $form = array_merge($this->form, $options);
-        $wmd     = isset($form['wmd'])     ? "<div id='wmd-button-bar'></div>" : null;
-        $preview = isset($form['preview']) ? '<div id="wmd-preview" class="wmd-panel wmd-preview"></div>' : null;
-        $id      = isset($form['id'])      ? " id='{$form['id']}'" : null;
-        $class   = isset($form['class'])   ? " class='{$form['class']}'" : null;
-        $name    = isset($form['name'])    ? " name='{$form['name']}'" : null;
-        $action  = isset($form['action'])  ? " action='{$form['action']}'" : null;
-        $method  = isset($form['method'])  ? " method='{$form['method']}'" : " method='post'";
-        $enctype = isset($form['enctype']) ? " enctype='{$form['enctype']}'" : null;
-        $cformId = isset($form['id'])      ? "{$form['id']}" : null;
-
-        if ($options['start']) {
-            return "<form{$wmd}{$preview}{$id}{$class}{$name}{$action}{$method}>\n";
-        }
-
-        $fieldsetStart  = '<fieldset>';
-        $legend         = null;
-        $fieldsetEnd    = '</fieldset>';
-        if (!$form['use_fieldset']) {
-            $fieldsetStart = $fieldsetEnd = null;
-        }
-
-        if ($form['use_fieldset'] && $form['legend']) {
-            $legend = "<legend>{$form['legend']}</legend>";
-        }
 
         $elementsArray  = $this->getHTMLForElements($options);
         $elements       = $this->getHTMLLayoutForElements($elementsArray, $options);
         $output         = $this->getOutput();
 
-        $html = <<< EOD
-\n{$wmd}<form{$id}{$class}{$name}{$action}{$method}{$enctype}>
-<input type="hidden" name="anax/htmlform-id" value="$cformId" />
-{$fieldsetStart}
-{$legend}
-{$elements}
-{$output}
-{$fieldsetEnd}
-</form>\n
-{$preview}
-EOD;
+        return $this->formhelper->htmlhelper($form, $options, $elements, $output);
+    }
 
-        return $html;
+
+
+    /**
+    *
+    *
+    */
+    public function elementhtml($key, $element)
+    {
+        $html = "<p class='buttonbar'>\n" . $element->GetHTML() . '&nbsp;';
+
+        while (list($key, $element) = each($this->elements)) {
+            if (in_array($element['type'], array('submit', 'reset', 'button'))) {
+                $html .= $element->GetHTML();
+            } else {
+                prev($this->elements);
+                break;
+            }
+        }
+        $html .= "\n</p>";
     }
 
 
@@ -345,22 +306,9 @@ EOD;
             if (in_array($element['type'], array('submit', 'reset', 'button'))
                 && $options['use_buttonbar']
             ) {
-                // Create a buttonbar
                 $name = 'buttonbar';
-                $html = "<p class='buttonbar'>\n" . $element->GetHTML() . '&nbsp;';
-
-                // Get all following submits (and buttons)
-                while (list($key, $element) = each($this->elements)) {
-                    if (in_array($element['type'], array('submit', 'reset', 'button'))) {
-                        $html .= $element->GetHTML();
-                    } else {
-                        prev($this->elements);
-                        break;
-                    }
-                }
-                $html .= "\n</p>";
+                $html = $this->elementhtml($key, $element);
             } else {
-                // Just add the element
                 $name = $element['name'];
                 $html = $element->GetHTML();
             }
@@ -426,18 +374,7 @@ EOD;
      */
     public function getOutput()
     {
-        $output = $this->output;
-        $message = isset($output["message"]) && !empty($output["message"])
-            ? $output["message"]
-            : null;
-
-        $class = isset($output["class"]) && !empty($output["class"])
-            ? " class=\"{$output["class"]}\""
-            : null;
-
-        return $message
-            ? "<output{$class}>{$message}</output>"
-            : null;
+            return $this->formhelper->outputhelper($this->output);
     }
 
 
@@ -464,22 +401,8 @@ EOD;
         }
 
         foreach ($values as $key => $val) {
-            if (isset($val['values'])) {
-                $this[$key]['checked'] = $val['values'];
-            } elseif (isset($val['value'])) {
-                $this[$key]['value'] = $val['value'];
-            }
-
-            if ($this[$key]['type'] === 'checkbox') {
-                $this[$key]['checked'] = true;
-            } elseif ($this[$key]['type'] === 'radio') {
-                $this[$key]['checked'] = $val['value'];
-            }
-
-            if (isset($val['validation-messages'])) {
-                $this[$key]['validation-messages'] = $val['validation-messages'];
-                $this[$key]['validation-pass'] = false;
-            }
+            $keyarray = $this[$key];
+            $this[$key] = $this->formhelper->inithelper($keyarray, $val);
         }
     }
 
@@ -506,7 +429,6 @@ EOD;
     public function check($callIfSuccess = null, $callIfFail = null)
     {
         $remember = null;
-        $validates = null;
         $callbackStatus = null;
         $values = [];
 
@@ -604,13 +526,10 @@ EOD;
         }
 
         if ($this->rememberValues) {
-            // Remember all posted values
             $session->set($this->sessionKey["save"], $values);
         }
 
-        $ret = $validates
-            ? $callbackStatus
-            : $validates;
+        $ret = $validates ? $callbackStatus : $validates;
 
 
         if ($ret === true && isset($callIfSuccess)) {

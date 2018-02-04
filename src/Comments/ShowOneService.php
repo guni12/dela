@@ -196,39 +196,13 @@ class ShowOneService
 
         $answer = $this->isquestion ? ' | ' . $this->misc->getAnswerLink($commentid) : "";
         $comment = $this->iscomment ? "" : ' | ' . $this->misc->getCommentLink($commentid);
-        $edit = $this->getEditLink($commentid);
-        $delete = ' | ' . $this->getDeleteLink($commentid) . " ";
+        $edit = '<a href="' . $this->misc->setUrlCreator("comm/update") . '/' . $commentid . '">Redigera</a>';
+        $delete = ' | ' . '<a href="' . $this->misc->setUrlCreator("comm/delete") . '/' . $commentid . '">Ta bort inlägget</a>';
 
         $hasloggedin = $edit . $answer . $comment . $delete;
 
 
         return $this->isadmin || $this->sess && $this->sess['id'] ? $hasloggedin : $notloggedin;
-    }
-
-
-    /**
-     * If loggedin allowed to edit
-     *
-     * @param string $userid
-     * @param string $id
-     * @param string $htmlcomment, link
-     *
-     * @return string htmlcode
-     */
-    public function getEditLink($commentid)
-    {
-        return '<a href="' . $this->misc->setUrlCreator("comm/update") . '/' . $commentid . '">Redigera</a>';
-    }
-
-
-    /**
-     * @param integer $commentid - current comment
-     * @return string htmlcode path to delete
-     */
-    public function getDeleteLink($commentid)
-    {
-        $end = '/' . $commentid . '">Ta bort inlägget</a>';
-        return '<a href="' . $this->misc->setUrlCreator("comm/delete") . $end;
     }
 
 
@@ -285,8 +259,7 @@ class ShowOneService
     {
         $curruser = $this->userhelp->getOne($item->userid);
 
-        $email = $curruser['email'];
-        $gravatar = $this->misc->getGravatar($email);
+        $gravatar = $this->misc->getGravatar($curruser['email']);
         $acronym = $curruser['acronym'];
         $updated = isset($item->updated) ? '| Ändrad: ' . $item->updated : "";
         

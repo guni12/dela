@@ -21,17 +21,6 @@ Det går bara att rösta en gång per inlägg <span class="hasvoted"><i class="f
 Den som har ställt en fråga kan acceptera ett svar genom att klicka på en smiley - <span class="delared"><i class="fa fa-smile-o" aria-hidden="true"></i></span>.  
 Efter att en fråga är godkänd "låses" smileyn till detta svar.
 
-Kvar att göra
-------------------
-
-Webbplatsen skall finnas på GitHub, tillsammans med en README som beskriver hur man checkar ut och installerar sin egen version.
-
-Webbplatsen skall finnas i drift med innehåll på studentservern.
-
-Kommandot make test skall passera för källkoden.
-
-Redovisning
-
 [Github](https://github.com/guni12/dela "dELa")
 
 Jag som gjort webbplatsen heter Gunvor Nilsson och studerar på BTH, när jag inte sjunger på GöteborgsOperan.

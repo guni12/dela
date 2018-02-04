@@ -75,6 +75,8 @@ class ShowAllService
     */
     public function countResponses($commcomments)
     {
+        $this->commentsct = 0;
+        $this->answersct = 0;
         foreach ($commcomments as $value) {
             $this->commentsct = $value->iscomment > 0 ? $this->commentsct + 1 : $this->commentsct;
             $this->answersct = $value->iscomment <= 0 ? $this->answersct + 1 : $this->answersct;

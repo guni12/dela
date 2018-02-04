@@ -7,10 +7,8 @@ use \Anax\HTMLForm\FormElementFactory;
 
 class FormHelper extends Form
 {
-    /**
-     * @var boolean $rememberValues remember values in the session.
-     */
     protected $di;
+    protected $session;
 
 
     /**
@@ -21,6 +19,7 @@ class FormHelper extends Form
     public function __construct(DIInterface $di)
     {
         $this->di = $di;
+        $this->session = $this->di->get("session");
     }
 
 
@@ -151,9 +150,9 @@ class FormHelper extends Form
     public function notPosted($failed, $save)
     {
         if ($failed) {
-            return $session->getOnce($failed);
+            return $this->session->getOnce($failed);
         } elseif ($save) {
-            return $session->getOnce($save);
+            return $this->session->getOnce($save);
         } 
     }
 
@@ -178,5 +177,137 @@ class FormHelper extends Form
             }
         }
         return $validates;
+    }
+
+
+    /**
+     * Add output to display to the user for what happened whith the form and
+     * optionally add a CSS class attribute.
+     *
+     * @param string $str   the string to add as output.
+     * @param string $class a class attribute to set.
+     * @param string $key - sessionkey
+     *
+     * @return $this.
+     */
+    public function helpOutput($str, $class = null, $key)
+    {
+        $output  = $this->session->get($key);
+
+        $output["message"] = isset($output["message"]) ? $output["message"] . " $str" : $str;
+
+        if ($class) {
+            $output["class"] = $class;
+        }
+        $this->session->set($key, $output);
+
+        return $this;
+    }
+
+
+
+    /**
+    *
+     * @param string $class a class attribute to set.
+     * @param string $key - sessionkey
+    */
+    public function setOutputHelper($class, $key)
+    {
+        $output  = $this->session->get($key);
+        $output["class"] = $class;
+        $this->session->set($key, $output);
+        return $this;
+    }
+
+
+
+    /**
+    *
+    * @param array $form - 
+    * @param array $options -
+    * 
+    * @return string - the htmlcode
+    */
+    public function htmlhelper($form, $options, $elements, $output)
+    {
+        $wmd     = isset($form['wmd'])     ? "<div id='wmd-button-bar'></div>" : null;
+        $preview = isset($form['preview']) ? '<div id="wmd-preview" class="wmd-panel wmd-preview"></div>' : null;
+        $id      = isset($form['id'])      ? " id='{$form['id']}'" : null;
+        $class   = isset($form['class'])   ? " class='{$form['class']}'" : null;
+        $name    = isset($form['name'])    ? " name='{$form['name']}'" : null;
+        $action  = isset($form['action'])  ? " action='{$form['action']}'" : null;
+        $method  = isset($form['method'])  ? " method='{$form['method']}'" : " method='post'";
+        $enctype = isset($form['enctype']) ? " enctype='{$form['enctype']}'" : null;
+        $cformId = isset($form['id'])      ? "{$form['id']}" : null;
+
+        if ($options['start']) {
+            return "<form{$wmd}{$preview}{$id}{$class}{$name}{$action}{$method}>\n";
+        }
+
+        $fieldsetStart  = '<fieldset>';
+        $legend         = null;
+        $fieldsetEnd    = '</fieldset>';
+        if (!$form['use_fieldset']) {
+            $fieldsetStart = $fieldsetEnd = null;
+        }
+
+        if ($form['use_fieldset'] && $form['legend']) {
+            $legend = "<legend>{$form['legend']}</legend>";
+        }
+
+        $html = <<< EOD
+\n{$wmd}<form{$id}{$class}{$name}{$action}{$method}{$enctype}>
+<input type="hidden" name="anax/htmlform-id" value="$cformId" />
+{$fieldsetStart}
+{$legend}
+{$elements}
+{$output}
+{$fieldsetEnd}
+</form>\n
+{$preview}
+EOD;
+
+        return $html;
+    }
+
+
+
+    /**
+    * @param array $output - info to print out in form
+    * @return string $message - if exist
+    */
+    public function outputhelper($output)
+    {
+        $message = isset($output["message"]) && !empty($output["message"]) ? $output["message"] : null;
+        $class = isset($output["class"]) && !empty($output["class"]) ? " class=\"{$output["class"]}\"" : null;
+
+        return $message ? "<output{$class}>{$message}</output>" : null;        
+    }
+
+
+    /**
+    * @param array $key - formpart with key $key
+    * 
+    * @return array $key - updated
+    */
+    public function inithelper($key, $val)
+    {
+        if (isset($val['values'])) {
+            $key['checked'] = $val['values'];
+        } elseif (isset($val['value'])) {
+            $key['value'] = $val['value'];
+        }
+
+        if ($key['type'] === 'checkbox') {
+            $key['checked'] = true;
+        } elseif ($key['type'] === 'radio') {
+            $key['checked'] = $val['value'];
+        }
+
+        if (isset($val['validation-messages'])) {
+            $key['validation-messages'] = $val['validation-messages'];
+            $key['validation-pass'] = false;
+        }
+        return $key;
     }
 }

@@ -25,6 +25,9 @@ class ShowOneService
     protected $help;
     protected $misc;
     protected $reputation;
+    protected $parent;
+    protected $color;
+    protected $tag;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -41,6 +44,9 @@ class ShowOneService
         $this->chosenid = $id;
         $this->comments = $this->fromdb->findAllWhere("userid = ?", $id);
         $this->reputation = 0;
+        $this->parent = null;
+        $this->color = "";
+        $this->tag = "";
     }
 
 
@@ -102,6 +108,26 @@ class ShowOneService
     }
 
 
+
+    /**
+    * @param object $item
+    *
+    */
+    public function parentStuff($item, $col)
+    {
+        $type = $item['iscomment'] ? $item['iscomment'] : $item['isanswer'];
+        $parent = $this->fromdb->getItemDetails($type);
+        $color = $parent->parentid == null ? "delared" : "delablue";
+        $decodeMarkdown = json_decode($parent->comment);
+        $tag = $this->getTags($decodeMarkdown->frontmatter->tags);
+        $text = "<td class = 'title'><a href='" . $this->misc->setUrlCreator("comm/view-one") . "/" . $item['id'] . "'><span class='" . $col . "'>" . $item['comm']->frontmatter->title . "</span></a></td ><td class = 'tag em06'></td>";
+
+        $text .= "<td class = 'parent em08'><a href='" . $this->misc->setUrlCreator("comm/view-one") . "/" . $parent->id . "'><span class='" . $color . "'>"  . $parent->title . "</span></a></td>";
+        $text .= "<td class = 'parenttag em06'>" . $tag . "</td><td class = 'answercomments em08'></td>";
+        return $text;
+    }
+
+
     /**
      * @param object $item
      *
@@ -109,14 +135,7 @@ class ShowOneService
      */
     public function getCommentHTML($item)
     {
-        $parent = $this->fromdb->getItemDetails($item['iscomment']);
-        $color = $parent->parentid == null ? "delared" : "delablue";
-        $decodeMarkdown = json_decode($parent->comment);
-        $tag = $this->getTags($decodeMarkdown->frontmatter->tags);
-        $text = "<td class = 'title'><a href='" . $this->misc->setUrlCreator("comm/view-one") . "/" . $item['id'] . "'><span class='delagreen'>" . $item['comm']->frontmatter->title . "</span></a></td><td class = 'tag em06'></td>";
-        $text .= "<td class = 'parent em08'><a href='" . $this->misc->setUrlCreator("comm/view-one") . "/" . $parent->id . "'><span class='" . $color . "'>"  . $parent->title . "</span></a></td>";
-        $text .= "<td class = 'parenttag em06'>" . $tag . "</td><td class = 'answercomments em08'></td>";
-        return $text;
+        return $this->parentStuff($item, "delagreen");
     }
 
 
@@ -127,20 +146,8 @@ class ShowOneService
      */
     public function getAnswersHTML($item)
     {
-        $parent = $this->fromdb->getItemDetails($item['isanswer']);
-        $color = $parent->parentid == null ? "delared" : "delablue";
-        $decodeMarkdown = json_decode($parent->comment);
-        $tag = $this->getTags($decodeMarkdown->frontmatter->tags);
-
-        $text = "<td class = 'title'><a href='" . $this->misc->setUrlCreator("comm/view-one") . "/" . $item['id'] . "'><span class='delablue'>" . $item['comm']->frontmatter->title . "</span></a></td ><td class = 'tag em06'></td>";
-        $text .= "<td class = 'parent em08'><a href='" . $this->misc->setUrlCreator("comm/view-one") . "/" . $parent->id . "'><span class='" . $color . "'>"  . $parent->title . "</span></a></td>";
-        $text .= "<td class = 'parenttag em06'>" . $tag . "</td><td class = 'answercomments em08'></td>";
-
-        return $text;
+        return $this->parentStuff($item, "delablue");
     }
-
-
- 
 
 
     /**

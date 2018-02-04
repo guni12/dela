@@ -14,7 +14,7 @@ class UpdateUserForm extends FormModel
 {
     protected $user;
     protected $userhelp;
-    protected $isadmin;
+    protected $admin;
 
     /**
      * Constructor injects with DI container and the id to update.
@@ -29,7 +29,9 @@ class UpdateUserForm extends FormModel
         $this->user = $this->userhelp->getUserItems($id);
 
         $sess = $this->di->get("session")->get("user");
-        $this->isadmin = $sess['isadmin'];
+
+        $checked = $sess['isadmin'] == 1 ? true : false;
+        $this->admin = $sess['isadmin'] ? ["type" => "checkbox","checked"   => $checked,"label" => "Är admin"] : ["type" => "hidden", "value" => null];
 
         $this->aForm();
     }
@@ -40,86 +42,19 @@ class UpdateUserForm extends FormModel
      */
     public function aForm()
     {
-        $checked = $this->user->isadmin == 1 ? true : false;
-        $admin = $this->isadmin ? ["type" => "checkbox","checked"   => $checked,"label" => "Är admin"] : ["type" => "hidden", "value" => null];
         $this->form->create(
-            [
-                "id" => __CLASS__,
-                "legend" => "Uppdatera kontot",
-            ],
-            [
-                "id" => [
-                    "type" => "text",
-                    "validation" => ["not_empty"],
-                    "readonly" => true,
-                    "value" => $this->user->id,
-                ],
-
-                "created" => [
-                    "type" => "datetime",
-                    "readonly" => true,
-                    "value" => $this->user->created,
-                    "label"      => "Skapad",
-                ],
-
-                "updated" => [
-                    "type" => "datetime",
-                    "readonly" => true,
-                    "value" => $this->user->updated,
-                    "label"      => "Uppdaterad",
-                ],
-
-                "acronym" => [
-                    "type" => "text",
-                    "validation" => ["not_empty"],
-                    "value" => $this->user->acronym,
-                    "class" => "form-control"
-                ],
-
-                "email" => [
-                    "type"        => "email",
-                    "label"       => "Epost",
-                    "value" => $this->user->email,
-                    "validation" => ["email"],
-                    "class" => "form-control"
-                ],
-
-                "profile" => [
-                    "type"        => "text",
-                    "label"       => "Hemort",
-                    "value" => $this->user->profile,
-                    "validation" => ["not_empty"],
-                    "wrapper-element-class" => "form-group",
-                    "class" => "form-control",
-                ],
-
-                "isadmin" => $admin,
-
-                "newpassword" => [
-                    "type" => "text",
-                    "validation" => ["not_empty"],
-                    "label"      => "Nytt lösenord",
-                    "class" => "form-control"
-                ],
-
-                "password-again" => [
-                    "type"        => "text",
-                    "validation" => [
-                        "match" => "newpassword"
-                    ],
-                    "label"      => "Nytt lösenord igen",
-                    "class" => "form-control"
-                ],
-
-                "submit" => [
-                    "type" => "submit",
-                    "value" => "Spara",
-                    "callback" => [$this, "callbackSubmit"]
-                ],
-
-                "reset" => [
-                    "type"      => "reset",
-                ],
+            ["id" => __CLASS__,"legend" => "Uppdatera kontot",],
+            ["id" => ["type" => "text","validation" => ["not_empty"],"readonly" => true,"value" => $this->user->id,],
+            "created" => ["type" => "datetime","readonly" => true,"value" => $this->user->created,"label" => "Skapad",],
+            "updated" => ["type" => "datetime","readonly" => true,"value" => $this->user->updated,"label" => "Uppdaterad",],
+            "acronym" => ["type" => "text","validation" => ["not_empty"],"value" => $this->user->acronym,"class" => "form-control"],
+            "email" => ["type" => "email","label" => "Epost","value" => $this->user->email,"validation" => ["email"],"class" => "form-control"],
+            "profile" => ["type" => "text","label" => "Hemort","value" => $this->user->profile,"validation" => ["not_empty"],"wrapper-element-class" => "form-group","class" => "form-control",],
+            "isadmin" => $this->admin,
+            "newpassword" => ["type" => "text","validation" => ["not_empty"],"label"      => "Nytt lösenord","class" => "form-control"],
+            "password-again" => ["type" => "text","validation" => ["match" => "newpassword"],"label" => "Nytt lösenord igen","class" => "form-control"],
+            "submit" => ["type" => "submit","value" => "Spara","callback" => [$this, "callbackSubmit"]],
+            "reset" => ["type" => "reset",],
             ]
         );
     }
