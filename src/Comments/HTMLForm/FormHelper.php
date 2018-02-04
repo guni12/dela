@@ -11,6 +11,8 @@ class FormHelper extends Form
     protected $session;
     protected $validates;
     protected $values;
+    protected $callbackStatus;
+    protected $elements;
 
 
     /**
@@ -22,94 +24,8 @@ class FormHelper extends Form
     {
         $this->di = $di;
         $this->session = $this->di->get("session");
-        $this->validates = false;
-        $this->values = [];
     }
 
-
-
-    /**
-     * Add a form element
-     *
-     * @param array $form     details for the form
-     *
-     * @return merged $formarray
-     */
-    public function createform($form = [])
-    {
-        $defaults = [
-            // Always have an id
-            "id" => "anax/htmlform",
-
-            // Use a default class on <form> to ease styling
-            "class" => "htmlform",
-
-            // Wrap fields within <fieldset>
-            "use_fieldset"  => true,
-
-            // Use legend for fieldset, set it to string value
-            "legend"        => null,
-
-            // Default wrapper element around form elements
-            "wrapper-element" => "div",
-
-            // Use a <br> after the label, where suitable
-            "br-after-label" => true,
-
-            "wmd"           => "div",
-
-            "preview"       => "div",
-        ];
-        return array_merge($defaults, $form);
-    }
-
-
-    /**
-     * Add a form element
-     *
-     * @param array $elements     details for the form
-     *
-     * @return merged $elementsarray
-     */
-    public function createelements($elements = [], $form = [])
-    {
-        $elemts = [];
-        if (!empty($elements)) {
-            foreach ($elements as $key => $element) {
-                $elemts[$key] = FormElementFactory::create($key, $element);
-                $elemts[$key]->setDefault([
-                    "wrapper-element" => $form["wrapper-element"],
-                    "br-after-label"  => $form["br-after-label"],
-                ]);
-            }
-        }
-        return $elemts;
-    }
-
-
-
-    /**
-     * Add a form element
-     *
-     * @param array $form     details for the form
-     *
-     * @return array $sessionKey
-     */
-    public function createoutput($form = [])
-    {
-        // Default values for <output>
-        $this->output = [];
-
-        // Setting keys used in the session
-        $generalKey = "anax/htmlform-" . $form["id"] . "#";
-        $this->sessionKey = [
-            "save"      => $generalKey . "save",
-            "output"    => $generalKey . "output",
-            "failed"    => $generalKey . "failed",
-            "remember"  => $generalKey . "remember",
-        ];
-        return $this->sessionKey;
-    }
 
 
     /**
@@ -134,42 +50,12 @@ class FormHelper extends Form
 
 
     /**
-    *
-    * @return merged options;
-    */
-    public function layoutoptions($options)
-    {
-        $defaults = [
-            'columns' => 1,
-            'wrap_at_element' => false,  // Wraps column in equal size or at the set number of elements
-        ];
-        return array_merge($defaults, $options);
-    }
-
-
-    /**
-    *
-    *
-    */
-    public function notPosted($failed, $save, $sess)
-    {
-        if ($failed) {
-            return $sess->getOnce($failed);
-        } elseif ($save) {
-            return $sess->getOnce($save);
-        } 
-    }
-
-
-
-    /**
     * @param array $element - the form that we check
     * @param array $values - the formvalues we check
     * @return array $values - updated
     */
     public function doValidation($element, $values)
     {
-        $this->validates = true;
         if (isset($element['validation'])) {
             $element['validation-pass'] = $element->Validate($element['validation'], $this);
 
@@ -181,6 +67,7 @@ class FormHelper extends Form
                 $this->validates = false;
             }
         }
+        $this->values = $values;
         return $values;
     }
 
@@ -195,6 +82,41 @@ class FormHelper extends Form
     }
 
 
+
+    /**
+     * @param di-connection $request
+     * @return boolean $validates
+     */
+    public function postElementFill($postElement, $element, $values)
+    {
+        $this->callbackStatus = null;
+        $validates = true;
+        $values = $this->fillValArr($postElement, $element, $values);
+        $element = $this->updateElement($element);
+
+        $values = $this->doValidation($element, $values);
+        $this->validates = $this->getValidate();
+
+        if (isset($element['remember']) && $element['remember']) {
+            $values[$element['name']] = ['value' => $element['value']];
+            $element['remember'] = true;
+        }
+        if (isset($element['callback']) && $this->validates) {
+            if (isset($element['callback-args'])) {
+                $this->callbackStatus = call_user_func_array(
+                    $element['callback'],
+                    array_merge([$this]),
+                    $element['callback-args']
+                );
+            } else {
+                $this->callbackStatus = call_user_func($element['callback'], $this);
+            }
+        }
+        $this->values = $values;
+        return $element;
+    }
+
+
     /**
      * Add output to display to the user for what happened whith the form and
      * optionally add a CSS class attribute.
@@ -203,7 +125,7 @@ class FormHelper extends Form
      * @param string $class a class attribute to set.
      * @param string $key - sessionkey
      *
-     * @return $this.
+     * @return array $output.
      */
     public function helpOutput($str, $class = null, $key)
     {
@@ -216,7 +138,7 @@ class FormHelper extends Form
         }
         $this->session->set($key, $output);
 
-        return $this;
+        return $output;
     }
 
 
@@ -225,15 +147,15 @@ class FormHelper extends Form
     *
      * @param string $class a class attribute to set.
      * @param string $key - sessionkey
+     * @return array $output
     */
     public function setOutputHelper($class, $key)
     {
         $output  = $this->session->get($key);
         $output["class"] = $class;
         $this->session->set($key, $output);
-        return $this;
+        return $output;
     }
-
 
 
     /**
@@ -268,7 +190,7 @@ class FormHelper extends Form
 
     /**
     *
-    * @param array $llvar - all variables for the form
+    * @param array $all - all variables for the form
     * @param array $form - whats already saved in the form
     * 
     * @return string - the htmlcode
@@ -312,8 +234,9 @@ EOD;
         $message = isset($output["message"]) && !empty($output["message"]) ? $output["message"] : null;
         $class = isset($output["class"]) && !empty($output["class"]) ? " class=\"{$output["class"]}\"" : null;
 
-        return $message ? "<output{$class}>{$message}</output>" : null;        
+        return $message ? "<output{$class}>{$message}</output>" : null;
     }
+
 
 
     /**
@@ -370,12 +293,10 @@ EOD;
 
 
      /**
-     * @param boolean|null $ret - true if submitted&validates, false if
-     *                                      not validates
      * @param array $arr containing callable $callIfSuccess and callable $callIfFail - handlers to call if function returns true. And containing boolean $callbackStatus - if form is submitted and validates..
-     *
+     * @param boolean $validates
      * @param array $keys - the sessionskeys failed, remember, save
-     * @param array $values - 
+     * @param array $values - the $this->values array for check
      *
      * @throws \Anax\HTMLForm\Exception
      */
@@ -405,9 +326,8 @@ EOD;
     * @param object $element - the formelement
     * @return array $arr - add to $this-values
     */
-    public function fillValArr($postElement, $element)
+    public function fillValArr($postElement, $element, $arr)
     {
-        $arr = [];
         if (is_array($postElement)) {
             $arr[$element['name']]['values'] = $element['checked'] = $postElement;
         } else {
@@ -446,5 +366,16 @@ EOD;
     public function getValues()
     {
         return $this->values;
+    }
+
+
+
+    /**
+    *
+    * @return array $this->callbackStatus - updated
+    */
+    public function getcallbackStatus()
+    {
+        return $this->callbackStatus;
     }
 }

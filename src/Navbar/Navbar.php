@@ -139,10 +139,7 @@ EOD;
         $home = call_user_func([$url, "create"], $this->config['items']['home']['route']);
         $navpath = call_user_func([$url, "create"], "user/login");
         $create = call_user_func([$url, "create"], "user/create");
-        $update = call_user_func([$url, "create"], "user/update");        
-        if ($sess['isadmin'] == 1) {
-            $update = call_user_func([$url, "create"], "user/adminupdate");
-        }
+        $update = call_user_func([$url, "create"], "user/update");
 
         $comm = new Comm();
         $grav = "<img src='" . $comm->getGravatar($sess['email']) . "' />";

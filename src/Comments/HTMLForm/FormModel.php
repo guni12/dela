@@ -4,6 +4,7 @@ namespace Guni\Comments\HTMLForm;
 
 use Anax\DI\DIInterface;
 use Guni\Comments\HTMLForm\FormHelper;
+use Guni\Comments\HTMLForm\FormHelper2;
 
 /**
  * Base class for form model classes.
@@ -16,6 +17,8 @@ abstract class FormModel
      */
     protected $di;
     protected $form;
+    protected $formhelper;
+    protected $formhelper2;
 
 
 
@@ -29,6 +32,7 @@ abstract class FormModel
         $this->di = $di;
         $this->form = new Form($di);
         $this->formhelper = new FormHelper($di);
+        $this->formhelper2 = new FormHelper2($di);
     }
 
 

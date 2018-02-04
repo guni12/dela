@@ -4,6 +4,7 @@ namespace Guni\Comments\HTMLForm;
 
 use \Guni\Comments\HTMLForm\FormModel;
 use \Guni\Comments\HTMLForm\FormHelper;
+use \Guni\Comments\HTMLForm\FormHelper2;
 use \Anax\DI\DIInterface;
 use \Anax\HTMLForm\FormElementFactory;
 
@@ -35,11 +36,14 @@ class Form implements \ArrayAccess
      * @var array $callbackStatus.
      */
     protected $callbackStatus;
+    protected $remember;
+    protected $validates;
 
     /**
      * extra class to make this file some smaller.
      */
     protected $formhelper;
+    protected $formhelper2;
 
     /**
      * @var Anax\DI\DIInterface $di the DI service container.
@@ -57,6 +61,7 @@ class Form implements \ArrayAccess
     {
         $this->di = $di;
         $this->formhelper = new FormHelper($di);
+        $this->formhelper2 = new FormHelper2($di);
     }
 
 
@@ -100,10 +105,10 @@ class Form implements \ArrayAccess
      */
     public function create($form = [], $elements = [])
     {
-        $this->form = $this->formhelper->createform($form);
-        $this->elements = $this->formhelper->createelements($elements, $this->form);
+        $this->form = $this->formhelper2->createform($form);
+        $this->elements = $this->formhelper2->createelements($elements, $this->form);
         $this->output = [];
-        $this->sessionKey = $this->formhelper->createoutput($this->form);
+        $this->sessionKey = $this->formhelper2->createoutput($this->form);
         return $this;
     }
 
@@ -185,8 +190,8 @@ class Form implements \ArrayAccess
      *
      * @param string $str   the string to add as output.
      * @param string $class a class attribute to set.
-     *
-     * @return $this.
+     * Affects session
+     * @return $output.
      */
     public function addOutput($str, $class = null)
     {
@@ -265,7 +270,7 @@ class Form implements \ArrayAccess
         $form = array_merge($this->form, $options);
 
         $elementsArray  = $this->getHTMLForElements($options);
-        $elements       = $this->getHTMLLayoutForElements($elementsArray, $options);
+        $elements       = $this->formhelper2->getHTMLLayoutForElements($elementsArray, $options);
         $output         = $this->getOutput();
 
         return $this->formhelper->htmlhelper($form, $options, $elements, $output);
@@ -273,26 +278,7 @@ class Form implements \ArrayAccess
 
 
 
-    /**
-    * @param string $key - key and value pair in list
-    * @param object $element - value in pair
-    *
-    * @return string $html for the form
-    */
-    public function elementhtml($key, $element)
-    {
-        $html = "<p class='buttonbar'>\n" . $element->GetHTML() . '&nbsp;';
 
-        while (list($key, $element) = each($this->elements)) {
-            if (in_array($element['type'], array('submit', 'reset', 'button'))) {
-                $html .= $element->GetHTML();
-            } else {
-                prev($this->elements);
-                break;
-            }
-        }
-        return $html . "\n</p>";
-    }
 
 
 
@@ -315,7 +301,7 @@ class Form implements \ArrayAccess
         while (list($key, $element) = each($this->elements)) {
             if (in_array($element['type'], array('submit', 'reset', 'button')) && $options['use_buttonbar']) {
                 $name = 'buttonbar';
-                $html = $this->elementhtml($key, $element);
+                $html = $this->formhelper2->elementhtml($key, $element, $this->elements, $element->GetHTML());
             } else {
                 $name = $element['name'];
                 $html = $element->GetHTML();
@@ -325,30 +311,6 @@ class Form implements \ArrayAccess
         }
 
         return $elements;
-    }
-
-
-
-
-    /**
-     * Place the elements according to a layout and return the HTML
-     *
-     * @param array $elements as returned from GetHTMLForElements().
-     * @param array $options  with options affecting the layout.
-     *
-     * @return array with HTML for the formelements.
-     */
-    public function getHTMLLayoutForElements($elements, $options = [])
-    {
-        $options = $this->formhelper->layoutoptions($options);
-        $html = null;
-        if ($options['columns'] === 1) {
-            foreach ($elements as $element) {
-                $html .= $element['html'];
-            }
-        }
-
-        return $html;
     }
 
 
@@ -363,6 +325,7 @@ class Form implements \ArrayAccess
         $errors = [];
         foreach ($this->elements as $name => $element) {
             if ($element['validation-pass'] === false) {
+                echo "Ja";
                 $errors[$name] = [
                     'id' => $element->GetElementId(),
                     'label' => $element['label'],
@@ -382,7 +345,7 @@ class Form implements \ArrayAccess
      */
     public function getOutput()
     {
-            return $this->formhelper->outputhelper($this->output);
+        return $this->formhelper->outputhelper($this->output);
     }
 
 
@@ -407,46 +370,11 @@ class Form implements \ArrayAccess
                 $this[$key]['checked'] = false;
             }
         }
-
         foreach ($values as $key => $val) {
             $keyarray = $this[$key];
             $this[$key] = $this->formhelper->inithelper($keyarray, $val);
         }
     }
-
-
-
-
-    /**
-     * @param di-connection $request
-     * @return boolean $validates
-     */
-    public function postElementFill($postElement, $element)
-    {
-        $validates = true;
-        $this->values = $this->formhelper->fillValArr($postElement, $element);
-        $element = $this->formhelper->updateElement($element);
-
-        $this->values = $this->formhelper->doValidation($element, $this->values);
-        $this->validates = $this->formhelper->getValidate();
-
-        if (isset($element['remember']) && $element['remember']) {
-            $this->values[$element['name']] = ['value' => $element['value']];
-            $remember = true;
-        }
-        if (isset($element['callback']) && $this->validates) {
-            if (isset($element['callback-args'])) {
-                $this->callbackStatus = call_user_func_array(
-                    $element['callback'],
-                    array_merge([$this]),
-                    $element['callback-args']
-                );
-            } else {
-                $this->callbackStatus = call_user_func($element['callback'], $this);
-            }
-        }
-    }
-
 
 
 
@@ -461,8 +389,9 @@ class Form implements \ArrayAccess
         ) {
             $element['checked'] = false;
         }
-        $this->values = $this->formhelper->doValidation($element, $this->values);
+        $this->values = $this->formhelper->doValidation($element, $this->values, $this->elements);
         $this->validates = $this->formhelper->getValidate();
+        return $element;
     }
 
 
@@ -476,7 +405,9 @@ class Form implements \ArrayAccess
     {
         foreach ($this->elements as $element) {
             $postElement = $request->getPost($element['name']);
-            $postElement ? $this->postElementFill($postElement, $element) : $this->noPostElement($element);
+            $element = $postElement ? $this->formhelper->postElementFill($postElement, $element, $this->values) : $this->noPostElement($element);
+            $this->values = $this->formhelper->getValues();
+            $this->validates = $this->formhelper->getValidate();
         }
     }
 
@@ -500,30 +431,17 @@ class Form implements \ArrayAccess
      */
     public function check($callIfSuccess = null, $callIfFail = null)
     {
-        $remember = null;
-        $this->callbackStatus = null;
         $this->values = [];
+        $this->remember = null;
+        $this->validates = null;
+        $this->callbackStatus = null;
 
-        $output = $this->sessionKey["output"];
         $session = $this->di->get("session");
-        $this->output = $session->getOnce($output, []);
+        $this->output = $session->getOnce($this->sessionKey["output"], []);
 
         $requestMethod = $this->di->get("request")->getServer("REQUEST_METHOD");
         if ($requestMethod !== "POST") {
-
-            $failed   = $this->sessionKey["failed"];
-            $remember = $this->sessionKey["remember"];
-            $save     = $this->sessionKey["save"];
-
-            $session->has($failed) || $session->has($save) ? $this->InitElements($this->formhelper->notPosted($failed, $save, $session)) : "";
-            
-            if ($session->has($remember)) {
-                foreach ($session->getOnce($remember) as $key => $val) {
-                    $this[$key]['value'] = $val['value'];
-                }
-            }
-
-            return null;
+            $this->emptyAll($session);
         }
 
         $request = $this->di->get("request");
@@ -531,10 +449,32 @@ class Form implements \ArrayAccess
         if (!$formid || $this->form["id"] !== $formid) {
             return null;
         }
-        $validates = $this->elementworker($request);
-
-        $ret = $this->formhelper->retresult([$callIfSuccess, $callIfFail, $this->callbackStatus], $validates, [$this->sessionKey["failed"], $this->sessionKey["remember"], $this->sessionKey["save"], $this->rememberValues], $this->values);
+        $this->elementworker($request);
+        $this->validates = $this->formhelper->getValidate();
         $this->values = $this->formhelper->getValues();
+        $this->callbackStatus = $this->formhelper->getCallbackStatus();
+
+        $ret = $this->formhelper->retresult([$callIfSuccess, $callIfFail, $this->callbackStatus], $this->validates, [$this->sessionKey["failed"], $this->sessionKey["remember"], $this->sessionKey["save"], $this->rememberValues], $this->values);
+        
         return $ret;
+    }
+
+
+
+    /**
+    * @param object $session - di-object
+    * @return null
+    */
+    public function emptyAll($session)
+    {
+        $session->has($this->sessionKey["failed"]) || $session->has($this->sessionKey["save"]) ? $this->InitElements($this->formhelper2->notPosted($this->sessionKey["failed"], $this->sessionKey["save"], $session)) : "";
+
+        if ($session->has($this->sessionKey["remember"])) {
+            foreach ($session->getOnce($this->sessionKey["remember"]) as $key => $val) {
+                $this[$key]['value'] = $val['value'];
+            }
+        }
+
+        return null;
     }
 }
