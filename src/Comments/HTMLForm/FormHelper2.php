@@ -180,4 +180,83 @@ class FormHelper2 extends Form
 
         return $html;
     }
+
+
+
+
+    /**
+    *
+    * @return merged options;
+    */
+    public function getoptions($options)
+    {
+        $defaults = [
+            // Only return the start of the form element
+            'start'         => false,
+            
+            // Layout all elements in one column
+            'columns'       => 1,
+            
+            // Layout consequtive buttons as one element wrapped in <p>
+            'use_buttonbar' => true,
+        ];
+        return array_merge($defaults, $options);
+    }
+
+
+
+
+    /**
+     * Add output to display to the user for what happened whith the form and
+     * optionally add a CSS class attribute.
+     *
+     * @param string $str   the string to add as output.
+     * @param string $class a class attribute to set.
+     * @param string $key - sessionkey
+     *
+     * @return array $output.
+     */
+    public function helpOutput($str, $class = null, $key)
+    {
+        $output  = $this->session->get($key);
+
+        $output["message"] = isset($output["message"]) ? $output["message"] . " $str" : $str;
+
+        if ($class) {
+            $output["class"] = $class;
+        }
+        $this->session->set($key, $output);
+
+        return $output;
+    }
+
+
+
+    /**
+    *
+     * @param string $class a class attribute to set.
+     * @param string $key - sessionkey
+     * @return array $output
+    */
+    public function setOutputHelper($class, $key)
+    {
+        $output  = $this->session->get($key);
+        $output["class"] = $class;
+        $this->session->set($key, $output);
+        return $output;
+    }
+
+
+
+    /**
+    * @param array $output - info to print out in form
+    * @return string $message - if exist
+    */
+    public function outputhelper($output)
+    {
+        $message = isset($output["message"]) && !empty($output["message"]) ? $output["message"] : null;
+        $class = isset($output["class"]) && !empty($output["class"]) ? " class=\"{$output["class"]}\"" : null;
+
+        return $message ? "<output{$class}>{$message}</output>" : null;
+    }
 }

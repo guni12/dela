@@ -24,27 +24,7 @@ class FormHelper extends Form
     {
         $this->di = $di;
         $this->session = $this->di->get("session");
-    }
-
-
-
-    /**
-    *
-    * @return merged options;
-    */
-    public function getoptions($options)
-    {
-        $defaults = [
-            // Only return the start of the form element
-            'start'         => false,
-            
-            // Layout all elements in one column
-            'columns'       => 1,
-            
-            // Layout consequtive buttons as one element wrapped in <p>
-            'use_buttonbar' => true,
-        ];
-        return array_merge($defaults, $options);
+        $this->validates = true;
     }
 
 
@@ -92,15 +72,46 @@ class FormHelper extends Form
     public function postElementFill($postElement, $element, $values)
     {
         $this->callbackStatus = null;
-        $this->validates = true;
         $values = $this->fillValArr($postElement, $element, $values);
         $element = $this->updateElement($element);
 
         $values = $this->doValidation($element, $values);
         $this->validates = $this->getValidate();
 
+        $values = $this->checkCallbackValues($element, $values);
+        $element = $this->checkCallbackElement($element);
+
+        $this->values = $values;
+        return $element;
+    }
+
+
+
+    /**
+    * @param object $element
+    * @param array $values
+    *
+    * @return array $values
+    */
+    public function checkCallbackValues($element, $values)
+    {
         if (isset($element['remember']) && $element['remember']) {
             $values[$element['name']] = ['value' => $element['value']];
+        }
+        return $values;
+    }
+
+
+
+
+    /**
+    * @param object $element
+    *
+    * @return object $elements
+    */
+    public function checkCallbackElement($element)
+    {
+        if (isset($element['remember']) && $element['remember']) {
             $element['remember'] = true;
         }
         if (isset($element['callback']) && $this->validates) {
@@ -114,50 +125,10 @@ class FormHelper extends Form
                 $this->callbackStatus = call_user_func($element['callback'], $this);
             }
         }
-        $this->values = $values;
         return $element;
     }
 
 
-    /**
-     * Add output to display to the user for what happened whith the form and
-     * optionally add a CSS class attribute.
-     *
-     * @param string $str   the string to add as output.
-     * @param string $class a class attribute to set.
-     * @param string $key - sessionkey
-     *
-     * @return array $output.
-     */
-    public function helpOutput($str, $class = null, $key)
-    {
-        $output  = $this->session->get($key);
-
-        $output["message"] = isset($output["message"]) ? $output["message"] . " $str" : $str;
-
-        if ($class) {
-            $output["class"] = $class;
-        }
-        $this->session->set($key, $output);
-
-        return $output;
-    }
-
-
-
-    /**
-    *
-     * @param string $class a class attribute to set.
-     * @param string $key - sessionkey
-     * @return array $output
-    */
-    public function setOutputHelper($class, $key)
-    {
-        $output  = $this->session->get($key);
-        $output["class"] = $class;
-        $this->session->set($key, $output);
-        return $output;
-    }
 
 
     /**
@@ -228,21 +199,8 @@ EOD;
 
 
     /**
-    * @param array $output - info to print out in form
-    * @return string $message - if exist
-    */
-    public function outputhelper($output)
-    {
-        $message = isset($output["message"]) && !empty($output["message"]) ? $output["message"] : null;
-        $class = isset($output["class"]) && !empty($output["class"]) ? " class=\"{$output["class"]}\"" : null;
-
-        return $message ? "<output{$class}>{$message}</output>" : null;
-    }
-
-
-
-    /**
-    * @param array $key - formpart with key $key
+    * @param object $key - formpart including attributes, type, label etc
+    * @param array $val - written content and validation-messages
     * 
     * @return array $key - updated
     */
@@ -295,30 +253,48 @@ EOD;
 
 
      /**
-     * @param array $arr containing callable $callIfSuccess and callable $callIfFail - handlers to call if function returns true. And containing boolean $callbackStatus - if form is submitted and validates..
+     * @param array $arr[0] - callable $callIfSuccess 
+     * @param array $arr[1] - callable $callIfFail - handlers to call if function returns true. 
+     * @param array $arr[2] - boolean $callbackStatus - if form is submitted and validates..
      * @param boolean $validates
-     * @param array $keys - the sessionskeys (string) failed, remember, save
+     * @param array $keys - the sessionskeys (string) 0:failed, 1:remember, 2:save and boolean 3:rememberValues
      * @param array $values - the $this->values array for check
      *
      * @throws \Anax\HTMLForm\Exception
+     *
+     * @return boolean $ret - callbackStatus or not
      */
     public function retresult($arr, $validates, $keys, $values)
     {
         $this->updateSession($keys, $validates, $arr[2], $values);
-
         $ret = $validates ? $arr[2] : $validates;
-        if ($ret === true && isset($arr[0])) {
-            if (!is_callable($arr[0])) {
-                throw new Exception("Form, success-method is not callable.");
-            }
-            call_user_func_array($arr[0], [$this]);
-        } elseif ($ret === false && isset($arr[1])) {
-            if (!is_callable($arr[1])) {
-                throw new Exception("Form, success-method is not callable.");
-            }
-            call_user_func_array($arr[1], [$this]);
-        }
+        $this->checkExceptions($ret, $arr[0], $arr[1]);
+
         return $ret;
+    }
+
+
+
+     /**
+     * @param boolean $ret - callbackStatus or not
+     * @param callable $callIfSuccess
+     * @param callable $callIfFail
+     *
+     * @throws \Anax\HTMLForm\Exception
+     */
+    public function checkExceptions($ret, $callIfSuccess, $callIfFail)
+    {
+        if ($ret === true && isset($callIfSuccess)) {
+            if (!is_callable($callIfSuccess)) {
+                throw new Exception("Form, success-method is not callable.");
+            }
+            call_user_func_array($callIfSuccess, [$this]);
+        } elseif ($ret === false && isset($callIfFail)) {
+            if (!is_callable($callIfFail)) {
+                throw new Exception("Form, success-method is not callable.");
+            }
+            call_user_func_array($callIfFail, [$this]);
+        }        
     }
 
 
@@ -379,5 +355,45 @@ EOD;
     public function getcallbackStatus()
     {
         return $this->callbackStatus;
+    }
+
+
+
+    /**
+     * @param object $element
+     * @param array $values - for checking
+     * @return object $element
+     */
+    public function noPostElement($element, $values)
+    {
+        if ($element['type'] === 'checkbox'
+            || $element['type'] === 'checkbox-multiple'
+        ) {
+            $element['checked'] = false;
+        }
+        $this->doValidation($element, $values);
+        return $element;
+    }
+
+
+
+    /**
+    * @param object $elements - this->elements
+    * @return object $elements - updated
+    */
+    public function inithelper2($elements)
+    {
+        foreach ($elements as $key => $val) {
+            if (in_array($elements[$key]['type'], array('submit', 'reset', 'button'))) {
+                continue;
+            }
+
+            $elements[$key]['value'] = null;
+
+            if (isset($elements[$key]['checked'])) {
+                $elements[$key]['checked'] = false;
+            }
+        }
+        return $elements;
     }
 }

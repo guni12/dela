@@ -195,7 +195,7 @@ class Form implements \ArrayAccess
      */
     public function addOutput($str, $class = null)
     {
-        return $this->formhelper->helpOutput($str, $class, $this->sessionKey["output"]);
+        return $this->formhelper2->helpOutput($str, $class, $this->sessionKey["output"]);
     }
 
 
@@ -209,7 +209,7 @@ class Form implements \ArrayAccess
      */
     public function setOutputClass($class)
     {
-        return $this->formhelper->setOutputHelper($class, $this->sessionKey["output"]);
+        return $this->formhelper2->setOutputHelper($class, $this->sessionKey["output"]);
     }
 
 
@@ -266,7 +266,7 @@ class Form implements \ArrayAccess
      */
     public function getHTML($options = [])
     {
-        $options = $this->formhelper->getoptions($options);
+        $options = $this->formhelper2->getoptions($options);
         $form = array_merge($this->form, $options);
 
         $elementsArray  = $this->getHTMLForElements($options);
@@ -325,7 +325,6 @@ class Form implements \ArrayAccess
         $errors = [];
         foreach ($this->elements as $name => $element) {
             if ($element['validation-pass'] === false) {
-                echo "Ja";
                 $errors[$name] = [
                     'id' => $element->GetElementId(),
                     'label' => $element['label'],
@@ -345,7 +344,7 @@ class Form implements \ArrayAccess
      */
     public function getOutput()
     {
-        return $this->formhelper->outputhelper($this->output);
+        return $this->formhelper2->outputhelper($this->output);
     }
 
 
@@ -353,45 +352,18 @@ class Form implements \ArrayAccess
     /**
      * Init all element with values from session, clear all and fill in with values from the session.
      *
-     * @param array $values retrieved from session
+     * @param array $values - content written by user
      *
      * @return void
      */
     protected function initElements($values)
     {
-        foreach ($this->elements as $key => $val) {
-            if (in_array($this[$key]['type'], array('submit', 'reset', 'button'))) {
-                continue;
-            }
+        $this->elements = $this->formhelper->inithelper2($this->elements);
 
-            $this[$key]['value'] = null;
-
-            if (isset($this[$key]['checked'])) {
-                $this[$key]['checked'] = false;
-            }
-        }
         foreach ($values as $key => $val) {
             $keyarray = $this[$key];
             $this[$key] = $this->formhelper->inithelper($keyarray, $val);
         }
-    }
-
-
-
-    /**
-     * @param di-connection $request
-     * @return boolean $validates
-     */
-    public function noPostElement($element)
-    {
-        if ($element['type'] === 'checkbox'
-            || $element['type'] === 'checkbox-multiple'
-        ) {
-            $element['checked'] = false;
-        }
-        $this->values = $this->formhelper->doValidation($element, $this->values);
-        $this->validates = $this->formhelper->getValidate();
-        return $element;
     }
 
 
@@ -403,9 +375,10 @@ class Form implements \ArrayAccess
      */
     public function elementworker($request)
     {
-        foreach ($this->elements as $element) {
+        foreach ($this->elements as $key => $element) {
             $postElement = $request->getPost($element['name']);
-            $element = $postElement ? $this->formhelper->postElementFill($postElement, $element, $this->values) : $this->noPostElement($element);
+            $element = $postElement ? $this->formhelper->postElementFill($postElement, $element, $this->values) : $this->formhelper->noPostElement($element, $this->values);
+            $this->elements[$key] = $element;
             $this->values = $this->formhelper->getValues();
             $this->validates = $this->formhelper->getValidate();
         }
@@ -455,7 +428,6 @@ class Form implements \ArrayAccess
         $this->callbackStatus = $this->formhelper->getCallbackStatus();
 
         $ret = $this->formhelper->retresult([$callIfSuccess, $callIfFail, $this->callbackStatus], $this->validates, [$this->sessionKey["failed"], $this->sessionKey["remember"], $this->sessionKey["save"], $this->rememberValues], $this->values);
-        
         return $ret;
     }
 
