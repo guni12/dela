@@ -400,7 +400,7 @@ EOD;
             }
 
             $elements[$key]['value'] = null;
-            $elements[$key]['checked'] = isset($elements[$key]['checked'] ? false : null;
+            $elements[$key]['checked'] = isset($elements[$key]['checked']) ? false : null;
         }
         return $elements;
     }
