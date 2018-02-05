@@ -107,9 +107,8 @@ class FormHelper2 extends Form
 
 
     /**
-    * @param boolean $failed - sessionkeys
-    * @param boolean $save
-    * @param boolean $sess
+    * @param string $failed - sessionkeys
+    * @param string $save
     */
     public function notPosted($failed, $save, $sess)
     {

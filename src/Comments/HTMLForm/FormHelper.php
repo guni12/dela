@@ -50,7 +50,7 @@ class FormHelper extends Form
 
 
     /**
-    * @param array $element - the form that we check
+    * @param object $element - the form that we check
     * @param array $values - the formvalues we check
     * @return array $values - updated
     */
@@ -84,13 +84,15 @@ class FormHelper extends Form
 
 
     /**
-     * @param di-connection $request
-     * @return boolean $validates
+     * @param string $postElement
+     * @param object $element
+     * @param array $values
+     * @return object $element
      */
     public function postElementFill($postElement, $element, $values)
     {
         $this->callbackStatus = null;
-        $validates = true;
+        $this->validates = true;
         $values = $this->fillValArr($postElement, $element, $values);
         $element = $this->updateElement($element);
 
@@ -295,7 +297,7 @@ EOD;
      /**
      * @param array $arr containing callable $callIfSuccess and callable $callIfFail - handlers to call if function returns true. And containing boolean $callbackStatus - if form is submitted and validates..
      * @param boolean $validates
-     * @param array $keys - the sessionskeys failed, remember, save
+     * @param array $keys - the sessionskeys (string) failed, remember, save
      * @param array $values - the $this->values array for check
      *
      * @throws \Anax\HTMLForm\Exception

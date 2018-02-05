@@ -33,7 +33,7 @@ class Form implements \ArrayAccess
 
 
     /**
-     * @var array $callbackStatus.
+     * @var boolean $callbackStatus.
      */
     protected $callbackStatus;
     protected $remember;
@@ -191,7 +191,7 @@ class Form implements \ArrayAccess
      * @param string $str   the string to add as output.
      * @param string $class a class attribute to set.
      * Affects session
-     * @return $output.
+     * @return array $output.
      */
     public function addOutput($str, $class = null)
     {
@@ -389,7 +389,7 @@ class Form implements \ArrayAccess
         ) {
             $element['checked'] = false;
         }
-        $this->values = $this->formhelper->doValidation($element, $this->values, $this->elements);
+        $this->values = $this->formhelper->doValidation($element, $this->values);
         $this->validates = $this->formhelper->getValidate();
         return $element;
     }
