@@ -84,7 +84,7 @@ class ShowOneService
     /**
      * If loggedin allowed to edit
      *
-     * @param integer $toaccept - if owner of question he can accept
+     * @param integer $toaccept - if owner of question allowed to accept
      * @param integer $isaccepted - can only accept one answer
      * @param integer $id - the question
      *
@@ -357,6 +357,7 @@ class ShowOneService
         $this->iscomment = 0;
         
         $mainCommentLinks = $this->getLoginurl($this->comment->id);
+        $mainCommentLinks .= $this->voteChoices($this->comment);
 
         $text = '<h2>Svar <span class = "em06"><a href="' . $this->misc->setUrlCreator("comm/commentpoints") . '/' . $this->comment->id . '">rankordning</a> | <a href="' . $this->misc->setUrlCreator("comm/view-one") . '/' . $this->comment->id . '"> datumordning</a></span></h2>';
         
@@ -366,6 +367,7 @@ class ShowOneService
         $html = '<div class="col-sm-12 col-xs-12"><div class="col-lg-6 col-sm-7 col-xs-12">';
         $html .= $this->getValHtml($this->comment, 0, 1);
         $html .= '<br />' . $mainCommentLinks . '<hr />' . $this->commtext;
+
         $html .=  '<p><a href="' . $this->misc->setUrlCreator("comm") . '">Till Frågor</a></p>';
         $html .=  '</div><div class="col-sm-5 col-xs-12">' . $text . '</div></div>';
         return $html;

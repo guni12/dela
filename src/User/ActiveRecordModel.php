@@ -264,7 +264,6 @@ class ActiveRecordModel
                  ->execute($values);
 
         $this->{$this->tableIdColumn} = $this->db->lastInsertId();
-        echo $this->{$this->tableIdColumn};
     }
 
 

@@ -40,6 +40,7 @@ class ShowAllService
         $this->misc = new Misc($di);
         $this->userhelp = new UserHelp($di);
         $this->comments = $this->fromdb->getAll();
+        $this->comments = array_reverse($this->comments);
         $session = $this->di->get("session");
         $this->sess = $session->get("user");
         $this->sess = isset($this->sess) ? $this->sess : null;
