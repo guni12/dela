@@ -242,9 +242,7 @@ EOD;
 
 
      /**
-     * @param array $arr[0] - callable $callIfSuccess 
-     * @param array $arr[1] - callable $callIfFail - handlers to call if function returns true. 
-     * @param array $arr[2] - boolean $callbackStatus - if form is submitted and validates..
+     * @param array $arr - callable $callIfSuccess, callable $callIfFail  - handlers to call if function returns true, boolean $callbackStatus - if form is submitted and validates..
      * @param boolean $validates
      * @param array $keys - the sessionskeys (string) 0:failed, 1:remember, 2:save and boolean 3:rememberValues
      * @param array $values - the $this->values array for check
@@ -311,7 +309,7 @@ EOD;
 
 
     /**
-    * @param array|null $postElement - the posted element
+    * @param string $postElement - the posted element
     * @param object $element - the formelement
     * @return array $arr - add to $this-values
     */
@@ -389,7 +387,7 @@ EOD;
 
 
     /**
-    * @param object $elements - this->elements
+    * @param array<integer|string> $elements - this->elements
     * @return object $elements - updated
     */
     public function inithelper2($elements)

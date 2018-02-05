@@ -20,9 +20,21 @@ or you can download the zip
 
 ### Fix the database
 
-Look in the sql-folder. There you find the structure of the database tables. Use it and/or modify the content according to your needs.
+Look in the `sql`-folder. There you find the structure of the database tables in `sqlfile.sql`. Initiate the two tables `comm`and `user`. Then you can insert the supplied values if you prefer, but that is not necessary.
 
-You also find an example of how to set up the mysql database.php file. You can change to sqlite if you prefer.
+You also find an example of how to set up the mysql database.php file. Keep the name database.php and place it in the `config`-folder.
+
+### If you prefer sqlite:
+
+```
+mkdir data
+chmod 777 data
+```
+Modify `database.php`:
+```
+"driver_options"  => null,
+"dsn" => "sqlite:" . ANAX_INSTALL_PATH . "/data/db.sqlite",
+```
 
 
 ### Install with composer
