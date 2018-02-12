@@ -55,7 +55,7 @@ class VoteService
             $this->comm->find("id", $this->comment->parentid);
             $this->comm->accept = $answerid;
             $this->comm->save();
-            $pagerender->redirect("comm/view-one/" . $commentid);
+            $pagerender->redirect("comm/view-one/" . $answerid);
         }
     }
 

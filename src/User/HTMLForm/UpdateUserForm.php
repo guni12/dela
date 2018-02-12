@@ -30,7 +30,7 @@ class UpdateUserForm extends FormModel
 
         $sess = $this->di->get("session")->get("user");
 
-        $checked = $sess['isadmin'] == 1 ? true : false;
+        $checked = $this->user->isadmin == 1 ? true : false;
         $this->admin = $sess['isadmin'] ? ["type" => "checkbox","checked"   => $checked,"label" => "Är admin"] : ["type" => "hidden", "value" => null];
 
         $this->aForm();

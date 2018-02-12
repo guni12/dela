@@ -88,14 +88,14 @@ class ShowAllService
         $html = $this->getMembers();
 
         $create = $this->misc->setUrlCreator("user/create");
-        $adminupdate = $this->misc->setUrlCreator("user/adminupdate");
+        $update = $this->misc->setUrlCreator("user/update");
         $del = $this->misc->setUrlCreator("user/delete/0");
 
         $html .= $this->tableStart($create, $del);
 
         foreach ($this->users as $value) {
             $html .= '<tr><td>';
-            $html .= '<a href="' . $adminupdate . '/' . $value->id . '">' . $value->id . '</a></td>';
+            $html .= '<a href="' . $update . '/' . $value->id . '">' . $value->id . '</a></td>';
             $html .= '<td class = "adacr">' . $value->acronym . '</td>';
             $html .= '<td class = "ademl">' . $value->email . '</td>';
             $html .= '<td class = "adprof">' . $value->profile . '</td>';
