@@ -112,11 +112,11 @@ class FormHelper2 extends Form
     */
     public function notPosted($failed, $save, $sess)
     {
-        if ($failed) {
+        if ($sess->has($failed)) {
             return $sess->getOnce($failed);
-        } elseif ($save) {
+        } elseif ($sess->has($save)) {
             return $sess->getOnce($save);
-        } 
+        }
     }
 
 
